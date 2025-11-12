@@ -1,0 +1,290 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleName {
+  Passenger
+  Administrator
+}
+
+enum TripStatus {
+  Scheduled
+  Departed
+  Arrived
+  Cancelled
+}
+
+enum BookingStatus {
+  Pending
+  Confirmed
+  Cancelled
+}
+
+enum SeatBookingStatus {
+  Available
+  Locked
+  Booked
+}
+
+enum PaymentStatus {
+  Pending
+  Success
+  Failed
+}
+
+enum NotificationStatus {
+  Pending
+  Sent
+  Failed
+}
+
+enum NotificationChannel {
+  Email
+  SMS
+}
+
+enum SeatType {
+  Standard
+  Sleeper
+  VIP
+}
+
+model User {
+  id           String  @id @default(uuid())
+  fullName     String  @map("full_name")
+  email        String  @unique
+  phone        String? @unique
+  passwordHash String? @map("password_hash")
+
+  roles          UserRole[]
+  bookings       Booking[]
+  paymentMethods PaymentMethod[]
+  feedbacks      Feedback[]
+  notifications  Notification[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Role {
+  id   Int      @id @default(autoincrement())
+  name RoleName @unique
+
+  users UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  userId String @map("user_id")
+  roleId Int    @map("role_id")
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model Bus {
+  id            String @id @default(uuid())
+  plateNumber   String @unique @map("plate_number")
+  model         String
+  amenitiesJson Json   @map("amenities_json")
+
+  seats Seat[]
+  trips Trip[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("bus")
+}
+
+model Seat {
+  id       String   @id @default(uuid())
+  busId    String   @map("bus_id")
+  seatCode String   @map("seat_code")
+  seatType SeatType @map("seat_type")
+  isActive Boolean  @default(true) @map("is_active")
+
+  bus          Bus          @relation(fields: [busId], references: [id])
+  seatStatuses SeatStatus[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("seat")
+}
+
+model Route {
+  id               String @id @default(uuid())
+  origin           String
+  destination      String
+  distanceKm       Int    @map("distance_km")
+  estimatedMinutes Int    @map("estimated_minutes")
+
+  trips Trip[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("route")
+}
+
+model Trip {
+  id            String     @id @default(uuid())
+  routeId       String     @map("route_id")
+  busId         String     @map("bus_id")
+  departureTime DateTime   @map("departure_time")
+  arrivalTime   DateTime   @map("arrival_time")
+  basePrice     Decimal    @map("base_price")
+  status        TripStatus
+
+  route        Route        @relation(fields: [routeId], references: [id])
+  bus          Bus          @relation(fields: [busId], references: [id])
+  bookings     Booking[]
+  feedbacks    Feedback[]
+  seatStatuses SeatStatus[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("trip")
+}
+
+model Booking {
+  id          String        @id @default(uuid())
+  userId      String?       @map("user_id") 
+  tripId      String        @map("trip_id")
+  status      BookingStatus
+  totalAmount Decimal       @map("total_amount")
+  bookedAt    DateTime      @map("booked_at") 
+
+  user             User?             @relation(fields: [userId], references: [id])
+  trip             Trip              @relation(fields: [tripId], references: [id])
+  passengerDetails PassengerDetail[]
+  payments         Payment[]
+  seatStatuses     SeatStatus[]
+  notifications    Notification[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("booking")
+}
+
+model PassengerDetail {
+  id         String  @id @default(uuid())
+  bookingId  String  @map("booking_id")
+  fullName   String  @map("full_name")
+  documentId String? @map("document_id")
+  seatCode   String  @map("seat_code")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("passenger_detail")
+}
+
+model SeatStatus {
+  id          String            @id @default(uuid())
+  tripId      String            @map("trip_id")
+  seatId      String            @map("seat_id")
+  status      SeatBookingStatus
+  bookingId   String?           @map("booking_id")
+  lockedUntil DateTime?         @map("locked_until") 
+
+  trip    Trip     @relation(fields: [tripId], references: [id])
+  seat    Seat     @relation(fields: [seatId], references: [id])
+  booking Booking? @relation(fields: [bookingId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("seat_status")
+}
+
+model Payment {
+  id             String        @id @default(uuid())
+  bookingId      String        @map("booking_id")
+  provider       String
+  transactionRef String        @map("transaction_ref")
+  amount         Decimal
+  status         PaymentStatus
+  processedAt    DateTime?     @map("processed_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("payment")
+}
+
+model PaymentMethod {
+  id        String  @id @default(uuid())
+  userId    String  @map("user_id")
+  provider  String
+  details   Json
+  isDefault Boolean @default(false) @map("is_default")
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("payment_method")
+}
+
+model Feedback {
+  id          String   @id @default(uuid())
+  tripId      String   @map("trip_id")
+  userId      String   @map("user_id")
+  rating      Int
+  comment     String?
+  submittedAt DateTime @map("submitted_at")
+
+  trip Trip @relation(fields: [tripId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("feedback")
+}
+
+model Notification {
+  id        String             @id @default(uuid())
+  userId    String             @map("user_id")
+  bookingId String?            @map("booking_id")
+  channel   NotificationChannel
+  message   String
+  status    NotificationStatus
+  sentAt    DateTime?          @map("sent_at")
+
+  user    User     @relation(fields: [userId], references: [id])
+  booking Booking? @relation(fields: [bookingId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("notification")
+}

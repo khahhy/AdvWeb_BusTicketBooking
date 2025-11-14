@@ -90,7 +90,7 @@ export const ResizableNavbar: React.FC<ResizableNavbarProps> = ({
                 <motion.a
                   href={item.link}
                   className={cn(
-                    "flex items-center px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors duration-200 rounded-lg",
+                    "flex items-center px-4 py-2 text-base font-medium text-gray-600 hover:text-gray-900 transition-colors duration-200 rounded-lg",
                     activeDropdown === item.name && "text-gray-900 bg-gray-50/50"
                   )}
                   whileHover={{ scale: 1.05 }}
@@ -99,16 +99,16 @@ export const ResizableNavbar: React.FC<ResizableNavbarProps> = ({
                   {item.icon && <span className="mr-2">{item.icon}</span>}
                   <span className={cn(
                     "transition-all duration-200",
-                    isScrolled && "text-xs"
+                    isScrolled && "text-sm"
                   )}>
                     {item.name}
                   </span>
                   {item.children && (
                     <ChevronDown
                       className={cn(
-                        "ml-1 h-3 w-3 transition-transform duration-200",
+                        "ml-1 h-4 w-4 transition-transform duration-200",
                         activeDropdown === item.name && "rotate-180",
-                        isScrolled && "h-2 w-2"
+                        isScrolled && "h-3 w-3"
                       )}
                     />
                   )}

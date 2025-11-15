@@ -70,16 +70,18 @@ npm run preview
 ## 📱 Features
 
 ### Admin Dashboard (/admin)
+
 - **Sidebar navigation** với các menu:
   - Dashboard chính
-  - Quản lý xe buýt  
+  - Quản lý xe buýt
   - Quản lý tuyến đường
   - Quản lý đặt vé
   - Quản lý người dùng
 - **Dashboard metrics** hiển thị thống kê
 - **Recent activities** theo dõi hoạt động gần đây
 
-### User Dashboard (/user)  
+### User Dashboard (/user)
+
 - **Header** với navigation và login button
 - **Hero section** với form tìm kiếm chuyến xe
 - **Popular routes** hiển thị tuyến đường phổ biến
@@ -96,7 +98,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 // Button variants
 <Button variant="default">Primary</Button>
-<Button variant="secondary">Secondary</Button>  
+<Button variant="secondary">Secondary</Button>
 <Button variant="outline">Outline</Button>
 
 // Card component
@@ -111,17 +113,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 ## 🔧 Configuration
 
 ### TailwindCSS
+
 - Cấu hình với CSS variables cho theming
 - Support cho dark mode
 - Responsive design
 - Custom component classes
 
 ### TypeScript
+
 - Strict mode enabled
 - Path mapping với `@/*` alias
 - React 18 JSX transform
 
 ### Vite
+
 - Fast HMR
 - Path resolution cho `@/` imports
 - TypeScript support
@@ -129,9 +134,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 ## 🚦 Routing
 
 ```typescript
-/ → Redirect tới /user
-/user → User Dashboard
-/admin → Admin Dashboard  
+/ → Redirect tới /dashboard
+/dashboard → User Dashboard
+/admin → Admin Dashboard
 ```
 
 ## 📝 Scripts
@@ -146,7 +151,7 @@ npm run lint     # Run ESLint
 ## 🌐 Browser Support
 
 - Chrome (latest)
-- Firefox (latest) 
+- Firefox (latest)
 - Safari (latest)
 - Edge (latest)
 

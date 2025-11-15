@@ -6,7 +6,21 @@ export class RoutesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.routes.findMany();
+    return this.prisma.routes.findMany({
+      include: {
+        origin: true,
+        destination: true,
+        tripRoutes: {
+          include: {
+            trip: {
+              include: {
+                segments: true,
+              },
+            },
+          },
+        },
+      },
+    });
   }
 
   async findOne(id: string) {
@@ -17,13 +31,7 @@ export class RoutesService {
         destination: true,
         tripRoutes: {
           include: {
-            trip: {
-              include: {
-                bus: true,
-                tripStops: true,
-                segments: true,
-              },
-            },
+            trip: true,
           },
         },
       },

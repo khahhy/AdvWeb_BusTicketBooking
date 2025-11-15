@@ -7,20 +7,26 @@ export default function Features() {
           <div className="text-center">
             <div className="text-6xl mb-4">🎫</div>
             <h4 className="text-xl font-semibold mb-2">Easy Booking</h4>
-            <p className="text-muted-foreground">Book your tickets quickly with just a few clicks</p>
+            <p className="text-muted-foreground">
+              Book your tickets quickly with just a few clicks
+            </p>
           </div>
           <div className="text-center">
             <div className="text-6xl mb-4">🛡️</div>
             <h4 className="text-xl font-semibold mb-2">Safe & Secure</h4>
-            <p className="text-muted-foreground">Your information is completely secure with us</p>
+            <p className="text-muted-foreground">
+              Your information is completely secure with us
+            </p>
           </div>
           <div className="text-center">
             <div className="text-6xl mb-4">💰</div>
             <h4 className="text-xl font-semibold mb-2">Best Prices</h4>
-            <p className="text-muted-foreground">Guaranteed best ticket prices in the market</p>
+            <p className="text-muted-foreground">
+              Guaranteed best ticket prices in the market
+            </p>
           </div>
         </div>
       </div>
     </section>
-  )
+  );
 }

@@ -6,6 +6,7 @@ import {
 } from "react-router-dom";
 import AdminDashboard from "./admin/AdminDashboard";
 import UserDashboard from "./user/UserDashboard";
+import SearchPage from "./pages/SearchPage";
 import "./index.css";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/dashboard" element={<UserDashboard />} />
+          <Route path="/search" element={<SearchPage />} />
         </Routes>
       </div>
     </Router>

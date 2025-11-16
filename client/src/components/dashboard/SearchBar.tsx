@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ArrowLeftRight, Search } from 'lucide-react'
 import { DateRangeCalendar } from '@mui/x-date-pickers-pro/DateRangeCalendar'
 import { Box, Popover } from '@mui/material'
 import dayjs, { Dayjs } from 'dayjs'
 
 export default function SearchBar() {
+  const navigate = useNavigate()
   const [fromLocation, setFromLocation] = useState('')
   const [toLocation, setToLocation] = useState('')
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([null, null])
@@ -22,6 +24,10 @@ export default function SearchBar() {
 
   const handleDateClose = () => {
     setDatePickerAnchor(null)
+  }
+
+  const handleSearch = () => {
+    navigate('/search')
   }
 
   const formatDateRange = () => {
@@ -86,7 +92,10 @@ export default function SearchBar() {
         </div>
 
         {/* Search Button */}
-        <button className="flex-shrink-0 bg-black text-white p-4 rounded-full hover:bg-gray-800 transition-all duration-200 transform hover:scale-105">
+        <button 
+          onClick={handleSearch}
+          className="flex-shrink-0 bg-black text-white p-4 rounded-full hover:bg-gray-800 transition-all duration-200 transform hover:scale-105"
+        >
           <Search className="w-6 h-6" />
         </button>
       </div>

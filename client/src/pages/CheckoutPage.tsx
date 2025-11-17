@@ -13,6 +13,7 @@ import PassengerDetailsCard from '@/components/checkout/PassengerDetailsCard';
 import ContactInformationCard from '@/components/checkout/ContactInformationCard';
 import PriceDetailsSidebar from '@/components/checkout/PriceDetailsSidebar';
 import SeatMapModal from '@/components/checkout/SeatMapModal';
+import Footer from '@/components/dashboard/Footer';
 import { useEffect } from 'react';
 
 export default function CheckoutPage() {
@@ -133,7 +134,7 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-100">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
       {/* Navbar */}
       <ResizableNavbar
         items={navItems}
@@ -170,7 +171,7 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 -mt-16 relative z-10">
+      <div className="max-w-7xl mx-auto px-6 py-8 pb-20 -mt-16 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Booking Details */}
           <div className="lg:col-span-2 space-y-6">
@@ -241,6 +242,9 @@ export default function CheckoutPage() {
         ticketPrice={ticketPrice}
         seats={seats}
       />
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

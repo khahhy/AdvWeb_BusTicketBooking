@@ -12,6 +12,7 @@ import logoImage from '@/assets/images/logo.png';
 import backgroundImage from '@/assets/images/background.png';
 import TripCard from '@/components/search/TripCard';
 import FilterPanel from '@/components/search/FilterPanel';
+import Footer from '@/components/dashboard/Footer';
 import { mockTrips } from '@/data/mockTrips';
 
 export default function SearchPage() {
@@ -72,7 +73,7 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-100">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
       {/* Navbar */}
       <ResizableNavbar
         items={navItems}
@@ -186,7 +187,7 @@ export default function SearchPage() {
       </div>
 
       {/* Results Section */}
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <div className="max-w-7xl mx-auto px-6 py-12 pb-20">
         {/* Header Section */}
         <div className="mb-8 flex gap-6">
           <div className="w-80 flex-shrink-0"></div>
@@ -240,6 +241,9 @@ export default function SearchPage() {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

@@ -82,7 +82,7 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 sticky top-32 z-10">
+    <div className="bg-white rounded-2xl shadow-md p-6 sticky top-32 z-10">
       {/* Filter Header */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-bold text-gray-900">Filters</h3>
@@ -102,7 +102,7 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
             <button
               key={slot.value}
               onClick={() => handleDepartureTimeToggle(slot.value)}
-              className={`p-3 rounded-lg border-2 transition-all ${
+              className={`p-3 rounded-2xl border-2 transition-all ${
                 selectedDepartureTimes.includes(slot.value)
                   ? 'border-blue-600 bg-blue-50'
                   : 'border-gray-200 hover:border-gray-300'
@@ -123,7 +123,7 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
             <button
               key={slot.value}
               onClick={() => handleArrivalTimeToggle(slot.value)}
-              className={`p-3 rounded-lg border-2 transition-all ${
+              className={`p-3 rounded-2xl border-2 transition-all ${
                 selectedArrivalTimes.includes(slot.value)
                   ? 'border-blue-600 bg-blue-50'
                   : 'border-gray-200 hover:border-gray-300'

@@ -12,6 +12,7 @@ import PaymentTripSummaryCard from '@/components/payment/PaymentTripSummaryCard'
 import PaymentMethodsCard from '@/components/payment/PaymentMethodsCard';
 import PaymentButton from '@/components/payment/PaymentButton';
 import PaymentPriceSidebar from '@/components/payment/PaymentPriceSidebar';
+import Footer from '@/components/dashboard/Footer';
 import { useEffect } from 'react';
 
 export default function PaymentPage() {
@@ -93,7 +94,10 @@ export default function PaymentPage() {
     }
     setPaymentError('');
     console.log('Processing payment...', { selectedPaymentMethod });
-    // Navigate to confirmation or process payment
+    
+    // Navigate to confirmation page with all booking data
+    const confirmationUrl = `/confirmation?tripId=${tripId}&seat=${selectedSeat}&date=${travelDate}&passengerName=${encodeURIComponent(passengerName)}&passengerId=${encodeURIComponent(searchParams.get('passengerId') || '123456789012')}&email=${encodeURIComponent(searchParams.get('email') || 'example@gmail.com')}`;
+    navigate(confirmationUrl);
   };
 
   const paymentMethods = [
@@ -118,7 +122,7 @@ export default function PaymentPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-100">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
       {/* Navbar */}
       <ResizableNavbar
         items={navItems}
@@ -155,7 +159,7 @@ export default function PaymentPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 -mt-16 relative z-10">
+      <div className="max-w-7xl mx-auto px-6 py-8 pb-20 -mt-16 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Trip and Payment Details */}
           <div className="lg:col-span-2 space-y-6">
@@ -201,6 +205,9 @@ export default function PaymentPage() {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

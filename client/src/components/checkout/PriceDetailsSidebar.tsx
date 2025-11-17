@@ -20,7 +20,7 @@ export default function PriceDetailsSidebar({
   onNext,
 }: PriceDetailsSidebarProps) {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-24">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sticky top-24">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-900">Price Details</h2>
         <button className="text-blue-600 text-sm font-medium hover:underline">
@@ -28,7 +28,7 @@ export default function PriceDetailsSidebar({
         </button>
       </div>
 
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-6 flex items-start gap-2">
+      <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-3 mb-6 flex items-start gap-2">
         <span className="text-yellow-600">💡</span>
         <p className="text-sm text-yellow-800">
           Automatically applied the best deal for you.
@@ -72,7 +72,7 @@ export default function PriceDetailsSidebar({
 
       <button
         onClick={onNext}
-        className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold py-4 rounded-lg transition-colors duration-200"
+        className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold py-4 rounded-2xl transition-colors duration-200"
       >
         Next
       </button>

@@ -21,14 +21,14 @@ export default function PaymentMethodsCard({
   error,
 }: PaymentMethodsCardProps) {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
       <h2 className="text-xl font-bold text-gray-900 mb-6">Payment methods</h2>
       
       <div className="space-y-4">
         {paymentMethods.map((method) => (
           <div
             key={method.id}
-            className={`border rounded-lg p-4 cursor-pointer transition-all ${
+            className={`border rounded-2xl p-4 cursor-pointer transition-all ${
               selectedPaymentMethod === method.id
                 ? 'border-blue-500 bg-blue-50'
                 : error

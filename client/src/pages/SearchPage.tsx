@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import logoImage from '@/assets/images/logo.png';
-import backgroundImage from '@/assets/images/background1.png';
+import backgroundImage from '@/assets/images/background.png';
 import TripCard from '@/components/search/TripCard';
 import FilterPanel from '@/components/search/FilterPanel';
 import { mockTrips } from '@/data/mockTrips';
@@ -72,7 +72,7 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-100">
       {/* Navbar */}
       <ResizableNavbar
         items={navItems}
@@ -93,9 +93,12 @@ export default function SearchPage() {
 
       {/* Search Section */}
       <div 
-        className="pt-56 pb-32 bg-cover bg-center bg-no-repeat relative"
+        className="pt-56 pb-48 bg-cover bg-center bg-no-repeat relative"
         style={{ backgroundImage: `url(${backgroundImage})` }}
       >
+        {/* Gradient fade overlay at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 via-pink-50/60 via-pink-50/30 to-transparent pointer-events-none"></div>
+        
         {/* Optional overlay for better text readability */}
         {/* <div className="absolute inset-0 bg-black/20"></div> */}
         

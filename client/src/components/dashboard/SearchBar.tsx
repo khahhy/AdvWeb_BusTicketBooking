@@ -27,7 +27,22 @@ export default function SearchBar() {
   }
 
   const handleSearch = () => {
-    navigate('/search')
+    // Validate required fields
+    if (!fromLocation || !toLocation) {
+      alert('Please select both departure and destination locations');
+      return;
+    }
+
+    // Build search parameters
+    const searchParams = new URLSearchParams()
+
+    if (fromLocation) searchParams.set('from', fromLocation)
+    if (toLocation) searchParams.set('to', toLocation)
+    if (dateRange[0]) searchParams.set('departureDate', dayjs(dateRange[0]).format('YYYY-MM-DD'))
+    if (dateRange[1]) searchParams.set('returnDate', dayjs(dateRange[1]).format('YYYY-MM-DD'))
+
+    // Navigate to search page with parameters
+    navigate(`/search?${searchParams.toString()}`)
   }
 
   const formatDateRange = () => {
@@ -45,21 +60,24 @@ export default function SearchBar() {
         {/* From Field */}
         <div className="flex-1 px-6 py-4">
           <div className="text-xs font-medium text-gray-500 mb-1">From</div>
-          <select 
+          <select
             className="w-full text-lg font-medium text-gray-900 border-0 focus:ring-0 focus:outline-none bg-transparent"
             value={fromLocation}
             onChange={(e) => setFromLocation(e.target.value)}
           >
             <option value="">Select departure</option>
-            <option value="New York, USA">New York, USA</option>
             <option value="Ho Chi Minh City">Ho Chi Minh City</option>
             <option value="Hanoi">Hanoi</option>
             <option value="Da Nang">Da Nang</option>
+            <option value="Hai Phong">Hai Phong</option>
+            <option value="Can Tho">Can Tho</option>
+            <option value="Nha Trang">Nha Trang</option>
+            <option value="Hue">Hue</option>
           </select>
         </div>
 
         {/* Swap Button */}
-        <button 
+        <button
           onClick={handleSwap}
           className="flex-shrink-0 p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors duration-200"
           type="button"
@@ -70,16 +88,23 @@ export default function SearchBar() {
         {/* To Field */}
         <div className="flex-1 px-6 py-4">
           <div className="text-xs font-medium text-gray-500 mb-1">To</div>
-          <select 
+          <select
             className="w-full text-lg font-medium text-gray-900 border-0 focus:ring-0 focus:outline-none bg-transparent"
             value={toLocation}
             onChange={(e) => setToLocation(e.target.value)}
           >
             <option value="">Select destination</option>
-            <option value="Phu Quoc, Vietnam">Phu Quoc, Vietnam</option>
+            <option value="Ho Chi Minh City">Ho Chi Minh City</option>
+            <option value="Hanoi">Hanoi</option>
+            <option value="Da Nang">Da Nang</option>
             <option value="Da Lat">Da Lat</option>
             <option value="Nha Trang">Nha Trang</option>
             <option value="Can Tho">Can Tho</option>
+            <option value="Mui Ne">Mui Ne</option>
+            <option value="Phu Quoc">Phu Quoc</option>
+            <option value="Sapa">Sapa</option>
+            <option value="Hue">Hue</option>
+            <option value="Hoi An">Hoi An</option>
           </select>
         </div>
 
@@ -92,7 +117,7 @@ export default function SearchBar() {
         </div>
 
         {/* Search Button */}
-        <button 
+        <button
           onClick={handleSearch}
           className="flex-shrink-0 bg-black text-white p-4 rounded-full hover:bg-gray-800 transition-all duration-200 transform hover:scale-105"
         >

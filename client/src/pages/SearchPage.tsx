@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftRight, Search, Calendar as CalendarIcon } from 'lucide-react';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { Popover } from '@mui/material';
 import dayjs, { Dayjs } from 'dayjs';
 import ResizableNavbar, { NavItem } from '@/components/ui/resizable-navbar';
 import { Bus, Map, Ticket, User, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import logoImage from '@/assets/images/logo.png';
 import backgroundImage from '@/assets/images/background1.png';
 import TripCard from '@/components/search/TripCard';
@@ -20,7 +19,6 @@ export default function SearchPage() {
   const [fromLocation, setFromLocation] = useState('Ho Chi Minh City');
   const [toLocation, setToLocation] = useState('Mui Ne');
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
-  const [datePickerAnchor, setDatePickerAnchor] = useState<HTMLElement | null>(null);
   const [openTripId, setOpenTripId] = useState<string | null>(null);
 
   const navItems: NavItem[] = [
@@ -62,14 +60,6 @@ export default function SearchPage() {
     const temp = fromLocation;
     setFromLocation(toLocation);
     setToLocation(temp);
-  };
-
-  const handleDateClick = (event: React.MouseEvent<HTMLElement>) => {
-    setDatePickerAnchor(event.currentTarget);
-  };
-
-  const handleDateClose = () => {
-    setDatePickerAnchor(null);
   };
 
   const handleSearch = () => {
@@ -123,17 +113,18 @@ export default function SearchPage() {
               {/* From Field */}
               <div className="flex-1 px-6 py-4">
                 <div className="text-xs font-medium text-gray-500 mb-1">From</div>
-                <select
-                  className="w-full text-lg font-medium text-gray-900 border-0 focus:ring-0 focus:outline-none bg-transparent"
-                  value={fromLocation}
-                  onChange={(e) => setFromLocation(e.target.value)}
-                >
-                  <option value="Ho Chi Minh City">Ho Chi Minh City</option>
-                  <option value="Mui Ne">Mui Ne</option>
-                  <option value="Da Lat">Da Lat</option>
-                  <option value="Nha Trang">Nha Trang</option>
-                  <option value="Ba Ria - Vung Tau">Ba Ria - Vung Tau</option>
-                </select>
+                <Select value={fromLocation} onValueChange={setFromLocation}>
+                  <SelectTrigger className="w-full text-lg font-medium border-0 focus:ring-0 bg-transparent h-auto p-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Ho Chi Minh City">Ho Chi Minh City</SelectItem>
+                    <SelectItem value="Mui Ne">Mui Ne</SelectItem>
+                    <SelectItem value="Da Lat">Da Lat</SelectItem>
+                    <SelectItem value="Nha Trang">Nha Trang</SelectItem>
+                    <SelectItem value="Ba Ria - Vung Tau">Ba Ria - Vung Tau</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Swap Button */}
@@ -148,27 +139,36 @@ export default function SearchPage() {
               {/* To Field */}
               <div className="flex-1 px-6 py-4">
                 <div className="text-xs font-medium text-gray-500 mb-1">To</div>
-                <select
-                  className="w-full text-lg font-medium text-gray-900 border-0 focus:ring-0 focus:outline-none bg-transparent"
-                  value={toLocation}
-                  onChange={(e) => setToLocation(e.target.value)}
-                >
-                  <option value="Mui Ne">Mui Ne</option>
-                  <option value="Da Lat">Da Lat</option>
-                  <option value="Nha Trang">Nha Trang</option>
-                  <option value="Ho Chi Minh City">Ho Chi Minh City</option>
-                  <option value="Ba Ria - Vung Tau">Ba Ria - Vung Tau</option>
-                </select>
+                <Select value={toLocation} onValueChange={setToLocation}>
+                  <SelectTrigger className="w-full text-lg font-medium border-0 focus:ring-0 bg-transparent h-auto p-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Mui Ne">Mui Ne</SelectItem>
+                    <SelectItem value="Da Lat">Da Lat</SelectItem>
+                    <SelectItem value="Nha Trang">Nha Trang</SelectItem>
+                    <SelectItem value="Ho Chi Minh City">Ho Chi Minh City</SelectItem>
+                    <SelectItem value="Ba Ria - Vung Tau">Ba Ria - Vung Tau</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Date Picker */}
-              <div
-                className="flex-1 px-6 py-4 cursor-pointer"
-                onClick={handleDateClick}
-              >
-                <div className="text-xs font-medium text-gray-500 mb-1">Date</div>
-                <div className="text-lg font-medium text-gray-900">{formatDate()}</div>
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <div className="flex-1 px-6 py-4 cursor-pointer">
+                    <div className="text-xs font-medium text-gray-500 mb-1">Date</div>
+                    <div className="text-lg font-medium text-gray-900">{formatDate()}</div>
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="center">
+                  <Calendar
+                    value={selectedDate}
+                    onChange={setSelectedDate}
+                    disablePast
+                  />
+                </PopoverContent>
+              </Popover>
 
               {/* Search Button */}
               <button
@@ -178,46 +178,6 @@ export default function SearchPage() {
                 <Search className="w-6 h-6" />
               </button>
             </div>
-
-            {/* Date Picker Popover */}
-            <Popover
-              open={Boolean(datePickerAnchor)}
-              anchorEl={datePickerAnchor}
-              onClose={handleDateClose}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'center',
-              }}
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'center',
-              }}
-              PaperProps={{
-                sx: {
-                  mt: 2,
-                  borderRadius: 2,
-                  boxShadow:
-                    '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                },
-              }}
-            >
-              <div className="p-4">
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker
-                    value={selectedDate}
-                    onChange={(newValue) => {
-                      setSelectedDate(newValue);
-                      handleDateClose();
-                    }}
-                    slotProps={{
-                      textField: {
-                        variant: 'standard',
-                      },
-                    }}
-                  />
-                </LocalizationProvider>
-              </div>
-            </Popover>
           </div>
         </div>
       </div>

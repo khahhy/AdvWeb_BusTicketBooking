@@ -8,6 +8,8 @@ import AdminDashboard from "./admin/AdminDashboard";
 import UserDashboard from "./user/UserDashboard";
 import SearchPage from "./pages/SearchPage";
 import "./index.css";
+import CheckoutPage from "./pages/CheckoutPage";
+import PaymentPage from "./pages/PaymentPage";
 
 function App() {
   return (
@@ -18,6 +20,8 @@ function App() {
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/dashboard" element={<UserDashboard />} />
           <Route path="/search" element={<SearchPage />} />
+          <Route path="/checkout" element={<CheckoutPage />}/>
+          <Route path="/payment" element={<PaymentPage />}/>
         </Routes>
       </div>
     </Router>

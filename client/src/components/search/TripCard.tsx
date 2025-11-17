@@ -1,7 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Clock, MapPin } from 'lucide-react';
 import { Trip, Seat, generateSeats } from '@/data/mockTrips';
 import SeatMap from './SeatMap';
+import dayjs from 'dayjs';
 
 interface TripCardProps {
   trip: Trip;
@@ -10,6 +12,7 @@ interface TripCardProps {
 }
 
 export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
+  const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<'schedule' | 'seat' | 'shipment' | 'policy' | null>(null);
   const [seats, setSeats] = useState<Seat[]>(() => 
@@ -83,6 +86,14 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
   const totalPrice = useMemo(() => {
     return selectedSeats.length * trip.price;
   }, [selectedSeats, trip.price]);
+
+  const handleSelectTrip = () => {
+    const seat = selectedSeats.length > 0 
+      ? seats.find(s => s.id === selectedSeats[0])?.number || '01'
+      : '01';
+    const date = dayjs().format('YYYY-MM-DD');
+    navigate(`/checkout?tripId=${trip.id}&seat=${seat}&date=${date}`);
+  };
 
   const tabs = [
     { id: 'schedule', label: 'Schedule' },
@@ -182,7 +193,10 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
             ))}
           </div>
 
-          <button className="px-8 py-2 bg-foreground text-white font-semibold rounded-lg hover:bg-foreground/90 active:bg-foreground/80 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105">
+          <button 
+            onClick={handleSelectTrip}
+            className="px-8 py-2 bg-foreground text-white font-semibold rounded-lg hover:bg-foreground/90 active:bg-foreground/80 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+          >
             Select trip
           </button>
         </div>

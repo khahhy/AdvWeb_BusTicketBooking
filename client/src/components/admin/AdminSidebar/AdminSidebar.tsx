@@ -11,6 +11,7 @@ const AdminSidebar = ({ isCollapsed }: AdminSidebarProps) => {
       className={cn(
         "hidden md:flex flex-col",
         "bg-white dark:bg-gray-900 rounded-lg shadow-sm",
+        "sticky top-4",
         "h-[calc(100vh-2rem)]",
         "transition-all duration-300 group",
         isCollapsed ? "w-[88px]" : "w-[280px]",

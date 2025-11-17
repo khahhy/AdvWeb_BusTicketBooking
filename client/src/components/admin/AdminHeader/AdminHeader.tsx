@@ -11,12 +11,19 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Separator } from "@/components/ui/separator";
-
+import { cn } from "@/lib/utils";
 import logoImage from "@/assets/images/logo.png";
 
 const AdminHeader = () => {
   return (
-    <header className="flex h-16 items-center gap-4 rounded-lg shadow-sm bg-white dark:bg-gray-900 px-4 lg:px-6">
+    <header
+      className={cn(
+        "flex h-16 items-center gap-4 rounded-lg shadow-sm bg-white dark:bg-gray-900 px-4 lg:px-6",
+        // --- THÊM CÁC CLASS SAU ---
+        "sticky top-4 z-50"
+        // --- HẾT ---
+      )}
+    >
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="outline" size="icon" className="shrink-0 md:hidden">

@@ -9,6 +9,11 @@ import {
   AdminDashboard,
   PassengerManagement,
   AdminManagement,
+  LocationManagement,
+  BusManagement,
+  RouteManagement,
+  TripManagement,
+  TripForm,
 } from "@/admin";
 import UserDashboard from "./user/UserDashboard";
 import SearchPage from "./pages/SearchPage";
@@ -28,6 +33,16 @@ function App() {
             <Route path="users-management">
               <Route path="passengers" element={<PassengerManagement />} />
               <Route path="admins" element={<AdminManagement />} />
+            </Route>
+            <Route path="bus-operations">
+              <Route path="locations" element={<LocationManagement />} />
+              <Route path="buses" element={<BusManagement />} />
+              <Route path="routes" element={<RouteManagement />} />
+              <Route path="trips">
+                <Route index element={<TripManagement />} />
+                <Route path="new" element={<TripForm />} />
+                <Route path="edit/:tripId" element={<TripForm />} />
+              </Route>
             </Route>
           </Route>
           <Route path="/dashboard" element={<UserDashboard />} />

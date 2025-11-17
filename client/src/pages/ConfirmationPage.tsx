@@ -1,9 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Calendar as CalendarIcon, CheckCircle2, Download, Mail, MapPin, Map, Ticket, User } from 'lucide-react';
-import ResizableNavbar, { NavItem } from '@/components/ui/resizable-navbar';
-import { Button } from '@/components/ui/button';
-import logoImage from '@/assets/images/logo.png';
+import { Download, Mail, MapPin } from 'lucide-react';
+import Navbar from '@/components/common/Navbar';
 import backgroundImage from '@/assets/images/background.png';
 import Footer from '@/components/dashboard/Footer';
 import { mockTrips } from '@/data/mockTrips';
@@ -41,29 +39,6 @@ export default function ConfirmationPage() {
     return amount.toLocaleString('vi-VN') + 'VND';
   };
 
-  const navItems: NavItem[] = [
-    {
-      name: 'Routes',
-      link: '/routes',
-      icon: <Map className="h-4 w-4" />,
-    },
-    {
-      name: 'Schedule',
-      link: '/schedule',
-      icon: <CalendarIcon className="h-4 w-4" />,
-    },
-    {
-      name: 'Services',
-      link: '/services',
-      icon: <Ticket className="h-4 w-4" />,
-    },
-    {
-      name: 'About Us',
-      link: '/about',
-      icon: <User className="h-4 w-4" />,
-    },
-  ];
-
   const handleDownloadTicket = () => {
     console.log('Downloading ticket...');
     // Implement download logic
@@ -72,22 +47,7 @@ export default function ConfirmationPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-100">
       {/* Navbar */}
-      <ResizableNavbar
-        items={navItems}
-        logo={
-          <img
-            src={logoImage}
-            alt="Bus logo"
-            className="w-20 h-20 object-contain cursor-pointer"
-            onClick={() => navigate('/dashboard')}
-          />
-        }
-        button={
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 text-base font-semibold">
-            Login
-          </Button>
-        }
-      />
+      <Navbar />
 
       {/* Header Section with Background */}
       <div

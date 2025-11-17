@@ -1,14 +1,10 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeftRight, Search, Calendar as CalendarIcon } from 'lucide-react';
+import { ArrowLeftRight, Search } from 'lucide-react';
 import dayjs, { Dayjs } from 'dayjs';
-import ResizableNavbar, { NavItem } from '@/components/ui/resizable-navbar';
-import { Bus, Map, Ticket, User, MapPin } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Navbar from '@/components/common/Navbar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import logoImage from '@/assets/images/logo.png';
 import backgroundImage from '@/assets/images/background.png';
 import TripCard from '@/components/search/TripCard';
 import FilterPanel from '@/components/search/FilterPanel';
@@ -16,46 +12,10 @@ import Footer from '@/components/dashboard/Footer';
 import { mockTrips } from '@/data/mockTrips';
 
 export default function SearchPage() {
-  const navigate = useNavigate();
   const [fromLocation, setFromLocation] = useState('Ho Chi Minh City');
   const [toLocation, setToLocation] = useState('Mui Ne');
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
   const [openTripId, setOpenTripId] = useState<string | null>(null);
-
-  const navItems: NavItem[] = [
-    {
-      name: 'Routes',
-      link: '/routes',
-      icon: <Map className="h-4 w-4" />,
-      children: [
-        {
-          name: 'Ho Chi Minh City - Da Lat',
-          link: '/routes/hcm-dalat',
-          icon: <Bus className="h-4 w-4 text-blue-500" />,
-        },
-        {
-          name: 'Ho Chi Minh City - Nha Trang',
-          link: '/routes/hcm-nhatrang',
-          icon: <MapPin className="h-4 w-4 text-green-500" />,
-        },
-      ],
-    },
-    {
-      name: 'Schedule',
-      link: '/schedule',
-      icon: <CalendarIcon className="h-4 w-4" />,
-    },
-    {
-      name: 'Services',
-      link: '/services',
-      icon: <Ticket className="h-4 w-4" />,
-    },
-    {
-      name: 'About Us',
-      link: '/about',
-      icon: <User className="h-4 w-4" />,
-    },
-  ];
 
   const handleSwap = () => {
     const temp = fromLocation;
@@ -75,34 +35,19 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
       {/* Navbar */}
-      <ResizableNavbar
-        items={navItems}
-        logo={
-          <img
-            src={logoImage}
-            alt="Bus logo"
-            className="w-20 h-20 object-contain cursor-pointer"
-            onClick={() => navigate('/dashboard')}
-          />
-        }
-        button={
-          <Button className="bg-white hover:bg-gray-50 text-black px-6 py-2 rounded-full border border-gray-200 shadow-sm text-base font-medium">
-            Login
-          </Button>
-        }
-      />
+      <Navbar />
 
       {/* Search Section */}
-      <div 
+      <div
         className="pt-56 pb-48 bg-cover bg-center bg-no-repeat relative"
         style={{ backgroundImage: `url(${backgroundImage})` }}
       >
         {/* Gradient fade overlay at bottom */}
         <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 via-pink-50/60 via-pink-50/30 to-transparent pointer-events-none"></div>
-        
+
         {/* Optional overlay for better text readability */}
         {/* <div className="absolute inset-0 bg-black/20"></div> */}
-        
+
         <div className="max-w-6xl mx-auto px-6 relative z-10">
           <h1 className="text-4xl font-bold text-foreground/80 mb-2 text-center opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
             Find Your Bus Journey
@@ -218,9 +163,9 @@ export default function SearchPage() {
           {/* Trip Cards - Right Side */}
           <div className="flex-1 space-y-6">
             {mockTrips.map((trip) => (
-              <TripCard 
-                key={trip.id} 
-                trip={trip} 
+              <TripCard
+                key={trip.id}
+                trip={trip}
                 isOpen={openTripId === trip.id}
                 onToggle={(tripId) => setOpenTripId(openTripId === tripId ? null : tripId)}
               />

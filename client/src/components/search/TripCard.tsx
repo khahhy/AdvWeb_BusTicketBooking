@@ -103,31 +103,31 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
   ];
 
   return (
-    <div ref={cardRef} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-100">
+    <div ref={cardRef} className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-100">
       {/* Trip Header */}
       <div className="p-6">
         <div className="flex items-start justify-between">
           {/* Time and Location */}
           <div className="flex items-center gap-8 flex-1">
             {/* Departure */}
-            <div className="text-center">
+            <div className="text-center w-32 flex-shrink-0">
               <div className="text-3xl font-bold text-gray-900 mb-1">{trip.departureTime}</div>
               <div className="text-sm font-medium text-gray-700">{trip.from}</div>
             </div>
 
             {/* Duration */}
-            <div className="flex flex-col items-center px-6">
+            <div className="flex flex-col items-center px-6 flex-shrink-0">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-3 h-3 rounded-full bg-foreground"></div>
-                <div className="h-0.5 w-20 bg-foreground"></div>
-                <MapPin className="w-4 h-4 text-foreground" />
+                <MapPin className="w-4 h-4 text-gray-400" />
+                <div className="h-0.5 w-20 border-t-2 border-dashed border-gray-300"></div>
+                <MapPin className="w-4 h-4 text-gray-400" />
               </div>
               <div className="text-xs text-gray-500 font-medium">{trip.duration}</div>
               <div className="text-xs text-gray-400">(Asian/Ho Chi Minh)</div>
             </div>
 
             {/* Arrival */}
-            <div className="text-center">
+            <div className="text-center w-32 flex-shrink-0">
               <div className="text-3xl font-bold text-gray-900 mb-1">{trip.arrivalTime}</div>
               <div className="text-sm font-medium text-gray-700">{trip.to}</div>
             </div>
@@ -156,7 +156,7 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
 
         {/* Note */}
         {trip.note && (
-          <div className="mt-4 p-3 bg-foreground/5 rounded-lg border border-foreground/10">
+          <div className="mt-4 p-3 bg-foreground/5 rounded-2xl border border-foreground/10">
             <p className="text-xs text-foreground/80">
               <span className="font-semibold">Noted:</span> {trip.note}
             </p>
@@ -182,7 +182,7 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
                     setActiveTab(tab.id as any);
                   }
                 }}
-                className={`px-6 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                className={`px-6 py-2 text-sm font-medium rounded-2xl transition-all duration-200 ${
                   activeTab === tab.id && isOpen
                     ? 'bg-foreground text-white'
                     : 'text-gray-600 hover:bg-gray-100'
@@ -195,7 +195,7 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
 
           <button 
             onClick={handleSelectTrip}
-            className="px-8 py-2 bg-foreground text-white font-semibold rounded-lg hover:bg-foreground/90 active:bg-foreground/80 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+            className="px-8 py-2 bg-foreground text-white font-semibold rounded-2xl hover:bg-foreground/90 active:bg-foreground/80 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
           >
             Select trip
           </button>
@@ -210,7 +210,7 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
             <SeatMap seats={seats} onSeatSelect={handleSeatSelect} />
             
             {selectedSeats.length > 0 && (
-              <div className="mt-6 p-4 bg-white rounded-lg border border-gray-200">
+              <div className="mt-6 p-4 bg-white rounded-2xl border border-gray-200">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">Selected {selectedSeats.length} seats:</p>

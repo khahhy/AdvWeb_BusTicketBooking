@@ -7,7 +7,7 @@ export default function PaymentButton({ onPayment }: PaymentButtonProps) {
     <div className="space-y-4">
       <button
         onClick={onPayment}
-        className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 text-lg"
+        className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-4 rounded-2xl transition-colors duration-200 flex items-center justify-center gap-2 text-lg"
       >
         Pay securely
       </button>

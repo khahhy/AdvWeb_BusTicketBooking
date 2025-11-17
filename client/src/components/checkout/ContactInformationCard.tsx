@@ -31,7 +31,7 @@ export default function ContactInformationCard({
   setErrors,
 }: ContactInformationCardProps) {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
       <h2 className="text-xl font-bold text-gray-900 mb-2">Contact information</h2>
       <p className="text-sm text-gray-500 mb-6">
         The system will confirm the booking, refund, or change the schedule through this information
@@ -50,7 +50,7 @@ export default function ContactInformationCard({
                   setErrors({...errors, contactName: ''});
                 }
               }}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+              className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 ${
                 errors.contactName ? 'border-red-500' : 'border-gray-300'
               }`}
             />
@@ -70,7 +70,7 @@ export default function ContactInformationCard({
           <div className="relative flex gap-2">
             <div className="w-32">
               <Select value={countryCode} onValueChange={setCountryCode}>
-                <SelectTrigger className="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                <SelectTrigger className="w-full px-4 py-3 border border-gray-300 rounded-2xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -92,7 +92,7 @@ export default function ContactInformationCard({
                       setErrors({...errors, phoneNumber: ''});
                     }
                   }}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 ${
                     errors.phoneNumber ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
@@ -124,7 +124,7 @@ export default function ContactInformationCard({
                   setErrors({...errors, email: ''});
                 }
               }}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+              className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 ${
                 errors.email ? 'border-red-500' : 'border-gray-300'
               }`}
             />
@@ -152,7 +152,7 @@ export default function ContactInformationCard({
                   setErrors({...errors, contactPersonalId: ''});
                 }
               }}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+              className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 ${
                 errors.contactPersonalId ? 'border-red-500' : 'border-gray-300'
               }`}
             />

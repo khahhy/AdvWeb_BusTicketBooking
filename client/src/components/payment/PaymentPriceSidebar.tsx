@@ -16,7 +16,7 @@ export default function PaymentPriceSidebar({
   formatCurrency,
 }: PaymentPriceSidebarProps) {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-24">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sticky top-24">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-900">Price Details</h2>
         <button className="text-blue-600 text-sm font-medium hover:underline">

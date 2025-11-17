@@ -103,15 +103,15 @@ export default function SearchPage() {
         {/* <div className="absolute inset-0 bg-black/20"></div> */}
         
         <div className="max-w-6xl mx-auto px-6 relative z-10">
-          <h1 className="text-4xl font-bold text-foreground/80 mb-2 text-center">
+          <h1 className="text-4xl font-bold text-foreground/80 mb-2 text-center opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
             Find Your Bus Journey
           </h1>
-          <p className="text-blue-100 text-center mb-8 text-foreground/60">
+          <p className="text-blue-100 text-center mb-8 text-foreground/60 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
             Safe, Comfortable, and Affordable Bus Travel
           </p>
 
           {/* Search Bar */}
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]">
             <div className="flex items-center gap-4 bg-white rounded-full shadow-2xl p-2 border border-gray-200">
               {/* From Field */}
               <div className="flex-1 px-6 py-4">

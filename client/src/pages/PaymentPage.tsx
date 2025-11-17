@@ -5,16 +5,22 @@ import ResizableNavbar, { NavItem } from '@/components/ui/resizable-navbar';
 import { Bus, Map, Ticket, User, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import logoImage from '@/assets/images/logo.png';
+import backgroundImage from '@/assets/images/background.png';
 import { mockTrips } from '@/data/mockTrips';
 import dayjs from 'dayjs';
 import PaymentTripSummaryCard from '@/components/payment/PaymentTripSummaryCard';
 import PaymentMethodsCard from '@/components/payment/PaymentMethodsCard';
 import PaymentButton from '@/components/payment/PaymentButton';
 import PaymentPriceSidebar from '@/components/payment/PaymentPriceSidebar';
+import { useEffect } from 'react';
 
 export default function PaymentPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   
   // Get data from URL params
   const tripId = searchParams.get('tripId') || '1';
@@ -112,7 +118,7 @@ export default function PaymentPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-100">
       {/* Navbar */}
       <ResizableNavbar
         items={navItems}
@@ -125,47 +131,73 @@ export default function PaymentPage() {
           />
         }
         button={
-          <Button className="bg-white hover:bg-gray-50 text-black px-6 py-2 rounded-full border border-gray-200 shadow-sm text-base font-medium">
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 text-base font-semibold">
             Login
           </Button>
         }
       />
 
-      <div className="max-w-7xl mx-auto px-6 py-8 mt-24">
+      {/* Header Section with Background */}
+      <div 
+        className="pt-40 pb-32 bg-cover bg-center bg-no-repeat relative"
+        style={{ backgroundImage: `url(${backgroundImage})` }}
+      >
+        {/* Gradient fade overlay at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 via-pink-50/60 via-pink-50/30 to-transparent pointer-events-none"></div>
+        
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <h1 className="text-5xl font-bold text-foreground/80 mb-3 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
+            Complete Payment
+          </h1>
+          <p className="text-xl text-foreground/60 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
+            Choose your preferred payment method
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-8 -mt-16 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Trip and Payment Details */}
           <div className="lg:col-span-2 space-y-6">
-            <PaymentTripSummaryCard
-              trip={trip}
-              formatDate={formatDate}
-              passengerName={passengerName}
-              passengerId={passengerId}
-              email={email}
-            />
+            <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
+              <PaymentTripSummaryCard
+                trip={trip}
+                formatDate={formatDate}
+                passengerName={passengerName}
+                passengerId={passengerId}
+                email={email}
+              />
+            </div>
 
-            <PaymentMethodsCard
-              paymentMethods={paymentMethods}
-              selectedPaymentMethod={selectedPaymentMethod}
-              onSelectPaymentMethod={(methodId) => {
-                setSelectedPaymentMethod(methodId);
-                setPaymentError('');
-              }}
-              error={paymentError}
-            />
+            <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]">
+              <PaymentMethodsCard
+                paymentMethods={paymentMethods}
+                selectedPaymentMethod={selectedPaymentMethod}
+                onSelectPaymentMethod={(methodId) => {
+                  setSelectedPaymentMethod(methodId);
+                  setPaymentError('');
+                }}
+                error={paymentError}
+              />
+            </div>
 
-            <PaymentButton onPayment={handlePayment} />
+            <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.7s_forwards]">
+              <PaymentButton onPayment={handlePayment} />
+            </div>
           </div>
 
           {/* Right Column - Price Details */}
           <div className="lg:col-span-1">
-            <PaymentPriceSidebar
-              selectedSeat={selectedSeat}
-              ticketPrice={ticketPrice}
-              insuranceFee={insuranceFee}
-              serviceFee={serviceFee}
-              totalPrice={totalPrice}
-              formatCurrency={formatCurrency}
-            />
+            <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.4s_forwards]">
+              <PaymentPriceSidebar
+                selectedSeat={selectedSeat}
+                ticketPrice={ticketPrice}
+                insuranceFee={insuranceFee}
+                serviceFee={serviceFee}
+                totalPrice={totalPrice}
+                formatCurrency={formatCurrency}
+              />
+            </div>
           </div>
         </div>
       </div>

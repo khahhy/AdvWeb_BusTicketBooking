@@ -15,6 +15,14 @@ export class AuthService {
       throw new BadRequestException('Email already registered');
     }
 
+    if (dto.phoneNumber) {
+      const phoneExist = await this.prisma.users.findUnique({
+        where: { phoneNumber: dto.phoneNumber },
+      });
+      if (phoneExist)
+        throw new BadRequestException('Phone number already exists');
+    }
+
     let hashedPassword: string | null = null;
     if (dto.password) {
       hashedPassword = await hash(dto.password, 10);

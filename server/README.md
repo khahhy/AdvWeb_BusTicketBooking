@@ -10,7 +10,7 @@ npm install
 ## Sync schema
 
 ```bash
-npx prisma db push
+npx prisma generate
 ```
 
 ## Run backend

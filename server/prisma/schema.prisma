@@ -62,12 +62,6 @@ enum NotificationStatus {
   failed
 }
 
-enum SeatType {
-  upperDeck
-  lowerDeck
-  window
-}
-
 enum GatewayType {
   momo
   zalopay
@@ -112,7 +106,6 @@ model Locations {
 model Buses {
   id        String   @id @default(uuid())
   plate     String   @unique
-  busType   String?
   amenities Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -125,7 +118,6 @@ model Seats {
   id          String   @id @default(uuid())
   busId       String
   seatNumber  String
-  seatType    SeatType?
   coordinates Json?
 
   bus   Buses @relation(fields: [busId], references: [id])

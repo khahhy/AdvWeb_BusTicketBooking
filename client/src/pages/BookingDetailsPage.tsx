@@ -11,7 +11,8 @@ import {
   CreditCard,
   Phone,
   Mail,
-  CheckCircle2
+  CheckCircle2,
+  Star
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import { Button } from '@/components/ui/button';
@@ -150,6 +151,10 @@ export default function BookingDetailsPage() {
 
   const handleGoBack = () => {
     navigate('/booking-history');
+  };
+
+  const handleRateTrip = () => {
+    navigate(`/feedback/${booking?.id}`);
   };
 
   if (loading) {
@@ -421,6 +426,16 @@ export default function BookingDetailsPage() {
                   <Download className="w-5 h-5" />
                   Download Ticket
                 </Button>
+
+                {booking.status === 'completed' && (
+                  <Button
+                    onClick={handleRateTrip}
+                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-2xl font-semibold flex items-center justify-center gap-2"
+                  >
+                    <Star className="w-5 h-5" />
+                    Rate This Trip
+                  </Button>
+                )}
 
                 <Button
                   onClick={handleGoBack}

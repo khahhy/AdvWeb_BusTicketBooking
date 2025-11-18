@@ -20,6 +20,8 @@ import SearchPage from "./pages/SearchPage";
 import BookingHistoryPage from "./pages/BookingHistoryPage";
 import BookingDetailsPage from "./pages/BookingDetailsPage";
 import FeedbackRatingPage from "./pages/FeedbackRatingPage";
+import ModifyBookingPage from "./pages/ModifyBookingPage";
+import NotificationsPage from "./pages/NotificationsPage";
 import "./index.css";
 import CheckoutPage from "./pages/CheckoutPage";
 import PaymentPage from "./pages/PaymentPage";
@@ -54,6 +56,8 @@ function App() {
           <Route path="/booking-history" element={<BookingHistoryPage />} />
           <Route path="/booking-details/:id" element={<BookingDetailsPage />} />
           <Route path="/feedback/:id" element={<FeedbackRatingPage />} />
+          <Route path="/modify-booking/:id" element={<ModifyBookingPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/confirmation" element={<ConfirmationPage />} />

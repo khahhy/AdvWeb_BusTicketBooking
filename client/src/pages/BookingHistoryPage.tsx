@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Clock, Ticket, Download, Eye, Star } from 'lucide-react';
+import { Calendar, MapPin, Clock, Ticket, Download, Eye, Star, Edit } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -127,6 +127,10 @@ export default function BookingHistoryPage() {
 
   const handleRateTrip = (bookingId: string) => {
     navigate(`/feedback/${bookingId}`);
+  };
+
+  const handleModifyBooking = (bookingId: string) => {
+    navigate(`/modify-booking/${bookingId}`);
   };
 
   return (
@@ -267,6 +271,17 @@ export default function BookingHistoryPage() {
                       <Eye className="w-4 h-4" />
                       Details
                     </Button>
+                    {booking.status === 'upcoming' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleModifyBooking(booking.id)}
+                        className="flex items-center gap-1 border-blue-300 text-blue-600 hover:bg-blue-50"
+                      >
+                        <Edit className="w-4 h-4" />
+                        Modify
+                      </Button>
+                    )}
                     {booking.status === 'completed' && (
                       <Button
                         size="sm"

@@ -12,7 +12,8 @@ import {
   Phone,
   Mail,
   CheckCircle2,
-  Star
+  Star,
+  Edit
 } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import { Button } from '@/components/ui/button';
@@ -155,6 +156,10 @@ export default function BookingDetailsPage() {
 
   const handleRateTrip = () => {
     navigate(`/feedback/${booking?.id}`);
+  };
+
+  const handleModifyBooking = () => {
+    navigate(`/modify-booking/${booking?.id}`);
   };
 
   if (loading) {
@@ -426,6 +431,16 @@ export default function BookingDetailsPage() {
                   <Download className="w-5 h-5" />
                   Download Ticket
                 </Button>
+
+                {booking.status === 'upcoming' && (
+                  <Button
+                    onClick={handleModifyBooking}
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-2xl font-semibold flex items-center justify-center gap-2"
+                  >
+                    <Edit className="w-5 h-5" />
+                    Modify Booking
+                  </Button>
+                )}
 
                 {booking.status === 'completed' && (
                   <Button

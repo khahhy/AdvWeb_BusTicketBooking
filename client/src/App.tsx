@@ -22,6 +22,7 @@ import BookingDetailsPage from "./pages/BookingDetailsPage";
 import FeedbackRatingPage from "./pages/FeedbackRatingPage";
 import ModifyBookingPage from "./pages/ModifyBookingPage";
 import NotificationsPage from "./pages/NotificationsPage";
+import Chatbot from "./components/ui/chatbot";
 import "./index.css";
 import CheckoutPage from "./pages/CheckoutPage";
 import PaymentPage from "./pages/PaymentPage";
@@ -62,6 +63,9 @@ function App() {
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/confirmation" element={<ConfirmationPage />} />
         </Routes>
+
+        {/* Global Chatbot */}
+        <Chatbot />
       </div>
     </Router>
   );

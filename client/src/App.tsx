@@ -3,6 +3,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useLocation,
 } from "react-router-dom";
 import {
   AdminLayout,
@@ -27,45 +28,66 @@ import "./index.css";
 import CheckoutPage from "./pages/CheckoutPage";
 import PaymentPage from "./pages/PaymentPage";
 import ConfirmationPage from "./pages/ConfirmationPage";
+import SignUpPage from "./pages/SignUpPage";
+import LoginPage from "./pages/LoginPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
+import EmailVerifiedPage from "./pages/EmailVerifiedPage";
+
+function AppContent() {
+  const location = useLocation();
+  const hideChatbot = ['/signup', '/login', '/forgot-password', '/verify-email', '/email-verified'].includes(location.pathname);
+
+  return (
+    <>
+      <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        // admin pages
+        <Route path="/admin" element={<AdminLayout />}>
+          {/* <Route index element={<AdminDashboard />} /> */}
+          <Route path="users-management">
+            <Route path="passengers" element={<PassengerManagement />} />
+            <Route path="admins" element={<AdminManagement />} />
+          </Route>
+          <Route path="bus-operations">
+            <Route path="locations" element={<LocationManagement />} />
+            <Route path="buses" element={<BusManagement />} />
+            <Route path="routes" element={<RouteManagement />} />
+            <Route path="trips">
+              <Route index element={<TripManagement />} />
+              <Route path="new" element={<TripForm />} />
+              <Route path="edit/:tripId" element={<TripForm />} />
+            </Route>
+          </Route>
+        </Route>
+        <Route path="/dashboard" element={<UserDashboard />} />
+        <Route path="/search" element={<SearchPage />} />
+        <Route path="/booking-history" element={<BookingHistoryPage />} />
+        <Route path="/booking-details/:id" element={<BookingDetailsPage />} />
+        <Route path="/feedback/:id" element={<FeedbackRatingPage />} />
+        <Route path="/modify-booking/:id" element={<ModifyBookingPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/payment" element={<PaymentPage />} />
+        <Route path="/confirmation" element={<ConfirmationPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/email-verified" element={<EmailVerifiedPage />} />
+      </Routes>
+
+      {/* Global Chatbot - hidden on signup page */}
+      {!hideChatbot && <Chatbot />}
+    </>
+  );
+}
 
 function App() {
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <div className="min-h-screen bg-background">
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          // admin pages
-          <Route path="/admin" element={<AdminLayout />}>
-            {/* <Route index element={<AdminDashboard />} /> */}
-            <Route path="users-management">
-              <Route path="passengers" element={<PassengerManagement />} />
-              <Route path="admins" element={<AdminManagement />} />
-            </Route>
-            <Route path="bus-operations">
-              <Route path="locations" element={<LocationManagement />} />
-              <Route path="buses" element={<BusManagement />} />
-              <Route path="routes" element={<RouteManagement />} />
-              <Route path="trips">
-                <Route index element={<TripManagement />} />
-                <Route path="new" element={<TripForm />} />
-                <Route path="edit/:tripId" element={<TripForm />} />
-              </Route>
-            </Route>
-          </Route>
-          <Route path="/dashboard" element={<UserDashboard />} />
-          <Route path="/search" element={<SearchPage />} />
-          <Route path="/booking-history" element={<BookingHistoryPage />} />
-          <Route path="/booking-details/:id" element={<BookingDetailsPage />} />
-          <Route path="/feedback/:id" element={<FeedbackRatingPage />} />
-          <Route path="/modify-booking/:id" element={<ModifyBookingPage />} />
-          <Route path="/notifications" element={<NotificationsPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/payment" element={<PaymentPage />} />
-          <Route path="/confirmation" element={<ConfirmationPage />} />
-        </Routes>
-
-        {/* Global Chatbot */}
-        <Chatbot />
+        <AppContent />
       </div>
     </Router>
   );

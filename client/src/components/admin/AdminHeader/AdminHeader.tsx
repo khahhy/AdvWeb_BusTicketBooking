@@ -19,9 +19,7 @@ const AdminHeader = () => {
     <header
       className={cn(
         "flex h-16 items-center gap-4 rounded-lg shadow-sm bg-white dark:bg-gray-900 px-4 lg:px-6",
-        // --- THÊM CÁC CLASS SAU ---
-        "sticky top-4 z-50"
-        // --- HẾT ---
+        "sticky top-0 z-50"
       )}
     >
       <Sheet>

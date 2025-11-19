@@ -15,6 +15,7 @@ import {
   RouteManagement,
   TripManagement,
   TripForm,
+  BookingManagement,
 } from "@/admin";
 import UserDashboard from "./user/UserDashboard";
 import SearchPage from "./pages/SearchPage";
@@ -36,7 +37,13 @@ import EmailVerifiedPage from "./pages/EmailVerifiedPage";
 
 function AppContent() {
   const location = useLocation();
-  const hideChatbot = ['/signup', '/login', '/forgot-password', '/verify-email', '/email-verified'].includes(location.pathname);
+  const hideChatbot = [
+    "/signup",
+    "/login",
+    "/forgot-password",
+    "/verify-email",
+    "/email-verified",
+  ].includes(location.pathname);
 
   return (
     <>
@@ -58,6 +65,9 @@ function AppContent() {
               <Route path="new" element={<TripForm />} />
               <Route path="edit/:tripId" element={<TripForm />} />
             </Route>
+          </Route>
+          <Route path="sales">
+            <Route path="bookings" element={<BookingManagement />} />
           </Route>
         </Route>
         <Route path="/dashboard" element={<UserDashboard />} />

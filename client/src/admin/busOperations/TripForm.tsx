@@ -1,22 +1,7 @@
-import { useState } from "react";
-import {
-  ArrowLeft,
-  Bus,
-  MapPin,
-  Check,
-  Plus,
-  GripVertical,
-  Map,
-  Route,
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Bus, MapPin, Check, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -33,7 +18,6 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import {
   DndContext,
@@ -51,33 +35,54 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+
+import icon from "leaflet/dist/images/marker-icon.png";
+import iconShadow from "leaflet/dist/images/marker-shadow.png";
+
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
 const mockBuses = [
   { id: "BUS-001", name: "Xe 01 (51B-123.45)" },
   { id: "BUS-002", name: "Xe 02 (29A-678.90)" },
 ];
+
 const mockLocations = [
   {
     id: "LOC-001",
     name: "Bến xe Miền Đông",
     address: "292 Đinh Bộ Lĩnh, P.26, Q. Bình Thạnh, TPHCM",
-    mapPos: { x: "55%", y: "60%" },
+    lat: 10.8142,
+    lng: 106.7025,
   },
   {
     id: "LOC-002",
-    name: "Trạm Dầu Giây",
+    name: "Trạm Dầu Giây (Đồng Nai)",
     address: "QL1A, H. Thống Nhất, Đồng Nai",
-    mapPos: { x: "58%", y: "55%" },
+    lat: 10.9414,
+    lng: 107.1622,
   },
   {
     id: "LOC-003",
     name: "Bến xe Đà Lạt",
     address: "01 Tô Hiến Thành, P.3, TP. Đà Lạt",
-    mapPos: { x: "60%", y: "45%" },
+    lat: 11.9381,
+    lng: 108.4459,
   },
-];
-const mockRouteDefinitions = [
-  { id: "R-001", name: "Sài Gòn - Đà Lạt", price: 350000 },
-  { id: "R-002", name: "Sài Gòn - Đồng Nai", price: 150000 },
+  {
+    id: "LOC-004",
+    name: "Trạm Bảo Lộc",
+    address: "QL20, TP. Bảo Lộc, Lâm Đồng",
+    lat: 11.5473,
+    lng: 107.8061,
+  },
 ];
 
 type TripStop = {
@@ -89,15 +94,7 @@ type TripStop = {
   departureTime: string;
 };
 
-type AssignedRoute = {
-  id: string;
-  routeDefId: string;
-  routeDefName: string;
-  pickupStopId: string;
-  dropoffStopId: string;
-};
-
-function SortableTripStopItem({ stop }: { stop: TripStop }) {
+const SortableTripStopItem = ({ stop }: { stop: TripStop }) => {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: stop.id });
   const style = {
@@ -110,50 +107,75 @@ function SortableTripStopItem({ stop }: { stop: TripStop }) {
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className="flex items-center gap-2 p-3 bg-background rounded-md border"
+      className="flex items-center gap-2 p-3 bg-background rounded-md border hover:border-primary/50 transition-colors"
     >
-      <Button variant="ghost" size="icon" {...listeners}>
-        <GripVertical className="h-5 w-5" />
+      <Button
+        variant="ghost"
+        size="icon"
+        className="cursor-grab"
+        {...listeners}
+      >
+        <GripVertical className="h-5 w-5 text-muted-foreground" />
       </Button>
       <div className="flex-1">
-        <p className="font-medium">{stop.locationName}</p>
-        <p className="text-sm text-muted-foreground">
-          Đến: {stop.arrivalTime} - Đi: {stop.departureTime}
-        </p>
+        <div className="flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-primary" />
+          <p className="font-medium text-sm">{stop.locationName}</p>
+        </div>
+        <div className="flex gap-4 mt-1 text-xs text-muted-foreground ml-6">
+          <span>
+            Đến:{" "}
+            {stop.arrivalTime ? stop.arrivalTime.replace("T", " ") : "--:--"}
+          </span>
+          <span>
+            Đi:{" "}
+            {stop.departureTime
+              ? stop.departureTime.replace("T", " ")
+              : "--:--"}
+          </span>
+        </div>
       </div>
     </div>
   );
-}
+};
 
 const TripForm = () => {
   const navigate = useNavigate();
 
   const [tripName, setTripName] = useState("");
   const [selectedBusId, setSelectedBusId] = useState<string>();
-
   const [tripStops, setTripStops] = useState<TripStop[]>([]);
+
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<any>(null);
   const [tempArrivalTime, setTempArrivalTime] = useState("");
   const [tempDepartureTime, setTempDepartureTime] = useState("");
 
-  const [assignedRoutes, setAssignedRoutes] = useState<AssignedRoute[]>([]);
-  const [isRouteModalOpen, setIsRouteModalOpen] = useState(false);
-  const [tempRouteId, setTempRouteId] = useState<string>();
-  const [tempPickupId, setTempPickupId] = useState<string>();
-  const [tempDropoffId, setTempDropoffId] = useState<string>();
-
   const sensors = useSensors(useSensor(PointerSensor));
+
+  useEffect(() => {
+    if (tripStops.length >= 2) {
+      const startNode = tripStops[0];
+      const endNode = tripStops[tripStops.length - 1];
+      setTripName(`${startNode.locationName} - ${endNode.locationName}`);
+    } else if (tripStops.length === 1) {
+      setTripName(`${tripStops[0].locationName} - ???`);
+    } else {
+      setTripName("");
+    }
+  }, [tripStops]);
 
   const handleMapMarkerClick = (location: any) => {
     setSelectedLocation(location);
-    setTempArrivalTime("");
-    setTempDepartureTime("");
+
+    const now = new Date().toISOString().slice(0, 16);
+    setTempArrivalTime(now);
+    setTempDepartureTime(now);
     setIsMapModalOpen(true);
   };
 
   const handleAddStop = () => {
-    if (!selectedLocation || !tempArrivalTime || !tempDepartureTime) return;
+    if (!selectedLocation) return;
     setTripStops((prev) => [
       ...prev,
       {
@@ -179,121 +201,82 @@ const TripForm = () => {
     }
   };
 
-  const handleAddRoute = () => {
-    if (!tempRouteId || !tempPickupId || !tempDropoffId) return;
-    const routeDef = mockRouteDefinitions.find((r) => r.id === tempRouteId);
-    if (!routeDef) return;
-
-    setAssignedRoutes((prev) => [
-      ...prev,
-      {
-        id: `ar-${Date.now()}`,
-        routeDefId: routeDef.id,
-        routeDefName: routeDef.name,
-        pickupStopId: tempPickupId,
-        dropoffStopId: tempDropoffId,
-      },
-    ]);
-    setIsRouteModalOpen(false);
-    setTempRouteId(undefined);
-    setTempPickupId(undefined);
-    setTempDropoffId(undefined);
-  };
-
   const handleSaveTrip = () => {
-    console.log("Saving Trip...");
-    console.log("Step 1:", { tripName, selectedBusId });
-    console.log("Step 2:", tripStops);
-    console.log("Step 3:", assignedRoutes);
-
+    console.log("Saving Trip...", { tripName, selectedBusId, tripStops });
     navigate("/admin/bus-operations/trips");
   };
 
   const isStep1Done = !!tripName && !!selectedBusId;
   const isStep2Done = tripStops.length >= 2;
-  const isStep3Done = assignedRoutes.length >= 1;
+
+  const defaultCenter = [11.3, 107.5];
 
   return (
-    <div className="flex flex-1 flex-col p-4 md:p-8">
-      <div className="flex items-center justify-between mb-4">
+    <div className="flex flex-1 flex-col p-2 h-screen overflow-hidden">
+      <div className="flex items-center justify-between mb-4 shrink-0">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Create New Trip</h1>
-            <p className="text-muted-foreground">
-              Fill the steps to schedule a new trip.
-            </p>
           </div>
         </div>
         <Button
           onClick={handleSaveTrip}
-          disabled={!isStep1Done || !isStep2Done || !isStep3Done}
+          disabled={!isStep1Done || !isStep2Done}
         >
           <Check className="mr-2 h-4 w-4" /> Save & Activate
         </Button>
       </div>
 
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bus className="h-5 w-5" /> Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="tripName">Trip Name</Label>
-              <Input
-                id="tripName"
-                placeholder="E.g., Chuyến 8:00 Sài Gòn - Đà Lạt 17/11"
-                value={tripName}
-                onChange={(e) => setTripName(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="bus">Select Bus</Label>
-              <Select value={selectedBusId} onValueChange={setSelectedBusId}>
-                <SelectTrigger id="bus">
-                  <SelectValue placeholder="Select a bus..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockBuses.map((bus) => (
-                    <SelectItem key={bus.id} value={bus.id}>
-                      {bus.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid md:grid-cols-3 gap-3 h-full overflow-hidden ">
+        <div className="md:col-span-1 flex flex-col gap-3 overflow-y-auto">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bus className="h-5 w-5" /> General Info
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="space-y-2">
+                <Label htmlFor="bus">Bus</Label>
+                <Select value={selectedBusId} onValueChange={setSelectedBusId}>
+                  <SelectTrigger id="bus">
+                    <SelectValue placeholder="Select a bus..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mockBuses.map((bus) => (
+                      <SelectItem key={bus.id} value={bus.id}>
+                        {bus.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" /> Schedule & Stops
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid md:grid-cols-2 gap-4">
-            <div className="relative h-96 rounded-md border bg-muted flex items-center justify-center">
-              <Map className="h-24 w-24 text-gray-400" />
-              <span className="text-2xl text-gray-400">Map Placeholder</span>
+              <div className="space-y-2">
+                <Label htmlFor="tripName">Trip Name</Label>
+                <Input
+                  id="tripName"
+                  placeholder="Auto-generated from stops..."
+                  value={tripName}
+                  readOnly
+                  className="bg-muted text-muted-foreground font-semibold"
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-              {mockLocations.map((loc) => (
-                <button
-                  key={loc.id}
-                  className="absolute p-2 bg-primary rounded-full shadow-lg"
-                  style={{ top: loc.mapPos.y, left: loc.mapPos.x }}
-                  onClick={() => handleMapMarkerClick(loc)}
-                >
-                  <MapPin className="h-5 w-5 text-primary-foreground" />
-                </button>
-              ))}
-            </div>
-
-            <div className="h-96 overflow-y-auto pr-2">
+          <Card className="flex-1 flex flex-col">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 justify-between">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" /> Stops ({tripStops.length})
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-y-auto">
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -310,137 +293,99 @@ const TripForm = () => {
                   </div>
                 </SortableContext>
               </DndContext>
-              {tripStops.length === 0 && (
-                <p className="text-center text-muted-foreground pt-16">
-                  Click on map markers to add stops.
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Route className="h-5 w-5" /> Assign Routes
-            </CardTitle>
-            <CardDescription>
-              Assign which commercial routes this trip will service.
-            </CardDescription>
+              {tripStops.length === 0 && (
+                <div className="h-full flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed rounded-lg p-4">
+                  <MapPin className="h-8 w-8 mb-2 opacity-50" />
+                  <p className="text-center text-sm">
+                    No stops selected.
+                    <br />
+                    Click markers on the map to add.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="md:col-span-2 flex flex-col overflow-hidden h-[600px] md:h-auto">
+          <CardHeader className="py-3 px-6 shrink-0">
+            <CardTitle>Stop Map</CardTitle>
           </CardHeader>
-          <CardContent>
-            <Button onClick={() => setIsRouteModalOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Add Commercial Route
-            </Button>
-            <div className="mt-4 space-y-2">
-              {assignedRoutes.map((ar) => (
-                <Badge
-                  key={ar.id}
-                  variant="secondary"
-                  className="p-2 text-base"
+          <CardContent className="p-0 flex-1 relative">
+            <MapContainer
+              center={defaultCenter as [number, number]}
+              zoom={8}
+              scrollWheelZoom={true}
+              className="h-full w-full z-0"
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {mockLocations.map((loc) => (
+                <Marker
+                  key={loc.id}
+                  position={[loc.lat, loc.lng]}
+                  eventHandlers={{
+                    click: () => handleMapMarkerClick(loc),
+                  }}
                 >
-                  {ar.routeDefName}
-                </Badge>
+                  <Popup>
+                    <div className="text-sm">
+                      <strong>{loc.name}</strong>
+                      <br />
+                      {loc.address}
+                      <br />
+                      <span className="text-primary cursor-pointer font-semibold">
+                        Click marker to add
+                      </span>
+                    </div>
+                  </Popup>
+                </Marker>
               ))}
+            </MapContainer>
+
+            <div className="absolute top-4 right-4 bg-background/90 backdrop-blur p-2 rounded-md shadow text-xs z-[400]">
+              Click on markers to add them to the schedule
             </div>
           </CardContent>
         </Card>
       </div>
 
       <Dialog open={isMapModalOpen} onOpenChange={setIsMapModalOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Add to Schedule: {selectedLocation?.name}</DialogTitle>
+            <DialogTitle>Add Stop: {selectedLocation?.name}</DialogTitle>
           </DialogHeader>
-          <p className="text-muted-foreground">{selectedLocation?.address}</p>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="arrival">Arrival Time</Label>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="arrival" className="text-right">
+                Arrival
+              </Label>
               <Input
                 id="arrival"
                 type="datetime-local"
                 value={tempArrivalTime}
                 onChange={(e) => setTempArrivalTime(e.target.value)}
+                className="col-span-3"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="departure">Departure Time</Label>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="departure" className="text-right">
+                Departure
+              </Label>
               <Input
                 id="departure"
                 type="datetime-local"
                 value={tempDepartureTime}
                 onChange={(e) => setTempDepartureTime(e.target.value)}
+                className="col-span-3"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={handleAddStop}>Add to Schedule</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isRouteModalOpen} onOpenChange={setIsRouteModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Assign Commercial Route</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label>Commercial Route</Label>
-              <Select value={tempRouteId} onValueChange={setTempRouteId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a route..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockRouteDefinitions.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>
-                      {r.name} ({r.price.toLocaleString()} VNĐ)
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Pickup Stop</Label>
-              <Select
-                value={tempPickupId}
-                onValueChange={setTempPickupId}
-                disabled={tripStops.length === 0}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select pickup stop..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {tripStops.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.locationName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Dropoff Stop</Label>
-              <Select
-                value={tempDropoffId}
-                onValueChange={setTempDropoffId}
-                disabled={tripStops.length === 0}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select dropoff stop..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {tripStops.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.locationName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleAddRoute}>Assign Route</Button>
+            <Button onClick={handleAddStop}>Confirm Stop</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

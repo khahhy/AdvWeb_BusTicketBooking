@@ -23,11 +23,27 @@ export default function VerifyEmailPage() {
     }
   }, [countdown]);
 
-  const handleResendEmail = () => {
-    console.log('Resending verification email to:', email);
-    setResendDisabled(true);
-    setCountdown(60);
-    // Handle resend logic here
+  const handleResendEmail = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        console.log('Resend success:', data);
+        setResendDisabled(true);
+        setCountdown(60);
+      } else {
+        alert(data.message || 'Failed to resend email');
+      }
+    } catch (error) {
+      console.error('Resend error:', error);
+      alert('Network error. Please try again.');
+    }
   };
 
   return (

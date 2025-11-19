@@ -22,6 +22,7 @@ enum UserRole {
 }
 
 enum UserStatus {
+  unverified
   active
   banned
 }
@@ -79,17 +80,20 @@ enum GatewayType {
 // MODELS
 //
 model Users {
-  id           String        @id @default(uuid())
-  fullName     String?
-  email        String        @unique
-  phoneNumber  String?       @unique
-  password     String?
-  authProvider AuthProvider  @default(local)
-  providerId   String?
-  role         UserRole      @default(passenger)
-  status       UserStatus    @default(active)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id                 String        @id @default(uuid())
+  fullName           String?
+  email              String        @unique
+  phoneNumber        String?       @unique
+  password           String?
+  authProvider       AuthProvider  @default(local)
+  providerId         String?
+  role               UserRole      @default(passenger)
+  status             UserStatus    @default(unverified)
+  emailVerified      Boolean       @default(false)
+  verificationToken  String?       @unique
+  tokenExpiresAt     DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   bookings     Bookings[]
   reviews      Reviews[]

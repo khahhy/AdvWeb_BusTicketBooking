@@ -9,13 +9,7 @@ import {
   Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -143,7 +137,7 @@ const PassengerManagement = () => {
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+    <div className="flex flex-1 flex-col gap-2 md:gap-4">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatCard
           title="Total Users"
@@ -161,17 +155,16 @@ const PassengerManagement = () => {
           title="Active Users"
           value="890"
           icon={UserCheck}
-          description="+5.1% from last month (booked)"
+          description="+5.1% from last month"
         />
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Passenger List</CardTitle>
-          <CardDescription>Manage your passengers.</CardDescription>
+          <CardTitle>Passengers List</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between gap-4 py-4">
+          <div className="flex items-center justify-between gap-2 py-2">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input

@@ -10,3 +10,5 @@ export { default as BusManagement } from "./busOperations/BusManagement";
 export { default as RouteManagement } from "./busOperations/RouteManagement";
 export { default as TripManagement } from "./busOperations/TripManagement";
 export { default as TripForm } from "./busOperations/TripForm";
+
+export { default as BookingManagement } from "./saleAndBooking/BookingManagement";

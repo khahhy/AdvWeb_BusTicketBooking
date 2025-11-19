@@ -15,3 +15,7 @@ export interface Route {
   destination: Location;
   tripRoutes: TripRoute[];
 }
+
+export interface RouteTime extends Route {
+  departureTime: Date;
+}

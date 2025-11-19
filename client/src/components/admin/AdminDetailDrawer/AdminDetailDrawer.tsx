@@ -1,13 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-  SheetClose,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,6 +29,7 @@ const AdminDetailDrawer = ({
   const [editableName, setEditableName] = useState("");
   const [editableEmail, setEditableEmail] = useState("");
   const [editablePhone, setEditablePhone] = useState("");
+  const [activeTab, setActiveTab] = useState("details");
 
   const canEdit = currentUserId === admin?.id;
 
@@ -61,37 +54,37 @@ const AdminDetailDrawer = ({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-xl">
-        <SheetHeader>
-          <SheetTitle>Administrator Details</SheetTitle>
-          <SheetDescription>
-            View, edit, and check activity for this admin.
-          </SheetDescription>
-        </SheetHeader>
-
-        <Tabs defaultValue="details" className="mt-4">
-          <TabsList className="grid w-full grid-cols-2">
+      <SheetContent className="sm:max-w-2xl flex flex-col h-full [&>button]:hidden">
+        <Tabs
+          defaultValue="details"
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="mt-4 flex-1 flex flex-col overflow-hidden"
+        >
+          <TabsList className="grid w-full grid-cols-2 shrink-0">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="logs">Activity Logs</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="details">
-            {!canEdit && (
-              <div className="mb-4 flex items-center rounded-lg border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-800 dark:border-yellow-800 dark:bg-gray-800 dark:text-yellow-300">
-                <Lock className="mr-2 h-4 w-4" />
-                You can only edit your own profile.
-              </div>
-            )}
-            <div className="grid gap-4 py-4">
+          <TabsContent
+            value="details"
+            className="flex-1 overflow-y-auto py-4 px-1"
+          >
+            <div className="grid gap-4">
+              {!canEdit && (
+                <div className="flex items-center rounded-lg border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-800 dark:border-yellow-800 dark:bg-gray-800 dark:text-yellow-300">
+                  <Lock className="mr-2 h-4 w-4" />
+                  You can only edit your own profile.
+                </div>
+              )}
+
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">ID</Label>
+                <Label>ID</Label>
                 <span className="col-span-3 font-mono text-sm">{admin.id}</span>
               </div>
 
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Name
-                </Label>
+                <Label htmlFor="name">Name</Label>
                 <Input
                   id="name"
                   value={editableName}
@@ -101,9 +94,7 @@ const AdminDetailDrawer = ({
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
-                  Email
-                </Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   value={editableEmail}
@@ -113,9 +104,7 @@ const AdminDetailDrawer = ({
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="phone" className="text-right">
-                  Phone
-                </Label>
+                <Label htmlFor="phone">Phone</Label>
                 <Input
                   id="phone"
                   value={editablePhone}
@@ -125,10 +114,19 @@ const AdminDetailDrawer = ({
                 />
               </div>
             </div>
+
+            <div className="mt-6 flex justify-end">
+              <Button onClick={handleSaveClick} disabled={!canEdit}>
+                Save Changes
+              </Button>
+            </div>
           </TabsContent>
 
-          <TabsContent value="logs">
-            <div className="mt-4 space-y-4">
+          <TabsContent
+            value="logs"
+            className="flex-1 overflow-y-auto py-4 px-1"
+          >
+            <div className="space-y-4 pb-4">
               {logs.length > 0 ? (
                 logs.map((log) => (
                   <div
@@ -149,15 +147,6 @@ const AdminDetailDrawer = ({
             </div>
           </TabsContent>
         </Tabs>
-
-        <SheetFooter className="mt-6">
-          <SheetClose asChild>
-            <Button variant="outline">Close</Button>
-          </SheetClose>
-          <Button onClick={handleSaveClick} disabled={!canEdit}>
-            Save Changes
-          </Button>
-        </SheetFooter>
       </SheetContent>
     </Sheet>
   );

@@ -1,7 +1,9 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SignUpDto } from './dto/signup.dto';
-import { hash } from 'bcrypt';
+import { SignInDto } from './dto/signin.dto';
+import { hash, compare } from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { EmailService } from 'src/email/email.service';
 
@@ -10,6 +12,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
+    private readonly jwtService: JwtService,
   ) {}
 
   async signUp(dto: SignUpDto) {
@@ -165,6 +168,145 @@ export class AuthService {
 
     return {
       message: 'Verification email sent successfully. Please check your inbox.',
+    };
+  }
+
+  async signIn(dto: SignInDto) {
+    // Find user by email
+    const user = await this.prisma.users.findUnique({
+      where: { email: dto.email },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Check if user registered with local auth (not Google)
+    if (user.authProvider !== 'local' || !user.password) {
+      throw new BadRequestException(
+        `This account was registered with ${user.authProvider}. Please use ${user.authProvider} to sign in.`,
+      );
+    }
+
+    // Check if email is verified
+    if (!user.emailVerified) {
+      throw new UnauthorizedException(
+        'Please verify your email before signing in. Check your inbox for the verification link.',
+      );
+    }
+
+    // Check if account is active
+    if (user.status === 'banned') {
+      throw new UnauthorizedException('Your account has been banned. Please contact support.');
+    }
+
+    // Verify password
+    const isPasswordValid = await compare(dto.password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Generate JWT token
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const accessToken = this.jwtService.sign(payload);
+
+    // Return user info and token
+    return {
+      message: 'Sign in successful',
+      accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        status: user.status,
+      },
+    };
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.prisma.users.findUnique({
+      where: { email },
+    });
+
+    // Don't reveal if user exists or not for security
+    if (!user) {
+      return {
+        message: 'If an account with that email exists, a password reset link has been sent.',
+      };
+    }
+
+    // Check if user registered with local auth
+    if (user.authProvider !== 'local') {
+      throw new BadRequestException(
+        `This account was registered with ${user.authProvider}. Please use ${user.authProvider} to sign in.`,
+      );
+    }
+
+    // Generate reset token
+    const resetToken = randomBytes(32).toString('hex');
+    const tokenExpiresAt = new Date();
+    tokenExpiresAt.setHours(tokenExpiresAt.getHours() + 1); // Token expires in 1 hour
+
+    // Store reset token
+    await this.prisma.users.update({
+      where: { id: user.id },
+      data: {
+        resetToken,
+        resetTokenExpiresAt: tokenExpiresAt,
+      },
+    });
+
+    // Send password reset email
+    try {
+      await this.emailService.sendPasswordResetEmail(user.email, resetToken);
+    } catch (error) {
+      console.error('Failed to send password reset email:', error);
+      throw new BadRequestException('Failed to send password reset email');
+    }
+
+    return {
+      message: 'If an account with that email exists, a password reset link has been sent.',
+    };
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const cleanToken = decodeURIComponent(token.trim());
+
+    const user = await this.prisma.users.findFirst({
+      where: { resetToken: cleanToken },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    // Check if token expired
+    if (user.resetTokenExpiresAt && new Date() > user.resetTokenExpiresAt) {
+      throw new BadRequestException('Reset token has expired');
+    }
+
+    // Hash new password
+    const hashedPassword = await hash(newPassword, 10);
+
+    // Update password and clear reset token
+    await this.prisma.users.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpiresAt: null,
+      },
+    });
+
+    return {
+      message: 'Password reset successfully. You can now sign in with your new password.',
     };
   }
 }

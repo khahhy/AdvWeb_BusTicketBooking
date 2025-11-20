@@ -9,6 +9,7 @@ export interface NavItem {
   link: string;
   children?: NavItem[];
   icon?: React.ReactNode;
+  onClick?: () => void;
 }
 
 interface ResizableNavbarProps {
@@ -16,6 +17,7 @@ interface ResizableNavbarProps {
   logo: React.ReactNode;
   button?: React.ReactNode;
   className?: string;
+  onItemClick?: (link: string, name: string) => void;
 }
 
 export const ResizableNavbar: React.FC<ResizableNavbarProps> = ({
@@ -23,6 +25,7 @@ export const ResizableNavbar: React.FC<ResizableNavbarProps> = ({
   logo,
   button,
   className,
+  onItemClick,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -139,19 +142,26 @@ export const ResizableNavbar: React.FC<ResizableNavbarProps> = ({
                           stiffness: 400,
                           damping: 30,
                         }}
-                        className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-72 bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-gray-200/50 overflow-hidden"
+                        className="absolute top-full right-0 mt-2 w-72 bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-gray-200/50 overflow-hidden z-50"
                       >
                         <div className="p-4">
                           <div className="grid grid-cols-1 gap-2">
                             {item.children.map((child, childIndex) => (
-                              <motion.a
+                              <motion.div
                                 key={childIndex}
-                                href={child.link}
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: childIndex * 0.05 }}
-                                className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group"
+                                className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group cursor-pointer"
                                 whileHover={{ scale: 1.02 }}
+                                onClick={() => {
+                                  if (onItemClick) {
+                                    onItemClick(child.link, child.name);
+                                  } else if (child.link !== "#") {
+                                    window.location.href = child.link;
+                                  }
+                                  setActiveDropdown(null);
+                                }}
                               >
                                 {child.icon && (
                                   <div className="mr-3 p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
@@ -163,7 +173,7 @@ export const ResizableNavbar: React.FC<ResizableNavbarProps> = ({
                                     {child.name}
                                   </div>
                                 </div>
-                              </motion.a>
+                              </motion.div>
                             ))}
                           </div>
                         </div>

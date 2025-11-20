@@ -18,7 +18,7 @@ export default function ForgotPasswordPage() {
     return emailRegex.test(email);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email) {
@@ -32,8 +32,29 @@ export default function ForgotPasswordPage() {
     }
 
     setError('');
-    console.log('Password reset email sent to:', email);
-    setIsSubmitted(true);
+    
+    try {
+      const response = await fetch('http://localhost:3000/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || 'Failed to send reset email');
+        return;
+      }
+
+      console.log('Password reset email sent to:', email);
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error('Error sending reset email:', error);
+      setError('Failed to send reset email. Please try again.');
+    }
   };
 
   if (isSubmitted) {

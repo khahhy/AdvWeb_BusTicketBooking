@@ -32,6 +32,7 @@ import ConfirmationPage from "./pages/ConfirmationPage";
 import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import EmailVerifiedPage from "./pages/EmailVerifiedPage";
 
@@ -41,6 +42,7 @@ function AppContent() {
     "/signup",
     "/login",
     "/forgot-password",
+    "/reset-password",
     "/verify-email",
     "/email-verified",
   ].includes(location.pathname);
@@ -83,6 +85,7 @@ function AppContent() {
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/email-verified" element={<EmailVerifiedPage />} />
       </Routes>

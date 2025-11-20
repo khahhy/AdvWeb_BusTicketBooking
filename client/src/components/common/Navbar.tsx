@@ -1,12 +1,50 @@
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import ResizableNavbar, { NavItem } from '@/components/ui/resizable-navbar';
-import { Bus, Map, Ticket, User, MapPin, Phone } from 'lucide-react';
+import { Bus, Map, Ticket, User, MapPin, Phone, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import logoImage from '@/assets/images/logo.png';
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [, forceUpdate] = useState({});
+
+  // Check if user is logged in
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    const userStr = localStorage.getItem('user');
+    
+    if (token && userStr) {
+      setIsLoggedIn(true);
+      try {
+        const user = JSON.parse(userStr);
+        setUserName(user.fullName || user.email);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
+    setIsLoggedIn(false);
+    setUserName('');
+    forceUpdate({});
+    navigate('/login');
+  };
+
+  // Handle click on dropdown items
+  const handleNavClick = (link: string, itemName: string) => {
+    if (itemName === "Log Out") {
+      handleLogout();
+    } else if (link !== "#") {
+      navigate(link);
+    }
+  };
 
   const navItems: NavItem[] = [
     {
@@ -82,10 +120,46 @@ export default function Navbar() {
         />
       }
       button={
-        <Button className="bg-white hover:bg-gray-50 text-black px-6 py-2 rounded-full border border-gray-200 shadow-sm text-base font-medium">
-          Login
-        </Button>
+        isLoggedIn ? (
+          <div className="relative">
+            <ResizableNavbar
+              items={[{
+                name: userName,
+                link: "#",
+                icon: <User className="h-5 w-5" />,
+                children: [
+                  {
+                    name: "Profile",
+                    link: "/profile",
+                    icon: <User className="h-4 w-4 text-blue-500" />,
+                  },
+                  {
+                    name: "Booking History",
+                    link: "/booking-history",
+                    icon: <CalendarIcon className="h-4 w-4 text-green-500" />,
+                  },
+                  {
+                    name: "Log Out",
+                    link: "#",
+                    icon: <LogOut className="h-4 w-4 text-red-500" />,
+                  },
+                ],
+              }]}
+              logo={<></>}
+              onItemClick={handleNavClick}
+              className="!relative !left-0 !transform-none !w-auto !mt-0 !bg-transparent !border-0 !shadow-none"
+            />
+          </div>
+        ) : (
+          <Button 
+            onClick={() => navigate('/login')}
+            className="bg-white hover:bg-gray-50 text-black px-6 py-2 rounded-full border border-gray-200 shadow-sm text-base font-medium"
+          >
+            Login
+          </Button>
+        )
       }
+      onItemClick={handleNavClick}
     />
   );
 }

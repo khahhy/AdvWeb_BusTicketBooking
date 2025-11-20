@@ -35,6 +35,7 @@ if (!document.head.querySelector('style[data-password-style]')) {
 export default function LoginPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -43,6 +44,7 @@ export default function LoginPage() {
     email: '',
     password: '',
   });
+  const [serverError, setServerError] = useState('');
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -59,9 +61,13 @@ export default function LoginPage() {
     if (errors[field as keyof typeof errors]) {
       setErrors((prev) => ({ ...prev, [field]: '' }));
     }
+    // Clear server error
+    if (serverError) {
+      setServerError('');
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors = {
       email: '',
@@ -85,9 +91,41 @@ export default function LoginPage() {
 
     // If no errors, proceed with login
     if (!Object.values(newErrors).some((error) => error)) {
-      console.log('Login data:', formData);
-      // Handle login logic here - for testing, navigate to dashboard
-      navigate('/dashboard');
+      setLoading(true);
+      
+      try {
+        const response = await fetch('http://localhost:3000/auth/signin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Save token and user info to localStorage
+          localStorage.setItem('accessToken', data.accessToken);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          
+          console.log('Login successful:', data);
+          
+          // Navigate to dashboard
+          navigate('/dashboard');
+        } else {
+          // Show error message from backend
+          setServerError(data.message || 'Login failed. Please check your credentials.');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        setServerError('Network error. Please check your connection and try again.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -166,6 +204,13 @@ export default function LoginPage() {
                 )}
               </div>
 
+              {/* Server Error Message */}
+              {serverError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-sm text-red-600 text-center">{serverError}</p>
+                </div>
+              )}
+
               {/* Forgot Password Link */}
               <div className="flex justify-end">
                 <button
@@ -180,9 +225,14 @@ export default function LoginPage() {
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-2xl transition-all duration-300 font-semibold shadow-md hover:shadow-lg text-base"
+                disabled={loading}
+                className={`w-full py-3 rounded-2xl transition-all duration-300 font-semibold shadow-md hover:shadow-lg text-base ${
+                  loading
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                }`}
               >
-                Log In
+                {loading ? 'Logging in...' : 'Log In'}
               </button>
 
               {/* Divider */}

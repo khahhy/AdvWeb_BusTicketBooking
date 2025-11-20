@@ -1,13 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-  SheetClose,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetFooter } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +28,7 @@ const PassengerDetailDrawer = ({
   const [editableName, setEditableName] = useState("");
   const [editableEmail, setEditableEmail] = useState("");
   const [editablePhone, setEditablePhone] = useState("");
+  const [activeTab, setActiveTab] = useState("details");
 
   useEffect(() => {
     if (passenger) {
@@ -67,39 +60,38 @@ const PassengerDetailDrawer = ({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-xl">
-        <SheetHeader>
-          <SheetTitle>Passenger Details</SheetTitle>
-          <SheetDescription>
-            View and manage passenger information.
-          </SheetDescription>
-        </SheetHeader>
-
-        <Tabs defaultValue="details" className="mt-4">
-          <TabsList className="grid w-full grid-cols-2">
+      <SheetContent className="sm:max-w-2xl flex flex-col h-full [&>button]:hidden">
+        <Tabs
+          defaultValue="details"
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="mt-4 flex-1 flex flex-col overflow-hidden"
+        >
+          <TabsList className="grid w-full grid-cols-2 shrink-0">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="history">Booking History</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="details">
-            <div className="grid gap-4 py-4">
+          <TabsContent
+            value="details"
+            className="flex-1 overflow-y-auto py-4 px-1"
+          >
+            <div className="grid gap-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">ID</Label>
+                <Label>ID</Label>
                 <span className="col-span-3 font-mono text-sm">
                   {passenger.id}
                 </span>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">Joined</Label>
+                <Label>Joined</Label>
                 <span className="col-span-3 text-sm">
                   {new Date(passenger.joinDate).toLocaleString()}
                 </span>
               </div>
 
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Name
-                </Label>
+                <Label htmlFor="name">Name</Label>
                 <Input
                   id="name"
                   value={editableName}
@@ -108,9 +100,7 @@ const PassengerDetailDrawer = ({
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
-                  Email
-                </Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   value={editableEmail}
@@ -119,9 +109,7 @@ const PassengerDetailDrawer = ({
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="phone" className="text-right">
-                  Phone
-                </Label>
+                <Label htmlFor="phone">Phone</Label>
                 <Input
                   id="phone"
                   value={editablePhone}
@@ -130,11 +118,17 @@ const PassengerDetailDrawer = ({
                 />
               </div>
             </div>
-            <Button onClick={handleSaveClick}>Save Changes</Button>
+
+            <div className="mt-6 flex justify-end">
+              <Button onClick={handleSaveClick}>Save Changes</Button>
+            </div>
           </TabsContent>
 
-          <TabsContent value="history">
-            <div className="mt-4 space-y-4">
+          <TabsContent
+            value="history"
+            className="flex-1 overflow-y-auto py-4 px-1"
+          >
+            <div className="space-y-4">
               {passenger.bookings.length > 0 ? (
                 passenger.bookings.map((booking) => (
                   <Card key={booking.id}>
@@ -165,20 +159,27 @@ const PassengerDetailDrawer = ({
           </TabsContent>
         </Tabs>
 
-        <SheetFooter className="mt-6">
-          <SheetClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </SheetClose>
-          {passenger.status === "Active" ? (
-            <Button variant="destructive" onClick={handleBanClick}>
-              Ban Passenger
-            </Button>
-          ) : (
-            <Button variant="secondary" onClick={handleUnbanClick}>
-              Unban Passenger
-            </Button>
-          )}
-        </SheetFooter>
+        {activeTab === "details" && (
+          <SheetFooter className="mt-auto border-t pt-4 shrink-0">
+            {passenger.status === "Active" ? (
+              <Button
+                variant="destructive"
+                onClick={handleBanClick}
+                className="w-full sm:w-auto"
+              >
+                Ban Passenger
+              </Button>
+            ) : (
+              <Button
+                variant="secondary"
+                onClick={handleUnbanClick}
+                className="w-full sm:w-auto"
+              >
+                Unban Passenger
+              </Button>
+            )}
+          </SheetFooter>
+        )}
       </SheetContent>
     </Sheet>
   );

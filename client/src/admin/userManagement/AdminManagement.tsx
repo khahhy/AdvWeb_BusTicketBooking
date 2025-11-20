@@ -1,13 +1,7 @@
 import { useState, useEffect } from "react";
-import { Users, Eye } from "lucide-react";
+import { Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -16,11 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  AdminDetailDrawer,
-  AddAdminDialog,
-  StatCard,
-} from "@/components/admin";
+import { AdminDetailDrawer, AddAdminDialog } from "@/components/admin";
 import { type Admin } from "@/store/type/usersType";
 import { type ActivityLog } from "@/store/type/usersType";
 
@@ -105,21 +95,11 @@ const AdminManagement = () => {
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <StatCard
-          title="Total Admins"
-          value={mockAdmins.length}
-          icon={Users}
-          description={`${mockAdmins.length} administrators`}
-        />
-      </div>
-
-      <Card>
+    <div className="flex flex-1 flex-col">
+      <Card className="border-0 shadow-none">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Administrator List</CardTitle>
-            <CardDescription>Manage your administrators.</CardDescription>
+            <CardTitle>Administrators List</CardTitle>
           </div>
 
           <AddAdminDialog

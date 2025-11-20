@@ -8,6 +8,11 @@ import {
   Bus,
   Network,
   Calendar,
+  Ticket,
+  CreditCard,
+  Star,
+  Bell,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
 
@@ -63,14 +68,60 @@ export const sidebarNavItems: NavItem[] = [
         path: "/admin/bus-operations/buses",
       },
       {
+        label: "Trips",
+        icon: Calendar,
+        path: "/admin/bus-operations/trips",
+      },
+      {
         label: "Routes",
         icon: Network,
         path: "/admin/bus-operations/routes",
       },
+    ],
+  },
+  {
+    label: "Sales & Bookings",
+    icon: Ticket,
+    path: "/admin/sales",
+    subItems: [
       {
-        label: "Trips",
-        icon: Calendar,
-        path: "/admin/bus-operations/trips",
+        label: "Booking List",
+        icon: Ticket,
+        path: "/admin/sales/bookings",
+      },
+      {
+        label: "Transactions",
+        icon: CreditCard,
+        path: "/admin/sales/transactions",
+      },
+    ],
+  },
+  {
+    label: "Customer Care",
+    icon: Star,
+    path: "/admin/customer-care",
+    subItems: [
+      {
+        label: "Reviews",
+        icon: Star,
+        path: "/admin/customer-care/reviews",
+      },
+      {
+        label: "Notification Logs",
+        icon: Bell,
+        path: "/admin/customer-care/notifications",
+      },
+    ],
+  },
+  {
+    label: "System",
+    icon: Settings,
+    path: "/admin/system",
+    subItems: [
+      {
+        label: "Settings",
+        icon: Settings,
+        path: "/admin/system/settings",
       },
     ],
   },

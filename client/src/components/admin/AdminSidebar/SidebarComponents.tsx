@@ -20,7 +20,8 @@ export const getNavLinkClass = (
   isCollapsed: boolean,
   isSubItem = false
 ) => {
-  const isActive = currentPath.startsWith(path);
+  const isActive =
+    path === "/admin" ? currentPath === "/admin" : currentPath.startsWith(path);
 
   const baseClasses = [
     "flex",

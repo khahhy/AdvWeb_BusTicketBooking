@@ -1,22 +1,7 @@
 import { useState } from "react";
-import {
-  Plus,
-  Search,
-  Calendar as CalendarIcon,
-  MoreHorizontal,
-  Eye,
-  Edit,
-  XCircle,
-  Copy,
-} from "lucide-react";
+import { Plus, Search, Calendar as CalendarIcon, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -25,14 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -45,30 +22,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { TripDetailsDrawer } from "@/components/admin";
 
 type TripStatus = "Scheduled" | "Ongoing" | "Completed" | "Cancelled";
 
@@ -82,14 +42,14 @@ type Trip = {
   status: TripStatus;
 };
 
-const mockTripStopsView = {
+const mockTripStopsView: any = {
   "T-001": [
     { name: "Bến xe Miền Đông", time: "08:00" },
     { name: "Trạm Dầu Giây", time: "09:30" },
     { name: "Bến xe Đà Lạt", time: "14:00" },
   ],
 };
-const mockRoutesView = {
+const mockRoutesView: any = {
   "T-001": [{ name: "Sài Gòn - Đà Lạt", price: "350,000" }],
 };
 
@@ -142,41 +102,42 @@ const getStatusBadgeVariant = (status: TripStatus) => {
       return "outline";
     case "Cancelled":
       return "destructive";
+    default:
+      return "default";
   }
 };
 
 const TripManagement = () => {
   const navigate = useNavigate();
   const [date, setDate] = useState<Date | undefined>(new Date("2025-11-17"));
-  const [isCancelAlertOpen, setIsCancelAlertOpen] = useState(false);
+
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const handleCreateTrip = () => {
     navigate("/admin/bus-operations/trips/new");
   };
 
+  const handleViewDetails = (trip: Trip) => {
+    setSelectedTrip(trip);
+    setIsDrawerOpen(true);
+  };
+
   const handleEditTrip = (id: string) => {
+    console.log("Navigating to edit:", id);
     navigate(`/admin/bus-operations/trips/edit/${id}`);
   };
 
-  const handleDuplicateTrip = (trip: Trip) => {
-    navigate("/admin/bus-operations/trips/new", {
-      state: { tripToDuplicate: trip },
-    });
-  };
-
   const handleCancelTrip = (id: string) => {
-    console.log("Cancelling trip...", id);
-    setIsCancelAlertOpen(false);
+    console.log("Logic cancel trip:", id);
+    setIsDrawerOpen(false);
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-      <Card>
+    <div className="flex flex-1 flex-col gap-4 p-2 md:p-2 border-0 shadow-none">
+      <Card className="border-0 shadow-none">
         <CardHeader>
           <CardTitle>Trip Management</CardTitle>
-          <CardDescription>
-            Manage all scheduled and past trips.
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
@@ -238,12 +199,16 @@ const TripManagement = () => {
                   <TableHead>Start Time</TableHead>
                   <TableHead>End Time</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="w-[80px] text-center">View</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {mockTrips.map((trip) => (
-                  <TableRow key={trip.id}>
+                  <TableRow
+                    key={trip.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleViewDetails(trip)}
+                  >
                     <TableCell className="font-medium">
                       {trip.tripName}
                     </TableCell>
@@ -259,102 +224,33 @@ const TripManagement = () => {
                         {trip.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <Sheet>
-                        <AlertDialog
-                          open={isCancelAlertOpen}
-                          onOpenChange={setIsCancelAlertOpen}
-                        >
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-
-                              <SheetTrigger asChild>
-                                <DropdownMenuItem>
-                                  <Eye className="mr-2 h-4 w-4" /> View Details
-                                </DropdownMenuItem>
-                              </SheetTrigger>
-
-                              <DropdownMenuItem
-                                onClick={() => handleEditTrip(trip.id)}
-                              >
-                                <Edit className="mr-2 h-4 w-4" /> Edit
-                              </DropdownMenuItem>
-
-                              <DropdownMenuItem
-                                onClick={() => handleDuplicateTrip(trip)}
-                              >
-                                <Copy className="mr-2 h-4 w-4" /> Duplicate
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-
-                              <AlertDialogTrigger asChild>
-                                <DropdownMenuItem className="text-destructive">
-                                  <XCircle className="mr-2 h-4 w-4" />
-                                  Cancel Trip
-                                </DropdownMenuItem>
-                              </AlertDialogTrigger>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action will cancel the trip "
-                                {trip.tripName}
-                                ". This cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Close</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleCancelTrip(trip.id)}
-                              >
-                                Continue
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-
-                        <SheetContent>
-                          <SheetHeader>
-                            <SheetTitle>
-                              Trip Details: {trip.tripName}
-                            </SheetTitle>
-                          </SheetHeader>
-                          <div className="grid gap-4 py-4">
-                            <h4 className="font-semibold">Trip Stops</h4>
-
-                            <ul className="list-disc pl-5">
-                              {mockTripStopsView["T-001"].map((stop) => (
-                                <li key={stop.name}>
-                                  {stop.name} @ {stop.time}
-                                </li>
-                              ))}
-                            </ul>
-                            <h4 className="font-semibold">Commercial Routes</h4>
-                            <ul className="list-disc pl-5">
-                              {mockRoutesView["T-001"].map((r) => (
-                                <li key={r.name}>
-                                  {r.name} ({r.price} VNĐ)
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </SheetContent>
-                      </Sheet>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewDetails(trip);
+                        }}
+                      >
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
+
+          <TripDetailsDrawer
+            open={isDrawerOpen}
+            onOpenChange={setIsDrawerOpen}
+            trip={selectedTrip}
+            stops={selectedTrip ? mockTripStopsView[selectedTrip.id] : []}
+            routes={selectedTrip ? mockRoutesView[selectedTrip.id] : []}
+            onEdit={handleEditTrip}
+            onCancel={handleCancelTrip}
+          />
         </CardContent>
       </Card>
     </div>

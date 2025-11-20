@@ -1,13 +1,7 @@
 import { useState, useEffect } from "react";
-import { Bus, Plus, Eye, Wifi, Plug } from "lucide-react";
+import { Bus, Eye, Wifi, Plug, Armchair, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -16,31 +10,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-  SheetClose,
-} from "@/components/ui/sheet";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+import { AddBusDialog, BusDetailsDrawer } from "@/components/admin";
 
-const allPossibleAmenities = [
+const amenities = [
   { id: "wifi", label: "Wifi" },
   { id: "charging", label: "Cổng sạc USB" },
   { id: "wc", label: "WC (Nhà vệ sinh)" },
@@ -100,312 +73,227 @@ const mockRelatedTrips: RelatedTrip[] = [
   },
 ];
 
-const AmenitiesCheckboxes = ({
-  selected,
-  onChange,
-}: {
-  selected: string[];
-  onChange: (amenityId: string, checked: boolean) => void;
-}) => (
-  <div className="grid grid-cols-2 gap-4 rounded-md border p-4">
-    {allPossibleAmenities.map((amenity) => (
-      <div key={amenity.id} className="flex items-center space-x-2">
-        <Checkbox
-          id={amenity.id}
-          checked={selected.includes(amenity.id)}
-          onCheckedChange={(checked) => onChange(amenity.id, !!checked)}
-        />
-        <label
-          htmlFor={amenity.id}
-          className="text-sm font-medium leading-none"
-        >
-          {amenity.label}
-        </label>
+const SeatMap = () => {
+  const rows = Array.from({ length: 8 }, (_, i) => i + 1);
+
+  return (
+    <div className="bg-gray-100 p-3 rounded-xl border-2 border-gray-300 w-full max-w-[300px] mx-auto relative">
+      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gray-300 w-24 h-4 rounded-b-lg text-[10px] text-center text-gray-600 font-bold uppercase tracking-wider">
+        FRONT
       </div>
-    ))}
+
+      <div className="flex justify-between items-end mb-2 mt-2 border-b-2 border-dashed border-gray-300 pb-2">
+        <div className="flex flex-col items-center gap-1">
+          <div className="p-2 bg-slate-800 rounded-lg text-white shadow-sm">
+            <User size={24} />
+          </div>
+          <span className="text-xs font-bold text-slate-700">Driver</span>
+        </div>
+        <div className="text-xs text-gray-400 italic pr-2">Entry Door</div>
+      </div>
+
+      <div className="grid grid-cols-5 gap-y-2 gap-x-1">
+        <div className="text-center text-xs font-medium text-gray-400 mb-1">
+          A
+        </div>
+        <div className="text-center text-xs font-medium text-gray-400 mb-1">
+          B
+        </div>
+        <div className="w-4"></div>
+        <div className="text-center text-xs font-medium text-gray-400 mb-1">
+          C
+        </div>
+        <div className="text-center text-xs font-medium text-gray-400 mb-1">
+          D
+        </div>
+        {rows.map((row) => (
+          <>
+            <div className="flex justify-center">
+              <SeatIcon label={`A${row}`} />
+            </div>
+            <div className="flex justify-center">
+              <SeatIcon label={`B${row}`} />
+            </div>
+            <div className="flex justify-center items-center">
+              <span className="text-[10px] text-gray-300 font-mono">{row}</span>
+            </div>
+            <div className="flex justify-center">
+              <SeatIcon label={`C${row}`} />
+            </div>
+            <div className="flex justify-center">
+              <SeatIcon label={`D${row}`} />
+            </div>
+          </>
+        ))}
+      </div>
+      <div className="mt-6 flex justify-center">
+        <div className="h-2 w-32 bg-gray-300 rounded-full"></div>
+      </div>
+    </div>
+  );
+};
+
+const SeatIcon = ({ label }: { label: string }) => (
+  <div
+    className="group flex flex-col items-center gap-0.5 cursor-pointer hover:scale-105 transition-transform"
+    title={`Ghế ${label}`}
+  >
+    <div className="p-1.5 bg-white border border-blue-200 rounded-md shadow-sm text-blue-500 group-hover:bg-blue-50 group-hover:border-blue-400 transition-colors">
+      <Armchair size={18} strokeWidth={2.5} />
+    </div>
+    <span className="text-[10px] font-medium text-gray-500 group-hover:text-blue-600">
+      {label}
+    </span>
   </div>
 );
 
 const BusManagement = () => {
   const [selectedBus, setSelectedBus] = useState<Bus | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-  const [editableName, setEditableName] = useState("");
-  const [editableLicensePlate, setEditableLicensePlate] = useState("");
-  const [editableAmenities, setEditableAmenities] = useState<string[]>([]);
+  const [name, setName] = useState("");
+  const [plate, setPlate] = useState("");
+  const [currentAmenities, setCurrentAmenities] = useState<string[]>([]);
 
   useEffect(() => {
     if (selectedBus) {
-      setEditableName(selectedBus.name);
-      setEditableLicensePlate(selectedBus.licensePlate);
-      setEditableAmenities(selectedBus.amenities);
+      setName(selectedBus.name);
+      setPlate(selectedBus.licensePlate);
+      setCurrentAmenities(selectedBus.amenities);
     }
   }, [selectedBus]);
 
-  const handleViewClick = (bus: Bus) => {
-    setSelectedBus(bus);
-    setIsSheetOpen(true);
-  };
+  function handleAmenityChange(id: string, checked: boolean) {
+    setCurrentAmenities((prev) =>
+      checked ? [...prev, id] : prev.filter((x) => x !== id)
+    );
+  }
 
-  const handleOpenCreateModal = () => {
-    setEditableName("");
-    setEditableLicensePlate("");
-    setEditableAmenities([]);
-    setIsCreateModalOpen(true);
-  };
-
-  const handleAmenityChange = (amenityId: string, checked: boolean) => {
-    setEditableAmenities((prev) => {
-      if (checked) {
-        return [...prev, amenityId];
-      } else {
-        return prev.filter((id) => id !== amenityId);
-      }
-    });
-  };
-
-  const handleSaveChanges = () => {
-    if (!selectedBus) return;
-    console.log("Saving changes...", {
-      id: selectedBus.id,
-      name: editableName,
-      licensePlate: editableLicensePlate,
-      amenities: editableAmenities,
-    });
-    setIsSheetOpen(false);
-  };
-
-  const handleCreateBus = () => {
-    console.log("Creating new bus...", {
-      name: editableName,
-      licensePlate: editableLicensePlate,
-      amenities: editableAmenities,
-    });
-    setIsCreateModalOpen(false);
-  };
+  function handleOpenCreate() {
+    setName("");
+    setPlate("");
+    setCurrentAmenities([]);
+    setIsCreateOpen(true);
+  }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Bus Management</CardTitle>
-            <CardDescription>
-              Manage all 32-seat buses in your fleet.
-            </CardDescription>
-          </div>
-          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={handleOpenCreateModal}>
-                <Plus className="mr-2 h-4 w-4" /> Add New Bus
-              </Button>
-            </DialogTrigger>
+    <div className="flex flex-1 flex-col gap-4 md:gap-8 md:p-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <Card className="lg:col-span-1 border-0 shadow-none h-full">
+          <CardContent className="flex justify-center pb-8">
+            <SeatMap />
+          </CardContent>
+        </Card>
 
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Create New Bus</DialogTitle>
-                <DialogDescription>
-                  All buses are 32-seat by default.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">
-                    Name
-                  </Label>
-                  <Input
-                    id="name"
-                    placeholder="E.g., Xe 01, Xe 02..."
-                    value={editableName}
-                    onChange={(e) => setEditableName(e.target.value)}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="license" className="text-right">
-                    License Plate
-                  </Label>
-                  <Input
-                    id="license"
-                    placeholder="E.g., 51B-123.45"
-                    value={editableLicensePlate}
-                    onChange={(e) => setEditableLicensePlate(e.target.value)}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="col-span-4">
-                  <Label className="mb-2 block">Amenities</Label>
-                  <AmenitiesCheckboxes
-                    selected={editableAmenities}
-                    onChange={handleAmenityChange}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="submit" onClick={handleCreateBus}>
-                  Create Bus
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
-        <CardContent>
-          {/* 3. Bảng Dữ Liệu */}
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>License Plate</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Amenities</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockBuses.map((bus) => (
-                  <TableRow key={bus.id}>
-                    <TableCell className="font-medium">{bus.name}</TableCell>
-                    <TableCell>{bus.licensePlate}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          bus.status === "Active" ? "secondary" : "destructive"
-                        }
-                      >
-                        {bus.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {bus.amenities.includes("wifi") && (
-                          <Wifi className="h-4 w-4" title="Wifi" />
-                        )}
-                        {bus.amenities.includes("charging") && (
-                          <Plug className="h-4 w-4" title="Cổng sạc" />
-                        )}
-                        {bus.amenities.length > 2 && (
-                          <span className="text-xs text-muted-foreground">
-                            +{bus.amenities.length - 2} more
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewClick(bus)}
-                      >
-                        <Eye className="mr-2 h-4 w-4" /> View
-                      </Button>
-                    </TableCell>
+        <div className="lg:col-span-2 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight">
+                Bus Management
+              </h2>
+            </div>
+            <Button onClick={handleOpenCreate} className="shadow-lg">
+              Add New Bus
+            </Button>
+          </div>
+          <Card className="lg:col-span-2 border shadow-sm">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="pl-4">Name</TableHead>
+                    <TableHead>License Plate</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Amenities</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {mockBuses.map((bus) => (
+                    <TableRow key={bus.id}>
+                      <TableCell className="font-medium pl-4">
+                        {bus.name}
+                      </TableCell>
+                      <TableCell>{bus.licensePlate}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            bus.status === "Active"
+                              ? "secondary"
+                              : "destructive"
+                          }
+                        >
+                          {bus.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {bus.amenities.includes("wifi") && (
+                            <Wifi
+                              className="h-4 w-4 text-blue-500"
+                              title="Wifi"
+                            />
+                          )}
+                          {bus.amenities.includes("charging") && (
+                            <Plug
+                              className="h-4 w-4 text-green-500"
+                              title="Cổng sạc"
+                            />
+                          )}
+                          {bus.amenities.length > 2 && (
+                            <span className="text-xs text-muted-foreground bg-slate-100 px-1.5 py-0.5 rounded">
+                              +{bus.amenities.length - 2}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedBus(bus);
+                            setIsSheetOpen(true);
+                          }}
+                        >
+                          <Eye className="h-4 w-4 mr-1" /> Chi tiết
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* 4. Sheet (Drawer) Chi Tiết */}
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="sm:max-w-lg">
-          <SheetHeader>
-            <SheetTitle>Bus Details</SheetTitle>
-            <SheetDescription>
-              View, edit, and check associated trips.
-            </SheetDescription>
-          </SheetHeader>
+        <AddBusDialog
+          open={isCreateOpen}
+          onOpenChange={setIsCreateOpen}
+          name={name}
+          plate={plate}
+          amenities={currentAmenities}
+          setName={setName}
+          setPlate={setPlate}
+          onAmenityChange={handleAmenityChange}
+          onCreate={() => setIsCreateOpen(false)}
+        />
 
-          {selectedBus && (
-            <Tabs defaultValue="details" className="mt-4">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="details">Details & Amenities</TabsTrigger>
-                <TabsTrigger value="trips">Associated Trips</TabsTrigger>
-              </TabsList>
-
-              {/* Tab 1: Chi tiết & Tiện ích */}
-              <TabsContent value="details">
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="edit-name" className="text-right">
-                      Name
-                    </Label>
-                    <Input
-                      id="edit-name"
-                      value={editableName}
-                      onChange={(e) => setEditableName(e.target.value)}
-                      className="col-span-3"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="edit-license" className="text-right">
-                      License
-                    </Label>
-                    <Input
-                      id="edit-license"
-                      value={editableLicensePlate}
-                      onChange={(e) => setEditableLicensePlate(e.target.value)}
-                      className="col-span-3"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label className="text-right">Status</Label>
-                    <Badge
-                      className="col-span-1 w-fit"
-                      variant={
-                        selectedBus.status === "Active"
-                          ? "secondary"
-                          : "destructive"
-                      }
-                    >
-                      {selectedBus.status}
-                    </Badge>
-                  </div>
-                  <div className="col-span-4">
-                    <Label className="mb-2 block">Amenities</Label>
-                    <AmenitiesCheckboxes
-                      selected={editableAmenities}
-                      onChange={handleAmenityChange}
-                    />
-                  </div>
-                </div>
-              </TabsContent>
-
-              {/* Tab 2: Các chuyến đi liên quan */}
-              <TabsContent value="trips">
-                <div className="mt-4 space-y-4">
-                  {mockRelatedTrips.length > 0 ? (
-                    mockRelatedTrips.map((trip) => (
-                      <Card key={trip.id}>
-                        <CardContent className="pt-4">
-                          <p className="font-semibold">{trip.routeName}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Departure: {trip.departureTime.toLocaleString()}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    ))
-                  ) : (
-                    <p className="text-center text-muted-foreground">
-                      No associated trips.
-                    </p>
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
-          )}
-
-          <SheetFooter className="mt-6">
-            <SheetClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </SheetClose>
-            <Button onClick={handleSaveChanges}>Save Changes</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+        <BusDetailsDrawer
+          open={isSheetOpen}
+          onOpenChange={setIsSheetOpen}
+          bus={selectedBus}
+          name={name}
+          plate={plate}
+          amenities={currentAmenities}
+          setName={setName}
+          setPlate={setPlate}
+          onAmenityChange={handleAmenityChange}
+          relatedTrips={mockRelatedTrips}
+          onSave={() => setIsSheetOpen(false)}
+        />
+      </div>
     </div>
   );
 };

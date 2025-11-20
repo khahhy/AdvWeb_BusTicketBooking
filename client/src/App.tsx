@@ -16,6 +16,10 @@ import {
   TripManagement,
   TripForm,
   BookingManagement,
+  PaymentManagement,
+  ReviewManagement,
+  NotificationManagement,
+  SystemSettings,
 } from "@/admin";
 import UserDashboard from "./user/UserDashboard";
 import SearchPage from "./pages/SearchPage";
@@ -55,7 +59,7 @@ function AppContent() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         // admin pages
         <Route path="/admin" element={<AdminLayout />}>
-          {/* <Route index element={<AdminDashboard />} /> */}
+          <Route index element={<AdminDashboard />} />
           <Route path="users-management">
             <Route path="passengers" element={<PassengerManagement />} />
             <Route path="admins" element={<AdminManagement />} />
@@ -72,6 +76,14 @@ function AppContent() {
           </Route>
           <Route path="sales">
             <Route path="bookings" element={<BookingManagement />} />
+            <Route path="transactions" element={<PaymentManagement />} />
+          </Route>
+          <Route path="customer-care">
+            <Route path="reviews" element={<ReviewManagement />} />
+            <Route path="notifications" element={<NotificationManagement />} />
+          </Route>
+          <Route path="system">
+            <Route path="settings" element={<SystemSettings />} />
           </Route>
         </Route>
         <Route path="/dashboard" element={<UserDashboard />} />

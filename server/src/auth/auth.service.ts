@@ -309,4 +309,92 @@ export class AuthService {
       message: 'Password reset successfully. You can now sign in with your new password.',
     };
   }
+
+  async googleLogin(googleUser: any) {
+    const { email, fullName, providerId, authProvider } = googleUser;
+
+    // Check if user exists
+    let user = await this.prisma.users.findUnique({
+      where: { email },
+    });
+
+    if (user) {
+      // If user exists but registered with different provider
+      if (user.authProvider !== 'google' && user.authProvider !== 'firebase') {
+        throw new BadRequestException(
+          `This email is already registered with ${user.authProvider}. Please sign in with ${user.authProvider}.`,
+        );
+      }
+
+      // Update user info if needed
+      if (!user.providerId || user.providerId !== providerId) {
+        user = await this.prisma.users.update({
+          where: { id: user.id },
+          data: {
+            providerId,
+            authProvider: 'google',
+            fullName: fullName || user.fullName,
+            emailVerified: true,
+            status: 'active',
+          },
+        });
+      }
+    } else {
+      // Create new user
+      user = await this.prisma.users.create({
+        data: {
+          email,
+          fullName,
+          providerId,
+          authProvider: 'google',
+          role: 'passenger',
+          status: 'active',
+          emailVerified: true,
+        },
+      });
+    }
+
+    // Generate JWT token
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const accessToken = this.jwtService.sign(payload);
+
+    return {
+      accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        status: user.status,
+      },
+    };
+  }
+
+  async getUserById(userId: string) {
+    const user = await this.prisma.users.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        phoneNumber: true,
+        role: true,
+        status: true,
+        emailVerified: true,
+        authProvider: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
+  }
 }

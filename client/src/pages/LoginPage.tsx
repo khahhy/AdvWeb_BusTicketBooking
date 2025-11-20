@@ -130,8 +130,8 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    console.log('Login with Google');
-    // Handle Google OAuth here
+    // Redirect to backend Google OAuth endpoint
+    window.location.href = 'http://localhost:3000/auth/google';
   };
 
   return (

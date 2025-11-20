@@ -35,6 +35,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import EmailVerifiedPage from "./pages/EmailVerifiedPage";
+import AuthSuccessPage from "./pages/AuthSuccessPage";
 
 function AppContent() {
   const location = useLocation();
@@ -45,6 +46,7 @@ function AppContent() {
     "/reset-password",
     "/verify-email",
     "/email-verified",
+    "/auth-success",
   ].includes(location.pathname);
 
   return (
@@ -88,6 +90,7 @@ function AppContent() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/email-verified" element={<EmailVerifiedPage />} />
+        <Route path="/auth-success" element={<AuthSuccessPage />} />
       </Routes>
 
       {/* Global Chatbot - hidden on signup page */}

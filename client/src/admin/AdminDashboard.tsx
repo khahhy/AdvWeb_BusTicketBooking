@@ -1,96 +1,341 @@
-import { useState } from 'react'
+import {
+  Users,
+  Ticket,
+  Wallet,
+  TrendingUp,
+  Calendar,
+  MapPin,
+  Clock,
+  ArrowUpRight,
+  Bus,
+} from "lucide-react";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
+import { StatCard } from "@/components/admin";
 
-export default function AdminDashboard() {
-  const [activeSection, setActiveSection] = useState('dashboard')
+const REVENUE_DATA = [
+  { name: "Mon", revenue: 4000000 },
+  { name: "Tue", revenue: 3000000 },
+  { name: "Wed", revenue: 5500000 },
+  { name: "Thu", revenue: 4800000 },
+  { name: "Fri", revenue: 9000000 },
+  { name: "Sat", revenue: 12000000 },
+  { name: "Sun", revenue: 11500000 },
+];
 
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { id: 'buses', label: 'Bus Management', icon: '🚌' },
-    { id: 'routes', label: 'Route Management', icon: '🛣️' },
-    { id: 'bookings', label: 'Booking Management', icon: '🎫' },
-    { id: 'users', label: 'User Management', icon: '👥' },
-  ]
+const POPULAR_ROUTES = [
+  { name: "SG - Da Lat", value: 120, color: "#3B82F6" },
+  { name: "SG - Nha Trang", value: 98, color: "#8B5CF6" },
+  { name: "Da Nang - Hue", value: 86, color: "#10B981" },
+  { name: "Ha Noi - Sapa", value: 65, color: "#F59E0B" },
+];
 
+const UPCOMING_TRIPS = [
+  {
+    id: 1,
+    route: "Saigon - Da Lat",
+    time: "14:00",
+    bus: "59B-123.45",
+    seats: "28/34",
+    status: "Boarding",
+  },
+  {
+    id: 2,
+    route: "Da Nang - Hue",
+    time: "14:30",
+    bus: "43B-999.88",
+    seats: "15/29",
+    status: "Scheduled",
+  },
+  {
+    id: 3,
+    route: "Nha Trang - Saigon",
+    time: "15:00",
+    bus: "79B-555.66",
+    seats: "34/34",
+    status: "Full",
+  },
+];
+
+const RECENT_BOOKINGS = [
+  {
+    id: "VEX-991",
+    user: "Nguyen Van A",
+    route: "SG - DL",
+    amount: 350000,
+    status: "confirmed",
+  },
+  {
+    id: "VEX-992",
+    user: "Tran Thi B",
+    route: "DN - Hue",
+    amount: 180000,
+    status: "pending",
+  },
+  {
+    id: "VEX-993",
+    user: "Le C",
+    route: "HN - Sapa",
+    amount: 450000,
+    status: "confirmed",
+  },
+  {
+    id: "VEX-994",
+    user: "Pham D",
+    route: "SG - VT",
+    amount: 120000,
+    status: "cancelled",
+  },
+];
+
+const formatVND = (amount: number) =>
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+    amount
+  );
+
+const AdminDashboard = () => {
   return (
-    <div className="flex h-screen bg-background">
-      {/* Sidebar */}
-      <aside className="w-64 bg-card shadow-lg">
-        <div className="p-6">
-          <h1 className="text-2xl font-bold text-primary">Admin Panel</h1>
+    <div className="space-y-6 min-h-screen font-sans text-gray-900">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Dashboard Overview
+          </h1>
         </div>
-        <nav className="mt-6">
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveSection(item.id)}
-              className={`w-full flex items-center px-6 py-3 text-left hover:bg-accent transition-colors ${
-                activeSection === item.id ? 'bg-accent border-r-4 border-primary' : ''
-              }`}
-            >
-              <span className="mr-3">{item.icon}</span>
-              {item.label}
-            </button>
-          ))}
-        </nav>
-      </aside>
+        <div className="flex items-center gap-2 bg-white p-2 rounded-lg border shadow-sm">
+          <Calendar className="w-4 h-4 text-gray-500" />
+          <span className="text-sm font-medium text-gray-700">
+            {new Date().toLocaleDateString("en-GB")}
+          </span>
+        </div>
+      </div>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        <header className="bg-card shadow-sm p-6">
-          <h2 className="text-3xl font-semibold text-foreground">
-            {menuItems.find(item => item.id === activeSection)?.label || 'Dashboard'}
-          </h2>
-        </header>
-        
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-card p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold mb-2">Total Buses</h3>
-              <p className="text-3xl font-bold text-primary">45</p>
-            </div>
-            <div className="bg-card p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold mb-2">Tickets Sold Today</h3>
-              <p className="text-3xl font-bold text-green-600">127</p>
-            </div>
-            <div className="bg-card p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold mb-2">Today's Revenue</h3>
-              <p className="text-3xl font-bold text-blue-600">$2,540</p>
-            </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Total Revenue"
+          value="49,800,000 ₫"
+          icon={Wallet}
+          description="+12.5% from last month"
+        />
+        <StatCard
+          title="Total Bookings"
+          value="1,254"
+          icon={Ticket}
+          description="+8.2% from last month"
+        />
+        <StatCard
+          title="Active Passengers"
+          value="892"
+          icon={Users}
+          description="+120 new users this week"
+        />
+        <StatCard
+          title="Occupancy Rate"
+          value="78%"
+          icon={TrendingUp}
+          description="-2.4% since yesterday"
+        />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 bg-white p-6 rounded-xl border shadow-sm">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg font-bold text-gray-800">
+              Revenue Analytics
+            </h2>
+            <select className="text-sm border rounded-md px-2 py-1 outline-none bg-gray-50">
+              <option>Last 7 Days</option>
+              <option>Last Month</option>
+            </select>
           </div>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={REVENUE_DATA}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="#E5E7EB"
+                />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#6B7280", fontSize: 12 }}
+                  dy={10}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#6B7280", fontSize: 12 }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#fff",
+                    borderRadius: "8px",
+                    border: "1px solid #E5E7EB",
+                  }}
+                  formatter={(value: number) => formatVND(value)}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#2563EB"
+                  strokeWidth={3}
+                  dot={{
+                    r: 4,
+                    fill: "#2563EB",
+                    strokeWidth: 2,
+                    stroke: "#fff",
+                  }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
 
-          {/* Content based on active section */}
-          <div className="mt-8">
-            {activeSection === 'dashboard' && (
-              <div className="bg-card p-6 rounded-lg shadow">
-                <h3 className="text-xl font-semibold mb-4">Recent Activities</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center p-3 bg-muted rounded">
-                    <span>Bus B001 has departed</span>
-                    <span className="text-muted-foreground">2 minutes ago</span>
+        <div className="bg-white p-6 rounded-xl border shadow-sm">
+          <h2 className="text-lg font-bold text-gray-800 mb-6">Top Routes</h2>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={POPULAR_ROUTES}
+                layout="vertical"
+                margin={{ left: 0 }}
+              >
+                <XAxis type="number" hide />
+                <YAxis
+                  dataKey="name"
+                  type="category"
+                  width={100}
+                  tick={{ fontSize: 11 }}
+                  interval={0}
+                />
+                <Tooltip cursor={{ fill: "transparent" }} />
+                <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={30}>
+                  {POPULAR_ROUTES.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 bg-white rounded-xl border shadow-sm overflow-hidden">
+          <div className="p-6 border-b flex justify-between items-center">
+            <h2 className="text-lg font-bold text-gray-800">
+              Recent Transactions
+            </h2>
+            <button className="text-sm text-blue-600 font-medium hover:underline flex items-center gap-1">
+              View All <ArrowUpRight className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-gray-50 text-gray-500">
+                <tr>
+                  <th className="px-6 py-3">ID</th>
+                  <th className="px-6 py-3">Customer</th>
+                  <th className="px-6 py-3">Route</th>
+                  <th className="px-6 py-3">Amount</th>
+                  <th className="px-6 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {RECENT_BOOKINGS.map((booking) => (
+                  <tr key={booking.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium text-blue-600">
+                      {booking.id}
+                    </td>
+                    <td className="px-6 py-4 text-gray-600">{booking.user}</td>
+                    <td className="px-6 py-4 text-gray-600">{booking.route}</td>
+                    <td className="px-6 py-4 font-medium">
+                      {formatVND(booking.amount)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize border
+                        ${
+                          booking.status === "confirmed"
+                            ? "bg-green-50 text-green-700 border-green-200"
+                            : booking.status === "pending"
+                            ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                            : "bg-red-50 text-red-700 border-red-200"
+                        }`}
+                      >
+                        {booking.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border shadow-sm p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-bold text-gray-800">Upcoming Trips</h2>
+            <Clock className="w-4 h-4 text-gray-400" />
+          </div>
+          <div className="space-y-4">
+            {UPCOMING_TRIPS.map((trip) => (
+              <div
+                key={trip.id}
+                className="flex items-center p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <div className="bg-blue-50 p-2.5 rounded-lg text-blue-600 mr-3 flex flex-col items-center min-w-[60px]">
+                  <span className="text-xs font-bold">{trip.time}</span>
+                  <Bus className="w-4 h-4 mt-1" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-bold text-gray-900 truncate">
+                    {trip.route}
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-muted rounded">
-                    <span>New booking from John Doe</span>
-                    <span className="text-muted-foreground">5 minutes ago</span>
+                  <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                    <MapPin className="w-3 h-3" /> {trip.bus}
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-muted rounded">
-                    <span>Bus B003 has arrived at destination</span>
-                    <span className="text-muted-foreground">10 minutes ago</span>
+                </div>
+                <div className="text-right">
+                  <div
+                    className={`text-xs font-bold px-2 py-0.5 rounded mb-1 inline-block
+                     ${
+                       trip.status === "Boarding"
+                         ? "bg-green-100 text-green-700 animate-pulse"
+                         : trip.status === "Full"
+                         ? "bg-red-100 text-red-700"
+                         : "bg-gray-100 text-gray-700"
+                     }`}
+                  >
+                    {trip.status}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {trip.seats} seats
                   </div>
                 </div>
               </div>
-            )}
-            
-            {activeSection !== 'dashboard' && (
-              <div className="bg-card p-6 rounded-lg shadow">
-                <p className="text-muted-foreground">
-                  Content for {menuItems.find(item => item.id === activeSection)?.label} 
-                  will be developed here.
-                </p>
-              </div>
-            )}
+            ))}
           </div>
+          <button className="w-full mt-5 py-2 text-sm text-gray-600 bg-gray-50 border rounded-lg hover:bg-gray-100 font-medium transition-colors">
+            View Full Schedule
+          </button>
         </div>
-      </main>
+      </div>
     </div>
-  )
-}
+  );
+};
+
+export default AdminDashboard;

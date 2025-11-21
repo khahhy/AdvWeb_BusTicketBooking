@@ -1,9 +1,10 @@
-import { Controller, Post, Body, Get, Query, UseGuards, Req, Res } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, UseGuards, Req, Res, Patch } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignUpDto } from './dto/signup.dto';
 import { SignInDto } from './dto/signin.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
@@ -73,5 +74,27 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async getCurrentUser(@Req() req) {
     return this.authService.getUserById(req.user.userId);
+  }
+
+  @ApiOperation({ summary: 'Get user profile' })
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  async getProfile(@Req() req) {
+    console.log('Profile endpoint hit by user:', req.user);
+    try {
+      const result = await this.authService.getUserById(req.user.userId);
+      console.log('Profile result:', result);
+      return result;
+    } catch (error) {
+      console.error('Profile endpoint error:', error);
+      throw error;
+    }
+  }
+
+  @ApiOperation({ summary: 'Update user profile' })
+  @Patch('profile')
+  @UseGuards(JwtAuthGuard)
+  async updateProfile(@Req() req, @Body() updateProfileDto: UpdateProfileDto) {
+    return this.authService.updateProfile(req.user.userId, updateProfileDto);
   }
 }

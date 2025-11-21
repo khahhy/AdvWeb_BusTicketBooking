@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SignUpDto } from './dto/signup.dto';
 import { SignInDto } from './dto/signin.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { hash, compare } from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { EmailService } from 'src/email/email.service';
@@ -388,6 +389,7 @@ export class AuthService {
         status: true,
         emailVerified: true,
         authProvider: true,
+        createdAt: true,
       },
     });
 
@@ -396,5 +398,49 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  async updateProfile(userId: string, updateData: UpdateProfileDto) {
+    // Check if user exists
+    const existingUser = await this.prisma.users.findUnique({
+      where: { id: userId },
+    });
+
+    if (!existingUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    // If phone number is being updated, check if it's already taken by another user
+    if (updateData.phoneNumber) {
+      const phoneExists = await this.prisma.users.findFirst({
+        where: {
+          phoneNumber: updateData.phoneNumber,
+          id: { not: userId }, // Exclude current user
+        },
+      });
+
+      if (phoneExists) {
+        throw new BadRequestException('Phone number is already in use');
+      }
+    }
+
+    // Update the user
+    const updatedUser = await this.prisma.users.update({
+      where: { id: userId },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        phoneNumber: true,
+        role: true,
+        status: true,
+        emailVerified: true,
+        authProvider: true,
+        createdAt: true,
+      },
+    });
+
+    return updatedUser;
   }
 }

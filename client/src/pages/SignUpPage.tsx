@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, Eye, EyeOff, Phone } from 'lucide-react';
+import { buildApiUrl, API_ENDPOINTS } from '@/lib/api';
 import backgroundImage from '@/assets/images/background.png';
 
 // Add CSS to hide browser's default password reveal button for all browsers
@@ -116,7 +117,7 @@ export default function SignUpPage() {
     if (!Object.values(newErrors).some((error) => error)) {
       setIsLoading(true);
       try {
-        const response = await fetch('http://localhost:3000/auth/signup', {
+        const response = await fetch(buildApiUrl(API_ENDPOINTS.auth.signup), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -155,11 +156,11 @@ export default function SignUpPage() {
 
   const handleGoogleSignUp = () => {
     // Redirect to backend Google OAuth endpoint
-    window.location.href = 'http://localhost:3000/auth/google';
+    window.location.href = buildApiUrl('/auth/google');
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
       style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
     >

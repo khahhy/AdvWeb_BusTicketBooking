@@ -13,7 +13,7 @@ export default function EmailVerifiedPage() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    
+
     // Verify email with token from URL
     const verifyEmail = async () => {
       if (!token) {
@@ -23,7 +23,7 @@ export default function EmailVerifiedPage() {
       }
 
       try {
-        const response = await fetch(`http://localhost:3000/auth/verify-email?token=${token}`);
+        const response = await fetch(buildApiUrl(`/auth/verify-email?token=${token}`));
         const data = await response.json();
 
         if (response.ok) {
@@ -46,7 +46,7 @@ export default function EmailVerifiedPage() {
   }, [token]);
 
   return (
-    <div 
+    <div
       className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
       style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
     >
@@ -55,7 +55,7 @@ export default function EmailVerifiedPage() {
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
             <div className="flex flex-col items-center text-center">
-              
+
               {/* Loading State */}
               {verifying && (
                 <>
@@ -81,7 +81,7 @@ export default function EmailVerifiedPage() {
                   <h1 className="text-2xl font-bold text-foreground/80 mb-3">
                     Email Verified!
                   </h1>
-                  
+
                   <p className="text-gray-600 mb-8">
                     Your email has been successfully verified. You can now access all features of your account.
                   </p>
@@ -115,11 +115,11 @@ export default function EmailVerifiedPage() {
                   <h1 className="text-2xl font-bold text-foreground/80 mb-3">
                     Verification Failed
                   </h1>
-                  
+
                   <p className="text-red-600 mb-2 font-medium">
                     {error}
                   </p>
-                  
+
                   <p className="text-gray-600 mb-8 text-sm">
                     Your verification link may have expired or is invalid. Please request a new verification email.
                   </p>

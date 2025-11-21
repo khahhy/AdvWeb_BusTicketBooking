@@ -36,6 +36,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import EmailVerifiedPage from "./pages/EmailVerifiedPage";
 import AuthSuccessPage from "./pages/AuthSuccessPage";
+import ProfilePage from "./pages/ProfilePage";
 
 function AppContent() {
   const location = useLocation();
@@ -75,6 +76,7 @@ function AppContent() {
           </Route>
         </Route>
         <Route path="/dashboard" element={<UserDashboard />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/booking-history" element={<BookingHistoryPage />} />
         <Route path="/booking-details/:id" element={<BookingDetailsPage />} />

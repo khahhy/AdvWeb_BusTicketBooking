@@ -25,14 +25,14 @@ export default function VerifyEmailPage() {
 
   const handleResendEmail = async () => {
     try {
-      const response = await fetch('http://localhost:3000/auth/resend-verification', {
+      const response = await fetch(buildApiUrl('/auth/resend-verification'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      
+
       const data = await response.json();
-      
+
       if (response.ok) {
         console.log('Resend success:', data);
         setResendDisabled(true);
@@ -47,7 +47,7 @@ export default function VerifyEmailPage() {
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
       style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
     >
@@ -64,17 +64,17 @@ export default function VerifyEmailPage() {
               <h1 className="text-2xl font-bold text-foreground/80 mb-3">
                 Verify Your Email
               </h1>
-              
+
               <p className="text-gray-600 mb-6">
                 We've sent a verification link to
               </p>
-              
+
               <p className="text-lg font-semibold text-primary mb-6">
                 {email}
               </p>
 
               <p className="text-sm text-gray-500 mb-8">
-                Please check your inbox and click the verification link to complete your registration. 
+                Please check your inbox and click the verification link to complete your registration.
                 The link will expire in 24 hours.
               </p>
 

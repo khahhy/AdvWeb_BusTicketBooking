@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { buildApiUrl, API_ENDPOINTS } from '@/lib/api';
 import backgroundImage from '@/assets/images/background.png';
 
 // Add CSS to hide browser's default password reveal button for all browsers
@@ -92,9 +93,9 @@ export default function LoginPage() {
     // If no errors, proceed with login
     if (!Object.values(newErrors).some((error) => error)) {
       setLoading(true);
-      
+
       try {
-        const response = await fetch('http://localhost:3000/auth/signin', {
+        const response = await fetch(buildApiUrl(API_ENDPOINTS.auth.signin), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -111,9 +112,9 @@ export default function LoginPage() {
           // Save token and user info to localStorage
           localStorage.setItem('accessToken', data.accessToken);
           localStorage.setItem('user', JSON.stringify(data.user));
-          
+
           console.log('Login successful:', data);
-          
+
           // Navigate to dashboard
           navigate('/dashboard');
         } else {
@@ -131,11 +132,11 @@ export default function LoginPage() {
 
   const handleGoogleLogin = () => {
     // Redirect to backend Google OAuth endpoint
-    window.location.href = 'http://localhost:3000/auth/google';
+    window.location.href = buildApiUrl('/auth/google');
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
       style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
     >

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { buildApiUrl, API_ENDPOINTS } from '@/lib/api';
 import { Loader2 } from 'lucide-react';
 import backgroundImage from '@/assets/images/background.png';
 
@@ -9,24 +10,24 @@ export default function AuthSuccessPage() {
 
   useEffect(() => {
     const token = searchParams.get('token');
-    
+
     if (token) {
       const fetchUserInfo = async () => {
         try {
           // Save token first
           localStorage.setItem('accessToken', token);
-          
+
           // Fetch full user info from backend
-          const response = await fetch('http://localhost:3000/auth/me', {
+          const response = await fetch(buildApiUrl(API_ENDPOINTS.auth.me), {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
           });
-          
+
           if (response.ok) {
             const userData = await response.json();
             localStorage.setItem('user', JSON.stringify(userData));
-            
+
             // Redirect to dashboard
             setTimeout(() => {
               navigate('/dashboard');
@@ -36,15 +37,15 @@ export default function AuthSuccessPage() {
             const base64Url = token.split('.')[1];
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
             const payload = JSON.parse(window.atob(base64));
-            
+
             const user = {
               id: payload.sub,
               email: payload.email,
               role: payload.role,
             };
-            
+
             localStorage.setItem('user', JSON.stringify(user));
-            
+
             setTimeout(() => {
               navigate('/dashboard');
             }, 1000);
@@ -54,7 +55,7 @@ export default function AuthSuccessPage() {
           navigate('/login');
         }
       };
-      
+
       fetchUserInfo();
     } else {
       // No token, redirect to login
@@ -63,7 +64,7 @@ export default function AuthSuccessPage() {
   }, [searchParams, navigate]);
 
   return (
-    <div 
+    <div
       className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
       style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
     >

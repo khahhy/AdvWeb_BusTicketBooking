@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, ArrowLeft } from 'lucide-react';
+import { buildApiUrl, API_ENDPOINTS } from '@/lib/api';
 import backgroundImage from '@/assets/images/background.png';
 
 export default function ForgotPasswordPage() {
@@ -20,21 +21,21 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email) {
       setError('Email is required');
       return;
     }
-    
+
     if (!validateEmail(email)) {
       setError('Please enter a valid email');
       return;
     }
 
     setError('');
-    
+
     try {
-      const response = await fetch('http://localhost:3000/auth/forgot-password', {
+      const response = await fetch(buildApiUrl(API_ENDPOINTS.auth.forgotPassword), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -59,7 +60,7 @@ export default function ForgotPasswordPage() {
 
   if (isSubmitted) {
     return (
-      <div 
+      <div
         className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
         style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
       >
@@ -76,17 +77,17 @@ export default function ForgotPasswordPage() {
                 <h1 className="text-2xl font-bold text-foreground/80 mb-3">
                   Check Your Email
                 </h1>
-                
+
                 <p className="text-gray-600 mb-6">
                   We've sent a password reset link to
                 </p>
-                
+
                 <p className="text-lg font-semibold text-primary mb-6">
                   {email}
                 </p>
 
                 <p className="text-sm text-gray-500 mb-8">
-                  Please check your inbox and click the link to reset your password. 
+                  Please check your inbox and click the link to reset your password.
                   The link will expire in 1 hour.
                 </p>
 
@@ -118,7 +119,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div 
+    <div
       className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
       style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
     >

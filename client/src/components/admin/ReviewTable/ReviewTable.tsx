@@ -1,0 +1,105 @@
+import { Eye, Star, Trash2, EyeOff } from "lucide-react";
+import { Review, formatDate } from "@/admin/customerCare/ReviewManagement";
+
+interface ReviewTableProps {
+  reviews: Review[];
+  onViewDetail: (review: Review) => void;
+}
+
+const ReviewTable = ({ reviews, onViewDetail }: ReviewTableProps) => {
+  return (
+    <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-gray-50 text-gray-600 font-medium border-b">
+            <tr>
+              <th className="px-6 py-3">Passenger</th>
+              <th className="px-6 py-3">Rating</th>
+              <th className="px-6 py-3 w-1/3">Comment</th>
+              <th className="px-6 py-3">Trip Info</th>
+              <th className="px-6 py-3">Date</th>
+              <th className="px-6 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {reviews.map((review) => (
+              <tr
+                key={review.id}
+                className="hover:bg-gray-50 transition-colors group"
+              >
+                <td className="px-6 py-4 font-medium text-gray-900">
+                  {review.userName}
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-0.5">
+                    <span className="font-bold mr-2 text-gray-700">
+                      {review.rating}
+                    </span>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-3 h-3 ${
+                          star <= review.rating
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-200"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <p
+                    className="truncate max-w-xs text-gray-600"
+                    title={review.comment}
+                  >
+                    "{review.comment}"
+                  </p>
+                </td>
+                <td className="px-6 py-4 text-gray-500">
+                  <div className="text-xs font-medium text-gray-700">
+                    {review.routeName}
+                  </div>
+                </td>
+                <td className="px-6 py-4 text-gray-400 text-xs whitespace-nowrap">
+                  {formatDate(review.createdAt)}
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => onViewDetail(review)}
+                      className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full"
+                      title="View Detail"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button
+                      className="p-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-full"
+                      title="Hide Review (Moderation)"
+                    >
+                      <EyeOff className="w-4 h-4" />
+                    </button>
+                    <button
+                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {reviews.length === 0 && (
+              <tr>
+                <td colSpan={6} className="text-center py-12 text-gray-500">
+                  No reviews found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default ReviewTable;

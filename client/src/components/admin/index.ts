@@ -20,3 +20,15 @@ export { default as TripDetailsDrawer } from "./TripDetailsDrawer/TripDetailsDra
 export { default as RouteDetailsDrawer } from "./RouteDetailsDrawer/RouteDetailsDrawer";
 
 export { default as BookingDetailModal } from "./BookingDetailModal/BookingDetailModal";
+
+export { default as PaymentDetailModal } from "./PaymentDetailModal/PaymentDetailModal";
+export { default as PaymentTable } from "./PaymentTable/PaymentTable";
+
+export { default as ReviewTable } from "./ReviewTable/ReviewTable";
+export { default as ReviewStats } from "./ReviewStats/ReviewStats";
+export { default as ReviewDetailModal } from "./ReviewDetailModal/ReviewDetailModal";
+
+export { default as NotificationTable } from "./NotificationTable/NotificationTable";
+export { default as NotificationDetailModal } from "./NotificationDetailModal/NotificationDetailModal";
+export { default as NotificationStats } from "./NotificationStats/NotificationStats";
+export { default as SendNotificationModal } from "./SendNotificationModal/SendNotificationModal";

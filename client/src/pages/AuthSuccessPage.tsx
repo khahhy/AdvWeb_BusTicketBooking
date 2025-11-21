@@ -30,7 +30,11 @@ export default function AuthSuccessPage() {
 
             // Redirect to dashboard
             setTimeout(() => {
-              navigate('/dashboard');
+              if (userData.role === 'admin') {
+                navigate('/admin');
+              } else {
+                navigate('/dashboard');
+              }
             }, 1000);
           } else {
             // Fallback: parse JWT to get basic user info

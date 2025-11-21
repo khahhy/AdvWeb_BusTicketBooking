@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,18 +7,227 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-//
-// ENUMS
-//
+model Users {
+  id                  String          @id @default(uuid())
+  fullName            String?
+  email               String          @unique
+  phoneNumber         String?         @unique
+  password            String?
+  authProvider        AuthProvider    @default(local)
+  providerId          String?
+  role                UserRole        @default(passenger)
+  status              UserStatus      @default(unverified)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  emailVerified       Boolean         @default(false)
+  verificationToken   String?         @unique
+  tokenExpiresAt      DateTime?
+  resetToken          String?         @unique
+  resetTokenExpiresAt DateTime?
+  bookings            Bookings[]
+  notifications       Notifications[]
+  reviews             Reviews[]
+}
+
+model Locations {
+  id                String      @id @default(uuid())
+  name              String
+  address           String?
+  city              String
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  latitude          Float?
+  longitude         Float?
+  routesDestination Routes[]    @relation("RoutesDestination")
+  routesOrigin      Routes[]    @relation("RoutesOrigin")
+  tripStops         TripStops[]
+}
+
+model Buses {
+  id        String   @id @default(uuid())
+  plate     String   @unique
+  amenities Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  seats     Seats[]
+  trips     Trips[]
+}
+
+model Seats {
+  id          String             @id @default(uuid())
+  busId       String
+  seatNumber  String
+  coordinates Json?
+  bookings    Bookings[]
+  seatLocks   SeatSegmentLocks[]
+  bus         Buses              @relation(fields: [busId], references: [id])
+
+  @@unique([busId, seatNumber])
+}
+
+model Trips {
+  id         String             @id @default(uuid())
+  busId      String
+  tripName   String?
+  startTime  DateTime
+  endTime    DateTime
+  status     TripStatus         @default(scheduled)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  bookings   Bookings[]
+  seatLocks  SeatSegmentLocks[]
+  tripRoutes TripRouteMap[]
+  segments   TripSegments[]
+  tripStops  TripStops[]
+  bus        Buses              @relation(fields: [busId], references: [id])
+
+  @@index([busId, startTime])
+}
+
+model TripStops {
+  id              String         @id @default(uuid())
+  tripId          String
+  locationId      String
+  sequence        Int
+  arrivalTime     DateTime?
+  departureTime   DateTime?
+  bookingsDropoff Bookings[]     @relation("DropoffStop")
+  bookingsPickup  Bookings[]     @relation("PickupStop")
+  segmentFrom     TripSegments[] @relation("SegmentFrom")
+  segmentTo       TripSegments[] @relation("SegmentTo")
+  location        Locations      @relation(fields: [locationId], references: [id])
+  trip            Trips          @relation(fields: [tripId], references: [id])
+
+  @@unique([tripId, sequence])
+}
+
+model TripSegments {
+  id              String             @id @default(uuid())
+  tripId          String
+  fromStopId      String
+  toStopId        String
+  segmentIndex    Int
+  durationMinutes Int?
+  seatLocks       SeatSegmentLocks[]
+  fromStop        TripStops          @relation("SegmentFrom", fields: [fromStopId], references: [id])
+  toStop          TripStops          @relation("SegmentTo", fields: [toStopId], references: [id])
+  trip            Trips              @relation(fields: [tripId], references: [id])
+
+  @@unique([tripId, segmentIndex])
+}
+
+model Routes {
+  id                    String         @id @default(uuid())
+  originLocationId      String
+  destinationLocationId String
+  name                  String
+  description           String?
+  price                 Decimal
+  isActive              Boolean        @default(false)
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  bookings              Bookings[]
+  destination           Locations      @relation("RoutesDestination", fields: [destinationLocationId], references: [id])
+  origin                Locations      @relation("RoutesOrigin", fields: [originLocationId], references: [id])
+  tripRoutes            TripRouteMap[]
+}
+
+model TripRouteMap {
+  id      String @id @default(uuid())
+  tripId  String
+  routeId String
+  route   Routes @relation(fields: [routeId], references: [id])
+  trip    Trips  @relation(fields: [tripId], references: [id])
+
+  @@unique([tripId, routeId])
+}
+
+model Bookings {
+  id            String             @id @default(uuid())
+  userId        String
+  tripId        String
+  routeId       String
+  seatId        String
+  pickupStopId  String
+  dropoffStopId String
+  customerInfo  Json
+  price         Decimal
+  status        BookingStatus
+  ticketCode    String?            @unique
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  dropoffStop   TripStops          @relation("DropoffStop", fields: [dropoffStopId], references: [id])
+  pickupStop    TripStops          @relation("PickupStop", fields: [pickupStopId], references: [id])
+  route         Routes             @relation(fields: [routeId], references: [id])
+  seat          Seats              @relation(fields: [seatId], references: [id])
+  trip          Trips              @relation(fields: [tripId], references: [id])
+  user          Users              @relation(fields: [userId], references: [id])
+  notifications Notifications[]
+  payments      Payments[]
+  reviews       Reviews[]
+  seatLocks     SeatSegmentLocks[]
+}
+
+model SeatSegmentLocks {
+  id        String       @id @default(uuid())
+  tripId    String
+  seatId    String
+  segmentId String
+  bookingId String
+  booking   Bookings     @relation(fields: [bookingId], references: [id])
+  seat      Seats        @relation(fields: [seatId], references: [id])
+  segment   TripSegments @relation(fields: [segmentId], references: [id])
+  trip      Trips        @relation(fields: [tripId], references: [id])
+
+  @@unique([tripId, seatId, segmentId])
+}
+
+model Payments {
+  id                   String        @id @default(uuid())
+  bookingId            String
+  amount               Decimal
+  gateway              GatewayType?
+  gatewayTransactionId String?
+  status               PaymentStatus
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  booking              Bookings      @relation(fields: [bookingId], references: [id])
+}
+
+model Reviews {
+  id        String   @id @default(uuid())
+  bookingId String
+  userId    String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  booking   Bookings @relation(fields: [bookingId], references: [id])
+  user      Users    @relation(fields: [userId], references: [id])
+}
+
+model Notifications {
+  id        String             @id @default(uuid())
+  userId    String
+  bookingId String?
+  type      NotificationType
+  template  String?
+  content   String?
+  status    NotificationStatus @default(pending)
+  sentAt    DateTime?
+  createdAt DateTime           @default(now())
+  booking   Bookings?          @relation(fields: [bookingId], references: [id])
+  user      Users              @relation(fields: [userId], references: [id])
+}
+
 enum UserRole {
   passenger
   admin
 }
 
 enum UserStatus {
-  unverified
   active
   banned
+  unverified
 }
 
 enum AuthProvider {
@@ -63,247 +266,9 @@ enum NotificationStatus {
   failed
 }
 
-enum SeatType {
-  upperDeck
-  lowerDeck
-  window
-}
-
 enum GatewayType {
   momo
   zalopay
   payos
   paypal_sandbox
-}
-
-//
-// MODELS
-//
-model Users {
-  id                 String        @id @default(uuid())
-  fullName           String?
-  email              String        @unique
-  phoneNumber        String?       @unique
-  password           String?
-  authProvider       AuthProvider  @default(local)
-  providerId         String?
-  role               UserRole      @default(passenger)
-  status             UserStatus    @default(unverified)
-  emailVerified      Boolean       @default(false)
-  verificationToken  String?       @unique
-  tokenExpiresAt     DateTime?
-  resetToken         String?       @unique
-  resetTokenExpiresAt DateTime?
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
-
-  bookings     Bookings[]
-  reviews      Reviews[]
-  notifications Notifications[]
-}
-
-model Locations {
-  id        String   @id @default(uuid())
-  name      String
-  address   String?
-  city      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  tripStops TripStops[]
-  routesOrigin Routes[] @relation("RoutesOrigin")
-  routesDestination Routes[] @relation("RoutesDestination")
-}
-
-model Buses {
-  id        String   @id @default(uuid())
-  plate     String   @unique
-  busType   String?
-  amenities Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  seats Seats[]
-  trips Trips[]
-}
-
-model Seats {
-  id          String   @id @default(uuid())
-  busId       String
-  seatNumber  String
-  seatType    SeatType?
-  coordinates Json?
-
-  bus   Buses @relation(fields: [busId], references: [id])
-  bookings Bookings[]
-
-  seatLocks SeatSegmentLocks[]
-
-  @@unique([busId, seatNumber])
-}
-
-model Trips {
-  id        String     @id @default(uuid())
-  busId     String
-  tripName  String?
-  startTime DateTime
-  endTime   DateTime
-  status    TripStatus @default(scheduled)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-
-  bus         Buses      @relation(fields: [busId], references: [id])
-  tripStops   TripStops[]
-  segments    TripSegments[]
-  tripRoutes  TripRouteMap[]
-  bookings    Bookings[]
-  seatLocks   SeatSegmentLocks[]
-}
-
-model TripStops {
-  id            String   @id @default(uuid())
-  tripId        String
-  locationId    String
-  sequence      Int
-  arrivalTime   DateTime?
-  departureTime DateTime?
-
-  trip     Trips     @relation(fields: [tripId], references: [id])
-  location Locations @relation(fields: [locationId], references: [id])
-
-  segmentFrom TripSegments[] @relation("SegmentFrom")
-  segmentTo   TripSegments[] @relation("SegmentTo")
-
-  bookingsPickup  Bookings[] @relation("PickupStop")
-  bookingsDropoff Bookings[] @relation("DropoffStop")
-
-  @@unique([tripId, sequence])
-}
-
-model TripSegments {
-  id             String   @id @default(uuid())
-  tripId         String
-  fromStopId     String
-  toStopId       String
-  segmentIndex   Int
-  durationMinutes Int?
-
-  trip     Trips      @relation(fields: [tripId], references: [id])
-  fromStop TripStops  @relation("SegmentFrom", fields: [fromStopId], references: [id])
-  toStop   TripStops  @relation("SegmentTo", fields: [toStopId], references: [id])
-
-  seatLocks SeatSegmentLocks[]
-
-  @@unique([tripId, segmentIndex])
-}
-
-model Routes {
-  id                   String     @id @default(uuid())
-  originLocationId     String
-  destinationLocationId String
-  name                 String
-  description          String?
-  price                Decimal
-  isActive             Boolean  @default(true)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-
-  origin      Locations @relation("RoutesOrigin", fields: [originLocationId], references: [id])
-  destination Locations @relation("RoutesDestination", fields: [destinationLocationId], references: [id])
-
-  tripRoutes TripRouteMap[]
-  bookings   Bookings[]
-}
-
-model TripRouteMap {
-  id      String @id @default(uuid())
-  tripId  String
-  routeId String
-
-  trip  Trips  @relation(fields: [tripId], references: [id])
-  route Routes @relation(fields: [routeId], references: [id])
-
-  @@unique([tripId, routeId])
-}
-
-model Bookings {
-  id            String        @id @default(uuid())
-  userId        String
-  tripId        String
-  routeId       String
-  seatId        String
-  pickupStopId  String
-  dropoffStopId String
-  customerInfo  Json
-  price         Decimal
-  status        BookingStatus
-  ticketCode    String? @unique
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  user     Users   @relation(fields: [userId], references: [id])
-  trip     Trips   @relation(fields: [tripId], references: [id])
-  route    Routes  @relation(fields: [routeId], references: [id])
-  seat     Seats   @relation(fields: [seatId], references: [id])
-  pickupStop  TripStops @relation("PickupStop", fields: [pickupStopId], references: [id])
-  dropoffStop TripStops @relation("DropoffStop", fields: [dropoffStopId], references: [id])
-  payments Payments[]
-  reviews  Reviews[]
-  notifications Notifications[]
-  seatLocks SeatSegmentLocks[]
-}
-
-model SeatSegmentLocks {
-  id        String @id @default(uuid())
-  tripId    String
-  seatId    String
-  segmentId String
-  bookingId String
-
-  trip     Trips        @relation(fields: [tripId], references: [id])
-  seat     Seats        @relation(fields: [seatId], references: [id])
-  segment  TripSegments @relation(fields: [segmentId], references: [id])
-  booking  Bookings     @relation(fields: [bookingId], references: [id])
-
-  @@unique([tripId, seatId, segmentId])
-}
-
-model Payments {
-  id                   String        @id @default(uuid())
-  bookingId            String
-  amount               Decimal
-  gateway              GatewayType?
-  gatewayTransactionId String?
-  status               PaymentStatus
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-
-  booking Bookings @relation(fields: [bookingId], references: [id])
-}
-
-model Reviews {
-  id        String   @id @default(uuid())
-  bookingId String
-  userId    String
-  rating    Int
-  comment   String?
-  createdAt DateTime @default(now())
-
-  booking Bookings @relation(fields: [bookingId], references: [id])
-  user    Users    @relation(fields: [userId], references: [id])
-}
-
-model Notifications {
-  id        String             @id @default(uuid())
-  userId    String
-  bookingId String?
-  type      NotificationType
-  template  String?
-  content   String?
-  status    NotificationStatus @default(pending)
-  sentAt    DateTime?
-  createdAt DateTime @default(now())
-
-  user    Users     @relation(fields: [userId], references: [id])
-  booking Bookings? @relation(fields: [bookingId], references: [id])
 }

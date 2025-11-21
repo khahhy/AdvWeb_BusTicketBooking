@@ -36,6 +36,8 @@ model Locations {
   city              String
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
+  latitude          Float?
+  longitude         Float?
   routesDestination Routes[]    @relation("RoutesDestination")
   routesOrigin      Routes[]    @relation("RoutesOrigin")
   tripStops         TripStops[]
@@ -121,7 +123,7 @@ model Routes {
   name                  String
   description           String?
   price                 Decimal
-  isActive              Boolean        @default(true)
+  isActive              Boolean        @default(false)
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
   bookings              Bookings[]

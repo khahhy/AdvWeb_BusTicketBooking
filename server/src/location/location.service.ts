@@ -6,6 +6,7 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
+import { normalizeCity } from 'src/common/utils/normalizeCity';
 
 @Injectable()
 export class LocationsService {
@@ -36,6 +37,59 @@ export class LocationsService {
       throw new InternalServerErrorException('Failed to fetch location', {
         cause: err,
       });
+    }
+  }
+
+  async getCities() {
+    try {
+      const cities = await this.prisma.locations.findMany({
+        distinct: ['city'],
+        select: { city: true },
+        orderBy: { city: 'asc' },
+      });
+
+      return {
+        message: 'Fetched list of cities successfully',
+        data: cities.map((c) => c.city),
+      };
+    } catch (err) {
+      throw new InternalServerErrorException('Failed to fetch cities', {
+        cause: err,
+      });
+    }
+  }
+
+  async getLocationsByCity(cityInput: string) {
+    try {
+      const normalizedInput = normalizeCity(cityInput);
+
+      const cities = await this.prisma.locations.findMany({
+        select: { city: true },
+        distinct: ['city'],
+      });
+
+      const matchedCity = cities.find(
+        (c) => normalizeCity(c.city) === normalizedInput,
+      )?.city;
+
+      if (!matchedCity) {
+        return { message: 'City not found', data: [] };
+      }
+
+      const locations = await this.prisma.locations.findMany({
+        where: { city: matchedCity },
+        orderBy: { name: 'asc' },
+      });
+
+      return {
+        message: 'Fetched locations by city successfully',
+        data: locations,
+      };
+    } catch (err) {
+      throw new InternalServerErrorException(
+        'Failed to fetch locations by city',
+        { cause: err },
+      );
     }
   }
 

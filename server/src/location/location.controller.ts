@@ -44,6 +44,36 @@ export class LocationsController {
     return this.locationsService.findAll();
   }
 
+  @ApiOperation({
+    summary: 'Get distinct list of cities, for example: Hà Nội, Đà Lạt',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Fetched list of cities successfully.',
+  })
+  @Get('cities')
+  getCities() {
+    return this.locationsService.getCities();
+  }
+
+  @ApiOperation({
+    summary:
+      'Get locations (or bus stop) filtered by city, for example: Bến xe miền tây',
+  })
+  @ApiParam({
+    name: 'city',
+    description: 'City name to filter locations',
+    type: String,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Fetched locations by city successfully.',
+  })
+  @Get('city/:city')
+  getLocationsByCity(@Param('city') city: string) {
+    return this.locationsService.getLocationsByCity(city);
+  }
+
   @ApiOperation({ summary: 'Get a location by ID' })
   @ApiParam({ name: 'id', description: 'Location ID', type: String })
   @ApiResponse({ status: 200, description: 'Fetched location successfully.' })

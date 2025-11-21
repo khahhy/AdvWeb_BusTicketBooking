@@ -27,9 +27,13 @@ export default function AuthSuccessPage() {
             const userData = await response.json();
             localStorage.setItem('user', JSON.stringify(userData));
             
-            // Redirect to dashboard
+            // Redirect based on user role
             setTimeout(() => {
-              navigate('/dashboard');
+              if (userData.role === 'admin') {
+                navigate('/admin');
+              } else {
+                navigate('/dashboard');
+              }
             }, 1000);
           } else {
             // Fallback: parse JWT to get basic user info

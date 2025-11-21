@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Menu, Search, Bell } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,14 @@ import { cn } from "@/lib/utils";
 import logoImage from "@/assets/images/logo.png";
 
 const AdminHeader = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
+
   return (
     <header
       className={cn(
@@ -100,6 +108,7 @@ const AdminHeader = () => {
             <Button
               variant="ghost"
               className="w-full justify-start text-sm font-normal"
+              onClick={handleLogout}
             >
               Logout
             </Button>

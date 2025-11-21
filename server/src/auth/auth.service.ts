@@ -188,8 +188,8 @@ export class AuthService {
       );
     }
 
-    // Check if email is verified
-    if (!user.emailVerified) {
+    // Check if email is verified (skip for admin users)
+    if (!user.emailVerified && user.role !== 'admin') {
       throw new UnauthorizedException(
         'Please verify your email before signing in. Check your inbox for the verification link.',
       );

@@ -114,8 +114,12 @@ export default function LoginPage() {
           
           console.log('Login successful:', data);
           
-          // Navigate to dashboard
-          navigate('/dashboard');
+          // Navigate based on user role
+          if (data.user.role === 'admin') {
+            navigate('/admin/bus-operations/locations');
+          } else {
+            navigate('/dashboard');
+          }
         } else {
           // Show error message from backend
           setServerError(data.message || 'Login failed. Please check your credentials.');

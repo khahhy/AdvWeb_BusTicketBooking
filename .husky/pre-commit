@@ -1,0 +1,13 @@
+#!/bin/sh
+
+echo "Checking code quality (Lint & Prettier)..."
+
+# Run lint-staged. If it fails (code errors), print the message and exit with 1
+if ! npx lint-staged; then
+    echo ""
+    echo "Code has errors. Please fix them before committing."
+    echo ""
+    exit 1
+fi
+
+echo "All good! Code is clean. Proceeding with commit..."

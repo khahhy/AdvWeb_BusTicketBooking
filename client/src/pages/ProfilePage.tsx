@@ -3,20 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { buildApiUrl, API_ENDPOINTS } from '@/lib/api';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/dashboard/Footer';
 import backgroundImage from '@/assets/images/background.png';
 import {
-  User,
   Mail,
-  Phone,
   Calendar,
   Shield,
   Edit2,
   Save,
   X,
+  Settings,
+  Bell,
+  History,
+  CreditCard,
 } from 'lucide-react';
 
 interface UserProfile {
@@ -223,181 +225,254 @@ export default function ProfilePage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8 pb-8 -mt-16 relative z-10">
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
 
-            {/* Profile Header */}
-            <div className="p-8 border-b border-gray-200">
-              <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6">
-                <div className="flex-shrink-0">
-                  <Avatar className="h-32 w-32 border-4 border-gray-100">
+          {/* Profile Overview Card */}
+          <Card className="mb-8 bg-white/95 backdrop-blur-sm shadow-xl border-0">
+            <CardContent className="p-8">
+              <div className="flex flex-col lg:flex-row items-center gap-8">
+                {/* Avatar Section */}
+                <div className="relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-pink-400 to-rose-400 rounded-full blur opacity-75"></div>
+                  <Avatar className="relative h-32 w-32 border-4 border-white shadow-2xl">
                     <AvatarImage src="" alt={user.fullName || 'User'} />
-                    <AvatarFallback className="text-2xl bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                    <AvatarFallback className="text-3xl bg-gradient-to-br from-pink-500 to-rose-600 text-white font-bold">
                       {getInitials(user.fullName, user.email)}
                     </AvatarFallback>
                   </Avatar>
+                  
                 </div>
 
-                <div className="text-center lg:text-left flex-1">
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                    {user.fullName || 'No Name Set'}
-                  </h2>
-                  <p className="text-lg text-gray-600 mb-4">{user.email}</p>
-
-                  <div className="flex flex-wrap gap-3 justify-center lg:justify-start mb-4">
-                    {getStatusBadge(user.status, user.emailVerified)}
-                    {getRoleBadge(user.role)}
-                  </div>
-
-                  <div className="text-sm text-gray-500">
-                    <Calendar className="inline w-4 h-4 mr-1" />
-                    Member since {new Date(user.createdAt).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </div>
-                </div>
-
-                <div className="flex-shrink-0">
-                  {!isEditing ? (
-                    <Button
-                      onClick={() => setIsEditing(true)}
-                      className="flex items-center gap-2 rounded-full px-6"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                      Edit Profile
-                    </Button>
-                  ) : (
-                    <div className="flex gap-3">
-                      <Button
-                        variant="outline"
-                        onClick={handleCancel}
-                        className="flex items-center gap-2 rounded-full"
-                      >
-                        <X className="h-4 w-4" />
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        className="flex items-center gap-2 rounded-full"
-                      >
-                        <Save className="h-4 w-4" />
-                        {isSaving ? 'Saving...' : 'Save'}
-                      </Button>
+                {/* Profile Info */}
+                <div className="flex-1 text-center lg:text-left">
+                  <div className="mb-4">
+                    <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                      {user.fullName || 'Welcome!'}
+                    </h1>
+                    <p className="text-lg text-gray-600 mb-3">{user.email}</p>
+                    <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
+                      {getStatusBadge(user.status, user.emailVerified)}
+                      {getRoleBadge(user.role)}
                     </div>
-                  )}
+                  </div>
+
+                  {/* Quick Stats */}
+                  <div className="grid grid-cols-3 gap-4 mt-6">
+                    <div className="text-center p-3 bg-gradient-to-br from-pink-50 to-rose-50 rounded-xl">
+                      <div className="text-2xl font-bold text-pink-600">0</div>
+                      <div className="text-sm text-gray-600">Bookings</div>
+                    </div>
+                    <div className="text-center p-3 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl">
+                      <div className="text-2xl font-bold text-blue-600">4.9</div>
+                      <div className="text-sm text-gray-600">Rating</div>
+                    </div>
+                    <div className="text-center p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl">
+                      <div className="text-2xl font-bold text-green-600">
+                        {new Date(user.createdAt).getFullYear()}
+                      </div>
+                      <div className="text-sm text-gray-600">Since</div>
+                    </div>
+                  </div>
                 </div>
+
+
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Profile Form */}
-            <div className="p-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Account Information</h3>
+          {/* Main Content Grid */}
+          <div className="grid lg:grid-cols-3 gap-8">
 
-              <div className="grid gap-6 md:grid-cols-2">
-                {/* Email Field */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <Mail className="inline w-4 h-4 mr-2" />
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    value={user.email}
-                    disabled
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-500 focus:outline-none"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
-                </div>
+            {/* Left Column - Quick Actions */}
+            <div className="lg:col-span-1 space-y-6">
 
-                {/* Full Name Field */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <User className="inline w-4 h-4 mr-2" />
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    disabled={!isEditing}
-                    placeholder="Enter your full name"
-                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
-                      isEditing
-                        ? 'border-gray-300 focus:ring-blue-200 bg-white'
-                        : 'border-gray-300 bg-gray-50 text-gray-700'
-                    }`}
-                  />
-                </div>
-
-                {/* Phone Number Field */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <Phone className="inline w-4 h-4 mr-2" />
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.phoneNumber}
-                    onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                    disabled={!isEditing}
-                    placeholder="Enter your phone number"
-                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
-                      isEditing
-                        ? 'border-gray-300 focus:ring-blue-200 bg-white'
-                        : 'border-gray-300 bg-gray-50 text-gray-700'
-                    }`}
-                  />
-                </div>
-
-                {/* Account Type Field */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <Shield className="inline w-4 h-4 mr-2" />
-                    Account Type
-                  </label>
-                  <input
-                    type="text"
-                    value={user.authProvider === 'local' ? 'Email/Password' :
-                           user.authProvider === 'google' ? 'Google Account' :
-                           'Firebase Account'}
-                    disabled
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-700 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <Separator className="my-8" />
-
-              {/* Quick Actions */}
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h3>
-                <div className="flex flex-wrap gap-4">
+              {/* Quick Actions Card */}
+              <Card className="bg-white/95 backdrop-blur-sm shadow-xl border-0">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <Settings className="w-6 h-6 text-pink-500" />
+                    Quick Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     onClick={() => navigate('/booking-history')}
-                    className="rounded-full"
+                    className="w-full justify-start h-12 hover:bg-pink-50 hover:text-pink-700 rounded-xl"
                   >
-                    View Booking History
+                    <History className="w-5 h-5 mr-3 text-pink-500" />
+                    Booking History
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     onClick={() => navigate('/notifications')}
-                    className="rounded-full"
+                    className="w-full justify-start h-12 hover:bg-blue-50 hover:text-blue-700 rounded-xl"
                   >
-                    Notification Settings
+                    <Bell className="w-5 h-5 mr-3 text-blue-500" />
+                    Notifications
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start h-12 hover:bg-green-50 hover:text-green-700 rounded-xl"
+                  >
+                    <CreditCard className="w-5 h-5 mr-3 text-green-500" />
+                    Payment Methods
                   </Button>
                   {!user.emailVerified && (
                     <Button
-                      variant="outline"
-                      className="rounded-full border-orange-300 text-orange-600 hover:bg-orange-50"
+                      variant="ghost"
+                      className="w-full justify-start h-12 hover:bg-orange-50 hover:text-orange-700 rounded-xl"
                     >
-                      Resend Verification Email
+                      <Mail className="w-5 h-5 mr-3 text-orange-500" />
+                      Verify Email
                     </Button>
                   )}
-                </div>
-              </div>
+                </CardContent>
+              </Card>
+
+              {/* Account Info Card */}
+              <Card className="bg-white/95 backdrop-blur-sm shadow-xl border-0">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <Shield className="w-6 h-6 text-rose-500" />
+                    Account Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="w-5 h-5 text-rose-500" />
+                      <span className="text-sm font-medium text-gray-700">Joined</span>
+                    </div>
+                    <span className="text-sm text-gray-600">
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <Shield className="w-5 h-5 text-blue-500" />
+                      <span className="text-sm font-medium text-gray-700">Provider</span>
+                    </div>
+                    <span className="text-sm text-gray-600 capitalize">
+                      {user.authProvider === 'local' ? 'Email' : user.authProvider}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right Column - Profile Information */}
+            <div className="lg:col-span-2">
+              <Card className="bg-white/95 backdrop-blur-sm shadow-xl border-0">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold text-gray-800">Personal Information</CardTitle>
+                  <CardDescription className="text-gray-600">
+                    Manage your personal details and contact information
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-6">
+
+                    {/* Email Field */}
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-semibold text-gray-700">
+                        <Mail className="w-5 h-5 mr-3 text-pink-500" />
+                        Email Address
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="email"
+                          value={user.email}
+                          disabled
+                          className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 focus:outline-none"
+                        />
+                        <Mail className="absolute left-4 top-4 w-5 h-5 text-gray-400" />
+                      </div>
+                      <p className="text-xs text-gray-500 ml-2 flex items-center gap-1">
+                        <Shield className="w-3 h-3" />
+                        Email cannot be changed for security reasons
+                      </p>
+                    </div>
+
+                    {/* Full Name Field */}
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-semibold text-gray-700">
+                        <Edit2 className="w-5 h-5 mr-3 text-rose-500" />
+                        Full Name
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={formData.fullName}
+                          onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                          disabled={!isEditing}
+                          placeholder="Enter your full name"
+                          className={`w-full pl-12 pr-4 py-4 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                            isEditing
+                              ? 'border-gray-300 focus:ring-pink-200 focus:border-pink-400 bg-white'
+                              : 'border-gray-200 bg-gray-50 text-gray-700'
+                          }`}
+                        />
+                        <Edit2 className={`absolute left-4 top-4 w-5 h-5 ${isEditing ? 'text-rose-500' : 'text-gray-400'}`} />
+                      </div>
+                    </div>
+
+                    {/* Phone Number Field */}
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-semibold text-gray-700">
+                        <History className="w-5 h-5 mr-3 text-blue-500" />
+                        Phone Number
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="tel"
+                          value={formData.phoneNumber}
+                          onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                          disabled={!isEditing}
+                          placeholder="Enter your phone number"
+                          className={`w-full pl-12 pr-4 py-4 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                            isEditing
+                              ? 'border-gray-300 focus:ring-blue-200 focus:border-blue-400 bg-white'
+                              : 'border-gray-200 bg-gray-50 text-gray-700'
+                          }`}
+                        />
+                        <History className={`absolute left-4 top-4 w-5 h-5 ${isEditing ? 'text-blue-500' : 'text-gray-400'}`} />
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                      {!isEditing ? (
+                        <Button
+                          onClick={() => setIsEditing(true)}
+                          className="bg-black hover:bg-gray-800 text-white px-8 py-3 rounded-xl"
+                        >
+                          <Edit2 className="w-5 h-5 mr-2" />
+                          Edit Profile
+                        </Button>
+                      ) : (
+                        <>
+                          <Button
+                            onClick={handleCancel}
+                            variant="outline"
+                            className="border-gray-300 hover:bg-gray-50 px-6 py-3 rounded-xl"
+                          >
+                            <X className="w-5 h-5 mr-2" />
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl disabled:opacity-50"
+                          >
+                            <Save className="w-5 h-5 mr-2" />
+                            {isSaving ? 'Saving...' : 'Save Changes'}
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

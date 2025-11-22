@@ -44,6 +44,7 @@ import AuthSuccessPage from "./pages/AuthSuccessPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProfilePage from "./pages/ProfilePage";
 import AboutPage from "./pages/AboutPage";
+import SupportPage from "./pages/SupportPage";
 
 function AppContent() {
   const location = useLocation();
@@ -92,6 +93,7 @@ function AppContent() {
         </Route>
         <Route path="/dashboard" element={<UserDashboard />} />
         <Route path="/about" element={<AboutPage />} />
+        <Route path="/support" element={<SupportPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/track-ticket" element={<TrackTicketPage />} />

@@ -143,7 +143,7 @@ const mockRecentTrips: Trip[] = [
 const RouteManagement = () => {
   const [routes, setRoutes] = useState<RouteDefinition[]>(initialRoutes);
   const [selectedRoute, setSelectedRoute] = useState<RouteDefinition | null>(
-    null
+    null,
   );
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -177,8 +177,8 @@ const RouteManagement = () => {
       filterStatus === "all"
         ? true
         : filterStatus === "active"
-        ? route.active
-        : !route.active;
+          ? route.active
+          : !route.active;
 
     const matchesLocation =
       filterLocation === "all"
@@ -200,7 +200,7 @@ const RouteManagement = () => {
     setNewRouteCode(
       `${trip.startLocation.substring(0, 3).toUpperCase()}-${trip.endLocation
         .substring(0, 3)
-        .toUpperCase()}`
+        .toUpperCase()}`,
     );
     setIsCreateDialogOpen(true);
   };
@@ -300,7 +300,7 @@ const RouteManagement = () => {
                   key={route.id}
                   className={cn(
                     "cursor-pointer hover:border-primary/50 transition-all hover:shadow-md",
-                    !route.active && "opacity-75 bg-muted/30"
+                    !route.active && "opacity-75 bg-muted/30",
                   )}
                   onClick={() => handleRouteClick(route)}
                 >

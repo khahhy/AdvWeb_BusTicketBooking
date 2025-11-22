@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Mail, ArrowLeft } from 'lucide-react';
-import { buildApiUrl, API_ENDPOINTS } from '@/lib/api';
-import backgroundImage from '@/assets/images/background.png';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Mail, ArrowLeft } from "lucide-react";
+import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
+import backgroundImage from "@/assets/images/background.png";
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   useEffect(() => {
@@ -23,38 +23,41 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
 
     if (!email) {
-      setError('Email is required');
+      setError("Email is required");
       return;
     }
 
     if (!validateEmail(email)) {
-      setError('Please enter a valid email');
+      setError("Please enter a valid email");
       return;
     }
 
-    setError('');
+    setError("");
 
     try {
-      const response = await fetch(buildApiUrl(API_ENDPOINTS.auth.forgotPassword), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        buildApiUrl(API_ENDPOINTS.auth.forgotPassword),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
         },
-        body: JSON.stringify({ email }),
-      });
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || 'Failed to send reset email');
+        setError(data.message || "Failed to send reset email");
         return;
       }
 
-      console.log('Password reset email sent to:', email);
+      console.log("Password reset email sent to:", email);
       setIsSubmitted(true);
     } catch (error) {
-      console.error('Error sending reset email:', error);
-      setError('Failed to send reset email. Please try again.');
+      console.error("Error sending reset email:", error);
+      setError("Failed to send reset email. Please try again.");
     }
   };
 
@@ -62,7 +65,10 @@ export default function ForgotPasswordPage() {
     return (
       <div
         className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
-        style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundPosition: "center bottom",
+        }}
       >
         <div className="max-w-xl w-full mx-auto px-6 py-6 relative z-10">
           {/* Email Sent Card */}
@@ -87,13 +93,13 @@ export default function ForgotPasswordPage() {
                 </p>
 
                 <p className="text-sm text-gray-500 mb-8">
-                  Please check your inbox and click the link to reset your password.
-                  The link will expire in 1 hour.
+                  Please check your inbox and click the link to reset your
+                  password. The link will expire in 1 hour.
                 </p>
 
                 {/* Back to Login Button */}
                 <button
-                  onClick={() => navigate('/login')}
+                  onClick={() => navigate("/login")}
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-2xl transition-all duration-300 font-semibold shadow-md hover:shadow-lg text-base flex items-center justify-center gap-2"
                 >
                   <ArrowLeft className="w-5 h-5" />
@@ -121,7 +127,10 @@ export default function ForgotPasswordPage() {
   return (
     <div
       className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
-      style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundPosition: "center bottom",
+      }}
     >
       <div className="max-w-xl w-full mx-auto px-6 py-6 relative z-10">
         {/* Forgot Password Form Card */}
@@ -132,7 +141,8 @@ export default function ForgotPasswordPage() {
                 Forgot Password?
               </h1>
               <p className="text-sm text-gray-600">
-                Enter your email address and we'll send you a link to reset your password.
+                Enter your email address and we'll send you a link to reset your
+                password.
               </p>
             </div>
 
@@ -149,19 +159,17 @@ export default function ForgotPasswordPage() {
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
-                      setError('');
+                      setError("");
                     }}
                     placeholder="Enter your email"
                     className={`w-full pl-12 pr-4 py-2.5 border rounded-2xl focus:outline-none focus:ring-2 transition-all ${
                       error
-                        ? 'border-red-300 focus:ring-red-200'
-                        : 'border-gray-300 focus:ring-blue-200'
+                        ? "border-red-300 focus:ring-red-200"
+                        : "border-gray-300 focus:ring-blue-200"
                     }`}
                   />
                 </div>
-                {error && (
-                  <p className="mt-1 text-sm text-red-600">{error}</p>
-                )}
+                {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
               </div>
 
               {/* Submit Button */}
@@ -175,7 +183,7 @@ export default function ForgotPasswordPage() {
               {/* Back to Login Link */}
               <button
                 type="button"
-                onClick={() => navigate('/login')}
+                onClick={() => navigate("/login")}
                 className="w-full bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-300 py-3 rounded-2xl transition-all duration-300 font-semibold text-base flex items-center justify-center gap-2"
               >
                 <ArrowLeft className="w-5 h-5" />

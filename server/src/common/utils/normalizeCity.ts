@@ -4,7 +4,7 @@
  */
 export function normalizeCity(cityName: string): string {
   if (!cityName) return '';
-  
+
   return cityName
     .toLowerCase()
     .normalize('NFD') // Decompose diacritical marks

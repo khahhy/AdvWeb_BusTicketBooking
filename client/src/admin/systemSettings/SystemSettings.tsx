@@ -77,7 +77,7 @@ const SystemSettings = () => {
   const updateConfig = (
     section: keyof SystemConfig,
     field: string,
-    value: any
+    value: any,
   ) => {
     setConfig((prev) => ({
       ...prev,
@@ -208,7 +208,7 @@ const SystemSettings = () => {
                           updateConfig(
                             "general",
                             "supportEmail",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                       />
@@ -241,7 +241,7 @@ const SystemSettings = () => {
                         updateConfig(
                           "general",
                           "maintenanceMode",
-                          e.target.checked
+                          e.target.checked,
                         )
                       }
                     />
@@ -283,7 +283,7 @@ const SystemSettings = () => {
                       updateConfig(
                         "booking",
                         "paymentHoldTimeMinutes",
-                        Number(e.target.value)
+                        Number(e.target.value),
                       )
                     }
                   />
@@ -306,7 +306,7 @@ const SystemSettings = () => {
                           updateConfig(
                             "booking",
                             "minCancellationHours",
-                            Number(e.target.value)
+                            Number(e.target.value),
                           )
                         }
                       />
@@ -330,7 +330,7 @@ const SystemSettings = () => {
                           updateConfig(
                             "booking",
                             "refundPercentage",
-                            Number(e.target.value)
+                            Number(e.target.value),
                           )
                         }
                       />
@@ -426,7 +426,7 @@ const SystemSettings = () => {
                         updateConfig(
                           "payment",
                           "enableCashOnBoard",
-                          e.target.checked
+                          e.target.checked,
                         )
                       }
                     />
@@ -511,7 +511,7 @@ const SystemSettings = () => {
                       updateConfig(
                         "aiBot",
                         "temperature",
-                        parseFloat(e.target.value)
+                        parseFloat(e.target.value),
                       )
                     }
                   />

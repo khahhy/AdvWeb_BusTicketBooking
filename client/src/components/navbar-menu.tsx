@@ -18,11 +18,11 @@ interface NavbarMenuProps {
   actions?: React.ReactNode;
 }
 
-export const NavbarMenu: React.FC<NavbarMenuProps> = ({ 
-  items, 
-  className, 
-  logo, 
-  actions 
+export const NavbarMenu: React.FC<NavbarMenuProps> = ({
+  items,
+  className,
+  logo,
+  actions,
 }) => {
   const [activeItem, setActiveItem] = useState<string | null>(null);
 
@@ -31,9 +31,7 @@ export const NavbarMenu: React.FC<NavbarMenuProps> = ({
       <div className="w-[70%] mx-auto bg-white/80 backdrop-blur-md border border-gray-200/20 rounded-2xl shadow-lg px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center">
-            {logo}
-          </div>
+          <div className="flex items-center">{logo}</div>
 
           {/* Navigation Menu */}
           <nav className="hidden md:flex items-center space-x-1">
@@ -48,7 +46,7 @@ export const NavbarMenu: React.FC<NavbarMenuProps> = ({
                   href={item.href}
                   className={cn(
                     "flex items-center px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-all duration-200 relative rounded-lg",
-                    activeItem === item.title && "text-gray-900 bg-gray-50/50"
+                    activeItem === item.title && "text-gray-900 bg-gray-50/50",
                   )}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -56,11 +54,11 @@ export const NavbarMenu: React.FC<NavbarMenuProps> = ({
                   {item.icon && <span className="mr-2">{item.icon}</span>}
                   {item.title}
                   {item.children && (
-                    <ChevronDown 
+                    <ChevronDown
                       className={cn(
                         "ml-1 h-4 w-4 transition-transform duration-200",
-                        activeItem === item.title && "rotate-180"
-                      )} 
+                        activeItem === item.title && "rotate-180",
+                      )}
                     />
                   )}
                 </motion.a>
@@ -77,26 +75,26 @@ export const NavbarMenu: React.FC<NavbarMenuProps> = ({
                           exit={{ opacity: 0 }}
                           className="fixed inset-0 bg-black/10 backdrop-blur-sm -z-10"
                         />
-                        
+
                         {/* Dropdown content */}
                         <motion.div
-                          initial={{ 
-                            opacity: 0, 
-                            y: 10, 
+                          initial={{
+                            opacity: 0,
+                            y: 10,
                             scale: 0.95,
-                            rotateX: -10
+                            rotateX: -10,
                           }}
-                          animate={{ 
-                            opacity: 1, 
-                            y: 0, 
+                          animate={{
+                            opacity: 1,
+                            y: 0,
                             scale: 1,
-                            rotateX: 0
+                            rotateX: 0,
                           }}
-                          exit={{ 
-                            opacity: 0, 
-                            y: 10, 
+                          exit={{
+                            opacity: 0,
+                            y: 10,
                             scale: 0.95,
-                            rotateX: -5
+                            rotateX: -5,
                           }}
                           transition={{
                             type: "spring",
@@ -111,7 +109,7 @@ export const NavbarMenu: React.FC<NavbarMenuProps> = ({
                         >
                           {/* Arrow */}
                           <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white border-l border-t border-gray-200/50 rotate-45"></div>
-                          
+
                           <div className="p-6">
                             <div className="grid grid-cols-1 gap-3">
                               {item.children.map((child, childIndex) => (
@@ -120,11 +118,11 @@ export const NavbarMenu: React.FC<NavbarMenuProps> = ({
                                   href={child.href}
                                   initial={{ opacity: 0, x: -20 }}
                                   animate={{ opacity: 1, x: 0 }}
-                                  transition={{ 
+                                  transition={{
                                     delay: childIndex * 0.05,
                                     type: "spring",
                                     stiffness: 300,
-                                    damping: 30
+                                    damping: 30,
                                   }}
                                   className="flex items-start p-4 rounded-xl hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-200 group border border-transparent hover:border-blue-100/50"
                                   whileHover={{ scale: 1.02, x: 4 }}
@@ -159,9 +157,7 @@ export const NavbarMenu: React.FC<NavbarMenuProps> = ({
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center space-x-4">
-            {actions}
-          </div>
+          <div className="flex items-center space-x-4">{actions}</div>
         </div>
       </div>
     </header>

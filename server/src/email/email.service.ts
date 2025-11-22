@@ -20,7 +20,7 @@ export class EmailService {
 
   async sendVerificationEmail(email: string, token: string) {
     const verificationUrl = `${process.env.FRONTEND_URL}/email-verified?token=${token}`;
-    
+
     console.log('Sending verification email to:', email);
     console.log('Token:', token);
     console.log('Verification URL:', verificationUrl);

@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import { buildApiUrl, API_ENDPOINTS } from '@/lib/api';
-import backgroundImage from '@/assets/images/background.png';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
+import backgroundImage from "@/assets/images/background.png";
 
 // Add CSS to hide browser's default password reveal button for all browsers
 const styleSheet = document.createElement("style");
@@ -28,8 +28,8 @@ styleSheet.textContent = `
     margin: 0;
   }
 `;
-if (!document.head.querySelector('style[data-password-style]')) {
-  styleSheet.setAttribute('data-password-style', 'true');
+if (!document.head.querySelector("style[data-password-style]")) {
+  styleSheet.setAttribute("data-password-style", "true");
   document.head.appendChild(styleSheet);
 }
 
@@ -38,14 +38,14 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
   const [errors, setErrors] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
-  const [serverError, setServerError] = useState('');
+  const [serverError, setServerError] = useState("");
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -60,32 +60,32 @@ export default function LoginPage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field as keyof typeof errors]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }));
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
     // Clear server error
     if (serverError) {
-      setServerError('');
+      setServerError("");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors = {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
     };
 
     // Validation
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
+      newErrors.email = "Please enter a valid email";
     }
 
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
     } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+      newErrors.password = "Password must be at least 8 characters";
     }
 
     setErrors(newErrors);
@@ -96,9 +96,9 @@ export default function LoginPage() {
 
       try {
         const response = await fetch(buildApiUrl(API_ENDPOINTS.auth.signin), {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             email: formData.email,
@@ -110,24 +110,28 @@ export default function LoginPage() {
 
         if (response.ok) {
           // Save token and user info to localStorage
-          localStorage.setItem('accessToken', data.accessToken);
-          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem("accessToken", data.accessToken);
+          localStorage.setItem("user", JSON.stringify(data.user));
 
-          console.log('Login successful:', data);
+          console.log("Login successful:", data);
 
           // Navigate based on user role
-          if (data.user.role === 'admin') {
-            navigate('/admin/bus-operations/locations');
+          if (data.user.role === "admin") {
+            navigate("/admin/bus-operations/locations");
           } else {
-            navigate('/dashboard');
+            navigate("/dashboard");
           }
         } else {
           // Show error message from backend
-          setServerError(data.message || 'Login failed. Please check your credentials.');
+          setServerError(
+            data.message || "Login failed. Please check your credentials.",
+          );
         }
       } catch (error) {
-        console.error('Login error:', error);
-        setServerError('Network error. Please check your connection and try again.');
+        console.error("Login error:", error);
+        setServerError(
+          "Network error. Please check your connection and try again.",
+        );
       } finally {
         setLoading(false);
       }
@@ -136,13 +140,16 @@ export default function LoginPage() {
 
   const handleGoogleLogin = () => {
     // Redirect to backend Google OAuth endpoint
-    window.location.href = buildApiUrl('/auth/google');
+    window.location.href = buildApiUrl("/auth/google");
   };
 
   return (
     <div
       className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
-      style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundPosition: "center bottom",
+      }}
     >
       <div className="max-w-xl w-full mx-auto px-6 py-6 relative z-10">
         {/* Login Form Card */}
@@ -164,12 +171,12 @@ export default function LoginPage() {
                   <input
                     type="email"
                     value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
                     placeholder="Enter your email"
                     className={`w-full pl-12 pr-4 py-2.5 border rounded-2xl focus:outline-none focus:ring-2 transition-all ${
                       errors.email
-                        ? 'border-red-300 focus:ring-red-200'
-                        : 'border-gray-300 focus:ring-blue-200'
+                        ? "border-red-300 focus:ring-red-200"
+                        : "border-gray-300 focus:ring-blue-200"
                     }`}
                   />
                 </div>
@@ -186,14 +193,16 @@ export default function LoginPage() {
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     value={formData.password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("password", e.target.value)
+                    }
                     placeholder="Enter your password"
                     className={`w-full pl-12 pr-12 py-2.5 border rounded-2xl focus:outline-none focus:ring-2 transition-all ${
                       errors.password
-                        ? 'border-red-300 focus:ring-red-200'
-                        : 'border-gray-300 focus:ring-blue-200'
+                        ? "border-red-300 focus:ring-red-200"
+                        : "border-gray-300 focus:ring-blue-200"
                     }`}
                   />
                   <button
@@ -201,7 +210,11 @@ export default function LoginPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
                 {errors.password && (
@@ -212,7 +225,9 @@ export default function LoginPage() {
               {/* Server Error Message */}
               {serverError && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <p className="text-sm text-red-600 text-center">{serverError}</p>
+                  <p className="text-sm text-red-600 text-center">
+                    {serverError}
+                  </p>
                 </div>
               )}
 
@@ -220,7 +235,7 @@ export default function LoginPage() {
               <div className="flex justify-end">
                 <button
                   type="button"
-                  onClick={() => navigate('/forgot-password')}
+                  onClick={() => navigate("/forgot-password")}
                   className="text-sm text-primary font-semibold hover:underline"
                 >
                   Forgot password?
@@ -233,11 +248,11 @@ export default function LoginPage() {
                 disabled={loading}
                 className={`w-full py-3 rounded-2xl transition-all duration-300 font-semibold shadow-md hover:shadow-lg text-base ${
                   loading
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-primary hover:bg-primary/90 text-primary-foreground"
                 }`}
               >
-                {loading ? 'Logging in...' : 'Log In'}
+                {loading ? "Logging in..." : "Log In"}
               </button>
 
               {/* Divider */}
@@ -246,7 +261,9 @@ export default function LoginPage() {
                   <div className="w-full border-t border-gray-300"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-gray-500">Or continue with</span>
+                  <span className="px-4 bg-white text-gray-500">
+                    Or continue with
+                  </span>
                 </div>
               </div>
 
@@ -279,10 +296,10 @@ export default function LoginPage() {
 
               {/* Sign Up Link */}
               <div className="text-center text-sm text-gray-600 mt-4">
-                Don't have an account?{' '}
+                Don't have an account?{" "}
                 <button
                   type="button"
-                  onClick={() => navigate('/signup')}
+                  onClick={() => navigate("/signup")}
                   className="text-primary font-semibold hover:underline"
                 >
                   Sign up

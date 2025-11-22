@@ -1,16 +1,16 @@
-import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import Navbar from '@/components/common/Navbar';
-import backgroundImage from '@/assets/images/background.png';
-import { mockTrips, generateSeats } from '@/data/mockTrips';
-import dayjs from 'dayjs';
-import TripSummaryCard from '@/components/checkout/TripSummaryCard';
-import PassengerDetailsCard from '@/components/checkout/PassengerDetailsCard';
-import ContactInformationCard from '@/components/checkout/ContactInformationCard';
-import PriceDetailsSidebar from '@/components/checkout/PriceDetailsSidebar';
-import SeatMapModal from '@/components/checkout/SeatMapModal';
-import Footer from '@/components/dashboard/Footer';
-import { useEffect } from 'react';
+import { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import Navbar from "@/components/common/Navbar";
+import backgroundImage from "@/assets/images/background.png";
+import { mockTrips, generateSeats } from "@/data/mockTrips";
+import dayjs from "dayjs";
+import TripSummaryCard from "@/components/checkout/TripSummaryCard";
+import PassengerDetailsCard from "@/components/checkout/PassengerDetailsCard";
+import ContactInformationCard from "@/components/checkout/ContactInformationCard";
+import PriceDetailsSidebar from "@/components/checkout/PriceDetailsSidebar";
+import SeatMapModal from "@/components/checkout/SeatMapModal";
+import Footer from "@/components/dashboard/Footer";
+import { useEffect } from "react";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -21,11 +21,11 @@ export default function CheckoutPage() {
   }, []);
 
   // Get trip data from URL params or use default
-  const tripId = searchParams.get('tripId') || '1';
-  const selectedSeat = searchParams.get('seat') || '25';
-  const travelDate = searchParams.get('date') || dayjs().format('YYYY-MM-DD');
+  const tripId = searchParams.get("tripId") || "1";
+  const selectedSeat = searchParams.get("seat") || "25";
+  const travelDate = searchParams.get("date") || dayjs().format("YYYY-MM-DD");
 
-  const trip = mockTrips.find(t => t.id === tripId) || mockTrips[0];
+  const trip = mockTrips.find((t) => t.id === tripId) || mockTrips[0];
 
   // Calculate prices
   const ticketPrice = trip.price;
@@ -33,53 +33,58 @@ export default function CheckoutPage() {
   const serviceFee = 14000;
   const totalPrice = ticketPrice + insuranceFee + serviceFee;
 
-  const [fullName, setFullName] = useState('');
-  const [contactName, setContactName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [email, setEmail] = useState('');
-  const [personalId, setPersonalId] = useState('');
-  const [contactPersonalId, setContactPersonalId] = useState('');
-  const [countryCode, setCountryCode] = useState('+84');
+  const [fullName, setFullName] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [email, setEmail] = useState("");
+  const [personalId, setPersonalId] = useState("");
+  const [contactPersonalId, setContactPersonalId] = useState("");
+  const [countryCode, setCountryCode] = useState("+84");
   const [showPassengerDetails, setShowPassengerDetails] = useState(true);
-  const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [showSeatMap, setShowSeatMap] = useState(false);
-  const seats = generateSeats(trip.totalSeats, trip.totalSeats - trip.availableSeats, trip.price);
+  const seats = generateSeats(
+    trip.totalSeats,
+    trip.totalSeats - trip.availableSeats,
+    trip.price,
+  );
 
   const formatDate = () => {
-    return dayjs(travelDate).format('ddd, MMM DD, YYYY');
+    return dayjs(travelDate).format("ddd, MMM DD, YYYY");
   };
 
   const formatCurrency = (amount: number) => {
-    return amount.toLocaleString('vi-VN') + 'VND';
+    return amount.toLocaleString("vi-VN") + "VND";
   };
 
   const validateForm = () => {
-    const newErrors: {[key: string]: string} = {};
+    const newErrors: { [key: string]: string } = {};
 
     // Validate passenger details
     if (!fullName.trim()) {
-      newErrors.fullName = 'Please enter passenger full name';
+      newErrors.fullName = "Please enter passenger full name";
     }
     if (!personalId.trim()) {
-      newErrors.personalId = 'Please enter Personal ID/Citizen ID/Passport ID';
+      newErrors.personalId = "Please enter Personal ID/Citizen ID/Passport ID";
     }
 
     // Validate contact information
     if (!contactName.trim()) {
-      newErrors.contactName = 'Please enter contact name';
+      newErrors.contactName = "Please enter contact name";
     }
     if (!phoneNumber.trim()) {
-      newErrors.phoneNumber = 'Please enter phone number';
+      newErrors.phoneNumber = "Please enter phone number";
     } else if (!/^\d{9,11}$/.test(phoneNumber)) {
-      newErrors.phoneNumber = 'Please enter a valid phone number';
+      newErrors.phoneNumber = "Please enter a valid phone number";
     }
     if (!email.trim()) {
-      newErrors.email = 'Please enter email address';
+      newErrors.email = "Please enter email address";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = "Please enter a valid email address";
     }
     if (!contactPersonalId.trim()) {
-      newErrors.contactPersonalId = 'Please enter Personal ID/Citizen ID/Passport ID';
+      newErrors.contactPersonalId =
+        "Please enter Personal ID/Citizen ID/Passport ID";
     }
 
     setErrors(newErrors);
@@ -88,9 +93,11 @@ export default function CheckoutPage() {
 
   const handleNext = () => {
     if (validateForm()) {
-      console.log('Proceeding to payment...');
+      console.log("Proceeding to payment...");
       // Navigate to payment page with trip details
-      navigate(`/payment?tripId=${tripId}&seat=${selectedSeat}&date=${travelDate}&passengerName=${encodeURIComponent(fullName)}&passengerId=${encodeURIComponent(personalId)}&email=${encodeURIComponent(email)}`);
+      navigate(
+        `/payment?tripId=${tripId}&seat=${selectedSeat}&date=${travelDate}&passengerName=${encodeURIComponent(fullName)}&passengerId=${encodeURIComponent(personalId)}&email=${encodeURIComponent(email)}`,
+      );
     }
   };
 

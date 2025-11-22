@@ -92,7 +92,7 @@ const mockPassengers: Passenger[] = [
 
 const PassengerManagement = () => {
   const [selectedPassenger, setSelectedPassenger] = useState<Passenger | null>(
-    null
+    null,
   );
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 

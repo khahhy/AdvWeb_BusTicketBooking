@@ -1,21 +1,21 @@
-import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon } from 'lucide-react';
-import ResizableNavbar, { NavItem } from '@/components/ui/resizable-navbar';
-import { Bus, Map, Ticket, User, MapPin, Phone, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import logoImage from '@/assets/images/logo.png';
+import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Calendar as CalendarIcon } from "lucide-react";
+import ResizableNavbar, { NavItem } from "@/components/ui/resizable-navbar";
+import { Bus, Map, Ticket, User, MapPin, Phone, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import logoImage from "@/assets/images/logo.png";
 
 export default function Navbar() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState("");
   const [, forceUpdate] = useState({});
 
   // Check if user is logged in
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    const userStr = localStorage.getItem('user');
+    const token = localStorage.getItem("accessToken");
+    const userStr = localStorage.getItem("user");
 
     if (token && userStr) {
       setIsLoggedIn(true);
@@ -23,18 +23,18 @@ export default function Navbar() {
         const user = JSON.parse(userStr);
         setUserName(user.fullName || user.email);
       } catch (error) {
-        console.error('Error parsing user data:', error);
+        console.error("Error parsing user data:", error);
       }
     }
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('user');
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("user");
     setIsLoggedIn(false);
-    setUserName('');
+    setUserName("");
     forceUpdate({});
-    navigate('/login');
+    navigate("/login");
   };
 
   // Handle click on dropdown items
@@ -111,35 +111,37 @@ export default function Navbar() {
           src={logoImage}
           alt="Bus logo"
           className="w-32 object-contain cursor-pointer"
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate("/dashboard")}
         />
       }
       button={
         isLoggedIn ? (
           <div className="relative">
             <ResizableNavbar
-              items={[{
-                name: userName,
-                link: "#",
-                icon: <User className="h-5 w-5" />,
-                children: [
-                  {
-                    name: "Profile",
-                    link: "/profile",
-                    icon: <User className="h-4 w-4 text-blue-500" />,
-                  },
-                  {
-                    name: "Booking History",
-                    link: "/booking-history",
-                    icon: <CalendarIcon className="h-4 w-4 text-green-500" />,
-                  },
-                  {
-                    name: "Log Out",
-                    link: "#",
-                    icon: <LogOut className="h-4 w-4 text-red-500" />,
-                  },
-                ],
-              }]}
+              items={[
+                {
+                  name: userName,
+                  link: "#",
+                  icon: <User className="h-5 w-5" />,
+                  children: [
+                    {
+                      name: "Profile",
+                      link: "/profile",
+                      icon: <User className="h-4 w-4 text-blue-500" />,
+                    },
+                    {
+                      name: "Booking History",
+                      link: "/booking-history",
+                      icon: <CalendarIcon className="h-4 w-4 text-green-500" />,
+                    },
+                    {
+                      name: "Log Out",
+                      link: "#",
+                      icon: <LogOut className="h-4 w-4 text-red-500" />,
+                    },
+                  ],
+                },
+              ]}
               logo={<></>}
               onItemClick={handleNavClick}
               className="!relative !left-0 !transform-none !w-auto !mt-0 !bg-transparent !border-0 !shadow-none"
@@ -147,7 +149,7 @@ export default function Navbar() {
           </div>
         ) : (
           <Button
-            onClick={() => navigate('/login')}
+            onClick={() => navigate("/login")}
             className="bg-white hover:bg-gray-50 text-black px-6 py-2 rounded-full border border-gray-200 shadow-sm text-base font-medium"
           >
             Login

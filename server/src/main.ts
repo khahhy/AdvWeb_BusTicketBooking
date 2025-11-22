@@ -9,7 +9,17 @@ async function bootstrap() {
     .setTitle('Bus Ticket Booking API')
     .setDescription('API documentation for Bus Ticket Booking system')
     .setVersion('1.0')
-    .addBearerAuth()
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

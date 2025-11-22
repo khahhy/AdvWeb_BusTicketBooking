@@ -15,7 +15,7 @@ const NotificationStats = ({ logs }: NotificationStatsProps) => {
       if (curr.type === "sms") acc.sms++;
       return acc;
     },
-    { sent: 0, failed: 0, email: 0, sms: 0 }
+    { sent: 0, failed: 0, email: 0, sms: 0 },
   );
 
   const successRate = total > 0 ? Math.round((stats.sent / total) * 100) : 0;

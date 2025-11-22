@@ -1,16 +1,16 @@
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider"
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
-import { DateCalendar } from "@mui/x-date-pickers/DateCalendar"
-import { Dayjs } from "dayjs"
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
+import { Dayjs } from "dayjs";
 
 export interface CalendarProps {
-  value?: Dayjs | null
-  onChange?: (date: Dayjs | null) => void
-  className?: string
-  minDate?: Dayjs
-  maxDate?: Dayjs
-  disablePast?: boolean
-  disableFuture?: boolean
+  value?: Dayjs | null;
+  onChange?: (date: Dayjs | null) => void;
+  className?: string;
+  minDate?: Dayjs;
+  maxDate?: Dayjs;
+  disablePast?: boolean;
+  disableFuture?: boolean;
 }
 
 export function Calendar({
@@ -71,5 +71,5 @@ export function Calendar({
         }}
       />
     </LocalizationProvider>
-  )
+  );
 }

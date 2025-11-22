@@ -18,7 +18,7 @@ export const getNavLinkClass = (
   path: string,
   currentPath: string,
   isCollapsed: boolean,
-  isSubItem = false
+  isSubItem = false,
 ) => {
   const isActive =
     path === "/admin" ? currentPath === "/admin" : currentPath.startsWith(path);
@@ -41,7 +41,7 @@ export const getNavLinkClass = (
         "rounded-md",
         "px-4",
         "group-hover:pl-12",
-        "group-hover:pr-4"
+        "group-hover:pr-4",
       );
     } else {
       baseClasses.push("rounded-lg", "p-4", "group-hover:px-4");
@@ -72,7 +72,7 @@ export const NavLinkContent = ({
     <span
       className={cn(
         "flex-1 whitespace-nowrap",
-        isCollapsed && "hidden group-hover:inline"
+        isCollapsed && "hidden group-hover:inline",
       )}
     >
       {label}
@@ -125,7 +125,7 @@ export const SidebarLink = ({
       <div
         className={cn(
           "flex items-center gap-3",
-          isCollapsed ? "justify-center group-hover:flex-1" : "flex-1"
+          isCollapsed ? "justify-center group-hover:flex-1" : "flex-1",
         )}
       >
         <NavLinkContent
@@ -159,20 +159,20 @@ export const SidebarAccordion = ({
           className={cn(
             getNavLinkClass(item.path, currentPath, isCollapsed),
             "hover:no-underline",
-            "[&>svg.shrink-0]:hidden"
+            "[&>svg.shrink-0]:hidden",
           )}
         >
           <div
             className={cn(
               "flex items-center gap-3",
-              isCollapsed ? "justify-center group-hover:flex-1" : "flex-1"
+              isCollapsed ? "justify-center group-hover:flex-1" : "flex-1",
             )}
           >
             <item.icon className="h-5 w-5" />
             <span
               className={cn(
                 "flex-1 whitespace-nowrap text-left",
-                isCollapsed && "hidden group-hover:inline"
+                isCollapsed && "hidden group-hover:inline",
               )}
             >
               {item.label}
@@ -183,7 +183,7 @@ export const SidebarAccordion = ({
             className={cn(
               "h-4 w-4 transition-transform duration-200",
               currentPath.startsWith(item.path) ? "rotate-180" : "rotate-0",
-              isCollapsed ? "hidden group-hover:inline" : "inline"
+              isCollapsed ? "hidden group-hover:inline" : "inline",
             )}
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -213,7 +213,7 @@ export const SidebarAccordion = ({
                   subItem.path,
                   currentPath,
                   isCollapsed,
-                  true
+                  true,
                 )}
               >
                 <NavLinkContent

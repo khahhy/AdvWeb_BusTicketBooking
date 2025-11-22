@@ -1,4 +1,4 @@
-import { Info } from 'lucide-react';
+import { Info } from "lucide-react";
 
 interface PassengerDetailsCardProps {
   fullName: string;
@@ -8,8 +8,8 @@ interface PassengerDetailsCardProps {
   selectedSeat: string;
   showPassengerDetails: boolean;
   setShowPassengerDetails: (value: boolean) => void;
-  errors: {[key: string]: string};
-  setErrors: (errors: {[key: string]: string}) => void;
+  errors: { [key: string]: string };
+  setErrors: (errors: { [key: string]: string }) => void;
 }
 
 export default function PassengerDetailsCard({
@@ -25,12 +25,15 @@ export default function PassengerDetailsCard({
 }: PassengerDetailsCardProps) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-4">Passenger details</h2>
-      
+      <h2 className="text-xl font-bold text-gray-900 mb-4">
+        Passenger details
+      </h2>
+
       <div className="bg-green-50 border border-green-200 rounded-2xl p-4 mb-6 flex items-start gap-2">
         <Info className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
         <p className="text-sm text-green-800">
-          Don't forget to optimize the price by choosing the right passenger type
+          Don't forget to optimize the price by choosing the right passenger
+          type
         </p>
       </div>
 
@@ -45,7 +48,7 @@ export default function PassengerDetailsCard({
           className="text-blue-600 text-sm font-medium hover:underline"
           onClick={() => setShowPassengerDetails(!showPassengerDetails)}
         >
-          {showPassengerDetails ? 'See less' : 'See more'}
+          {showPassengerDetails ? "See less" : "See more"}
         </button>
       </div>
 
@@ -60,10 +63,12 @@ export default function PassengerDetailsCard({
                   disabled
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-2xl text-gray-900"
                 />
-                <span className="absolute right-3 top-3 text-xs text-gray-500">Soft seat</span>
+                <span className="absolute right-3 top-3 text-xs text-gray-500">
+                  Soft seat
+                </span>
               </div>
             </div>
-            
+
             <div className="col-span-2 sm:col-span-1">
               <input
                 type="text"
@@ -72,11 +77,11 @@ export default function PassengerDetailsCard({
                 onChange={(e) => {
                   setFullName(e.target.value);
                   if (errors.fullName) {
-                    setErrors({...errors, fullName: ''});
+                    setErrors({ ...errors, fullName: "" });
                   }
                 }}
                 className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 ${
-                  errors.fullName ? 'border-red-500' : 'border-gray-300'
+                  errors.fullName ? "border-red-500" : "border-gray-300"
                 }`}
               />
               {errors.fullName && (
@@ -93,11 +98,11 @@ export default function PassengerDetailsCard({
               onChange={(e) => {
                 setPersonalId(e.target.value);
                 if (errors.personalId) {
-                  setErrors({...errors, personalId: ''});
+                  setErrors({ ...errors, personalId: "" });
                 }
               }}
               className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                errors.personalId ? 'border-red-500' : 'border-gray-300'
+                errors.personalId ? "border-red-500" : "border-gray-300"
               }`}
             />
             {errors.personalId && (

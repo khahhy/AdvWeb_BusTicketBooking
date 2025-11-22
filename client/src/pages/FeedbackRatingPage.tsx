@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Star,
@@ -8,15 +8,15 @@ import {
   Calendar,
   Clock,
   CheckCircle2,
-  Camera
-} from 'lucide-react';
-import Navbar from '@/components/common/Navbar';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import Footer from '@/components/dashboard/Footer';
-import backgroundImage from '@/assets/images/background.png';
-import dayjs from 'dayjs';
+  Camera,
+} from "lucide-react";
+import Navbar from "@/components/common/Navbar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import Footer from "@/components/dashboard/Footer";
+import backgroundImage from "@/assets/images/background.png";
+import dayjs from "dayjs";
 
 interface BookingData {
   id: string;
@@ -39,30 +39,30 @@ interface RatingCategory {
 
 // Mock booking data
 const mockBookings: { [key: string]: BookingData } = {
-  '1': {
-    id: '1',
-    bookingCode: 'BUS123456',
-    from: 'Ho Chi Minh City',
-    to: 'Da Lat',
-    date: '2024-11-15',
-    departureTime: '08:00',
-    arrivalTime: '14:30',
-    duration: '6h 30m',
-    busNumber: 'SGN-DAL-001',
-    busType: 'Limousine 22 seats'
+  "1": {
+    id: "1",
+    bookingCode: "BUS123456",
+    from: "Ho Chi Minh City",
+    to: "Da Lat",
+    date: "2024-11-15",
+    departureTime: "08:00",
+    arrivalTime: "14:30",
+    duration: "6h 30m",
+    busNumber: "SGN-DAL-001",
+    busType: "Limousine 22 seats",
   },
-  '2': {
-    id: '2',
-    bookingCode: 'BUS789012',
-    from: 'Ho Chi Minh City',
-    to: 'Nha Trang',
-    date: '2024-12-01',
-    departureTime: '22:00',
-    arrivalTime: '06:30',
-    duration: '8h 30m',
-    busNumber: 'SGN-NTR-003',
-    busType: 'Sleeper Bus 34 beds'
-  }
+  "2": {
+    id: "2",
+    bookingCode: "BUS789012",
+    from: "Ho Chi Minh City",
+    to: "Nha Trang",
+    date: "2024-12-01",
+    departureTime: "22:00",
+    arrivalTime: "06:30",
+    duration: "8h 30m",
+    busNumber: "SGN-NTR-003",
+    busType: "Sleeper Bus 34 beds",
+  },
 };
 
 export default function FeedbackRatingPage() {
@@ -73,15 +73,15 @@ export default function FeedbackRatingPage() {
   const [loading, setLoading] = useState(true);
   const [overallRating, setOverallRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
-  const [feedback, setFeedback] = useState('');
+  const [feedback, setFeedback] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const [categories, setCategories] = useState<RatingCategory[]>([
-    { id: 'comfort', label: 'Comfort & Cleanliness', rating: 0 },
-    { id: 'punctuality', label: 'On-time Performance', rating: 0 },
-    { id: 'staff', label: 'Staff Service', rating: 0 },
-    { id: 'safety', label: 'Safety & Driving', rating: 0 }
+    { id: "comfort", label: "Comfort & Cleanliness", rating: 0 },
+    { id: "punctuality", label: "On-time Performance", rating: 0 },
+    { id: "staff", label: "Staff Service", rating: 0 },
+    { id: "safety", label: "Safety & Driving", rating: 0 },
   ]);
 
   useEffect(() => {
@@ -97,15 +97,13 @@ export default function FeedbackRatingPage() {
   }, [id]);
 
   const formatDate = (dateStr: string) => {
-    return dayjs(dateStr).format('DD/MM/YYYY');
+    return dayjs(dateStr).format("DD/MM/YYYY");
   };
 
   const handleStarClick = (rating: number, categoryId?: string) => {
     if (categoryId) {
-      setCategories(prev =>
-        prev.map(cat =>
-          cat.id === categoryId ? { ...cat, rating } : cat
-        )
+      setCategories((prev) =>
+        prev.map((cat) => (cat.id === categoryId ? { ...cat, rating } : cat)),
       );
     } else {
       setOverallRating(rating);
@@ -120,7 +118,7 @@ export default function FeedbackRatingPage() {
 
   const handleSubmit = async () => {
     if (overallRating === 0) {
-      alert('Please provide an overall rating');
+      alert("Please provide an overall rating");
       return;
     }
 
@@ -133,7 +131,7 @@ export default function FeedbackRatingPage() {
 
       // Auto redirect after 3 seconds
       setTimeout(() => {
-        navigate('/booking-history');
+        navigate("/booking-history");
       }, 3000);
     }, 1500);
   };
@@ -142,8 +140,8 @@ export default function FeedbackRatingPage() {
     rating,
     onStarClick,
     onStarHover,
-    size = 'w-6 h-6',
-    categoryId
+    size = "w-6 h-6",
+    categoryId,
   }: {
     rating: number;
     onStarClick: (rating: number, categoryId?: string) => void;
@@ -174,8 +172,8 @@ export default function FeedbackRatingPage() {
             <Star
               className={`${size} transition-all duration-200 ${
                 star <= (localHover || rating)
-                  ? 'text-yellow-400 fill-yellow-400'
-                  : 'text-gray-300 hover:text-yellow-300'
+                  ? "text-yellow-400 fill-yellow-400"
+                  : "text-gray-300 hover:text-yellow-300"
               }`}
             />
           </button>
@@ -204,9 +202,15 @@ export default function FeedbackRatingPage() {
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Trip Not Found</h2>
-            <p className="text-gray-600 mb-6">The trip you're trying to rate doesn't exist.</p>
-            <Button onClick={() => navigate('/booking-history')}>Go Back to History</Button>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Trip Not Found
+            </h2>
+            <p className="text-gray-600 mb-6">
+              The trip you're trying to rate doesn't exist.
+            </p>
+            <Button onClick={() => navigate("/booking-history")}>
+              Go Back to History
+            </Button>
           </div>
         </div>
       </div>
@@ -221,15 +225,25 @@ export default function FeedbackRatingPage() {
           <div className="text-center max-w-md mx-auto">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
               <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">Thank You!</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                Thank You!
+              </h2>
               <p className="text-gray-600 mb-6">
-                Your feedback has been submitted successfully. We appreciate your time and will use your feedback to improve our services.
+                Your feedback has been submitted successfully. We appreciate
+                your time and will use your feedback to improve our services.
               </p>
               <div className="space-y-3">
-                <Button onClick={() => navigate('/booking-history')} className="w-full">
+                <Button
+                  onClick={() => navigate("/booking-history")}
+                  className="w-full"
+                >
                   Back to Booking History
                 </Button>
-                <Button variant="outline" onClick={() => navigate('/dashboard')} className="w-full">
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/dashboard")}
+                  className="w-full"
+                >
                   Back to Home
                 </Button>
               </div>
@@ -254,7 +268,7 @@ export default function FeedbackRatingPage() {
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <Button
             variant="outline"
-            onClick={() => navigate('/booking-history')}
+            onClick={() => navigate("/booking-history")}
             className="mb-6 bg-white/80 hover:bg-white border-white/50 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.1s_forwards]"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -274,12 +288,18 @@ export default function FeedbackRatingPage() {
         {/* Trip Summary */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Trip Summary</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">
+              Trip Summary
+            </h3>
 
             <div className="flex items-center justify-between mb-4">
               <div className="w-40 flex-shrink-0">
-                <div className="text-xl font-bold text-gray-900">{booking.from}</div>
-                <div className="text-base font-semibold text-gray-900 mt-1">{booking.departureTime}</div>
+                <div className="text-xl font-bold text-gray-900">
+                  {booking.from}
+                </div>
+                <div className="text-base font-semibold text-gray-900 mt-1">
+                  {booking.departureTime}
+                </div>
               </div>
 
               <div className="flex-1 px-8 text-center">
@@ -295,15 +315,21 @@ export default function FeedbackRatingPage() {
               </div>
 
               <div className="text-right w-40 flex-shrink-0">
-                <div className="text-xl font-bold text-gray-900">{booking.to}</div>
-                <div className="text-base font-semibold text-gray-900 mt-1">{booking.arrivalTime}</div>
+                <div className="text-xl font-bold text-gray-900">
+                  {booking.to}
+                </div>
+                <div className="text-base font-semibold text-gray-900 mt-1">
+                  {booking.arrivalTime}
+                </div>
               </div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200 text-sm">
               <div>
                 <span className="text-gray-600">Booking Code:</span>
-                <div className="font-semibold text-gray-900">{booking.bookingCode}</div>
+                <div className="font-semibold text-gray-900">
+                  {booking.bookingCode}
+                </div>
               </div>
               <div>
                 <span className="text-gray-600">Travel Date:</span>
@@ -314,7 +340,9 @@ export default function FeedbackRatingPage() {
               </div>
               <div>
                 <span className="text-gray-600">Bus Type:</span>
-                <div className="font-semibold text-gray-900">{booking.busType}</div>
+                <div className="font-semibold text-gray-900">
+                  {booking.busType}
+                </div>
               </div>
             </div>
           </div>
@@ -323,8 +351,12 @@ export default function FeedbackRatingPage() {
         {/* Overall Rating */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.4s_forwards]">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Overall Experience</h3>
-            <p className="text-gray-600 mb-6">How would you rate your overall experience with this trip?</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-4">
+              Overall Experience
+            </h3>
+            <p className="text-gray-600 mb-6">
+              How would you rate your overall experience with this trip?
+            </p>
 
             <div className="flex flex-col items-center">
               <StarRating
@@ -334,12 +366,12 @@ export default function FeedbackRatingPage() {
                 size="w-10 h-10"
               />
               <p className="text-sm text-gray-500 mt-3">
-                {overallRating === 0 && 'Click to rate'}
-                {overallRating === 1 && 'Poor'}
-                {overallRating === 2 && 'Fair'}
-                {overallRating === 3 && 'Good'}
-                {overallRating === 4 && 'Very Good'}
-                {overallRating === 5 && 'Excellent'}
+                {overallRating === 0 && "Click to rate"}
+                {overallRating === 1 && "Poor"}
+                {overallRating === 2 && "Fair"}
+                {overallRating === 3 && "Good"}
+                {overallRating === 4 && "Very Good"}
+                {overallRating === 5 && "Excellent"}
               </p>
             </div>
           </div>
@@ -348,11 +380,16 @@ export default function FeedbackRatingPage() {
         {/* Category Ratings */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Rate Specific Aspects</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-6">
+              Rate Specific Aspects
+            </h3>
 
             <div className="space-y-6">
               {categories.map((category) => (
-                <div key={category.id} className="flex items-center justify-between">
+                <div
+                  key={category.id}
+                  className="flex items-center justify-between"
+                >
                   <span className="text-gray-700 font-medium min-w-0 flex-1 mr-6">
                     {category.label}
                   </span>
@@ -370,9 +407,12 @@ export default function FeedbackRatingPage() {
         {/* Written Feedback */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Additional Feedback</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4">
+              Additional Feedback
+            </h3>
             <p className="text-gray-600 mb-4">
-              Tell us more about your experience. What did we do well? What could we improve?
+              Tell us more about your experience. What did we do well? What
+              could we improve?
             </p>
 
             <Textarea
@@ -412,7 +452,7 @@ export default function FeedbackRatingPage() {
             </Button>
 
             <Button
-              onClick={() => navigate('/booking-history')}
+              onClick={() => navigate("/booking-history")}
               variant="outline"
               className="flex-1 py-3 rounded-2xl font-semibold"
               disabled={submitting}

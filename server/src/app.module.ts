@@ -12,7 +12,17 @@ import { BookingsModule } from './bookings/bookings.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AuthModule } from './auth/auth.module';
 @Module({
-  imports: [PrismaModule, UserModule, LocationModule, BusesModule, TripsModule, RoutesModule, BookingsModule, NotificationsModule, AuthModule],
+  imports: [
+    PrismaModule,
+    UserModule,
+    LocationModule,
+    BusesModule,
+    TripsModule,
+    RoutesModule,
+    BookingsModule,
+    NotificationsModule,
+    AuthModule,
+  ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })

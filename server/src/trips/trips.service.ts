@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { BadRequestException } from '@nestjs/common';
 import { CreateTripDto } from 'src/trips/dto/create-trip.dto';
@@ -468,5 +472,109 @@ export class TripsService {
 
       return prisma.trips.delete({ where: { id: tripId } });
     });
+  }
+
+  async getSeatsStatus(tripId: string, routeId: string) {
+    try {
+      const trip = await this.prisma.trips.findUnique({
+        where: { id: tripId },
+        include: {
+          bus: {
+            include: {
+              seats: {
+                orderBy: { seatNumber: 'asc' },
+              },
+            },
+          },
+        },
+      });
+
+      if (!trip) throw new NotFoundException('Trip not found');
+      if (!trip.bus)
+        throw new NotFoundException('Bus assigned to trip not found');
+
+      const route = await this.prisma.routes.findUnique({
+        where: { id: routeId },
+        select: { originLocationId: true, destinationLocationId: true },
+      });
+
+      if (!route) throw new NotFoundException('Route not found');
+
+      const stops = await this.prisma.tripStops.findMany({
+        where: {
+          tripId,
+          locationId: {
+            in: [route.originLocationId, route.destinationLocationId],
+          },
+        },
+        select: { id: true, sequence: true, locationId: true },
+      });
+
+      const startStop = stops.find(
+        (s) => s.locationId === route.originLocationId,
+      );
+      const endStop = stops.find(
+        (s) => s.locationId === route.destinationLocationId,
+      );
+
+      if (!startStop || !endStop) {
+        throw new BadRequestException(
+          'This Trip does not cover the selected Route locations',
+        );
+      }
+      if (startStop.sequence >= endStop.sequence) {
+        throw new BadRequestException('Invalid route direction for this trip');
+      }
+
+      const relevantSegments = await this.prisma.tripSegments.findMany({
+        where: {
+          tripId,
+          fromStop: { sequence: { gte: startStop.sequence } },
+          toStop: { sequence: { lte: endStop.sequence } },
+        },
+        select: { id: true },
+      });
+
+      const segmentIds = relevantSegments.map((s) => s.id);
+
+      const lockedSeats = await this.prisma.seatSegmentLocks.findMany({
+        where: {
+          tripId,
+          segmentId: { in: segmentIds },
+        },
+        select: { seatId: true },
+      });
+
+      const lockedSeatIds = new Set(lockedSeats.map((lock) => lock.seatId));
+
+      const result = trip.bus.seats.map((seat) => {
+        const isLocked = lockedSeatIds.has(seat.id);
+        return {
+          seatId: seat.id,
+          seatNumber: seat.seatNumber,
+          coordinates: seat.coordinates,
+          status: isLocked ? 'BOOKED' : 'AVAILABLE',
+        };
+      });
+
+      return {
+        message: 'Fetched seat status successfully',
+        data: result,
+        meta: {
+          totalSeats: result.length,
+          availableSeats: result.filter((s) => s.status === 'AVAILABLE').length,
+        },
+      };
+    } catch (err) {
+      if (
+        err instanceof NotFoundException ||
+        err instanceof BadRequestException
+      ) {
+        throw err;
+      }
+      throw new InternalServerErrorException('Failed to fetch seat status', {
+        cause: err,
+      });
+    }
   }
 }

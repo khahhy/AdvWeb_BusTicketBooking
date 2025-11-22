@@ -13,10 +13,10 @@ export default function PaymentButton({ onPayment }: PaymentButtonProps) {
       </button>
 
       <div className="text-sm text-gray-600 text-center">
-        By tapping I have transferred, you agree to our{' '}
+        By tapping I have transferred, you agree to our{" "}
         <a href="#" className="text-blue-600 hover:underline">
           Payment Security Policy
-        </a>{' '}
+        </a>{" "}
         of Vexere
       </div>
     </div>

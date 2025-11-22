@@ -70,7 +70,7 @@ const NotificationTable = ({ logs, onViewDetail }: NotificationTableProps) => {
                 <td className="px-6 py-4">
                   <span
                     className={`inline-flex px-2 py-1 rounded border text-xs font-medium ${getTemplateBadge(
-                      log.template
+                      log.template,
                     )}`}
                   >
                     {log.template.replace("_", " ").toUpperCase()}

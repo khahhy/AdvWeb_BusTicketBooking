@@ -1,19 +1,19 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
-import { buildApiUrl, API_ENDPOINTS } from '@/lib/api';
-import backgroundImage from '@/assets/images/background.png';
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
+import backgroundImage from "@/assets/images/background.png";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
+  const token = searchParams.get("token");
 
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -21,27 +21,27 @@ export default function ResetPasswordPage() {
     window.scrollTo(0, 0);
 
     if (!token) {
-      setError('Invalid reset link');
+      setError("Invalid reset link");
     }
   }, [token]);
 
   const validatePassword = (password: string) => {
     if (password.length < 8) {
-      return 'Password must be at least 8 characters long';
+      return "Password must be at least 8 characters long";
     }
-    return '';
+    return "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!token) {
-      setError('Invalid reset link');
+      setError("Invalid reset link");
       return;
     }
 
     if (!newPassword) {
-      setError('Password is required');
+      setError("Password is required");
       return;
     }
 
@@ -52,29 +52,32 @@ export default function ResetPasswordPage() {
     }
 
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return;
     }
 
-    setError('');
+    setError("");
     setIsLoading(true);
 
     try {
-      const response = await fetch(buildApiUrl(API_ENDPOINTS.auth.resetPassword), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        buildApiUrl(API_ENDPOINTS.auth.resetPassword),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token,
+            newPassword,
+          }),
         },
-        body: JSON.stringify({
-          token,
-          newPassword
-        }),
-      });
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || 'Failed to reset password');
+        setError(data.message || "Failed to reset password");
         setIsLoading(false);
         return;
       }
@@ -83,12 +86,11 @@ export default function ResetPasswordPage() {
 
       // Redirect to login after 3 seconds
       setTimeout(() => {
-        navigate('/login');
+        navigate("/login");
       }, 3000);
-
     } catch (error) {
-      console.error('Error resetting password:', error);
-      setError('Failed to reset password. Please try again.');
+      console.error("Error resetting password:", error);
+      setError("Failed to reset password. Please try again.");
       setIsLoading(false);
     }
   };
@@ -97,7 +99,10 @@ export default function ResetPasswordPage() {
     return (
       <div
         className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
-        style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundPosition: "center bottom",
+        }}
       >
         <div className="max-w-xl w-full mx-auto px-6 py-6 relative z-10">
           <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
@@ -112,7 +117,8 @@ export default function ResetPasswordPage() {
                 </h1>
 
                 <p className="text-gray-600 mb-6">
-                  Your password has been changed successfully. You can now sign in with your new password.
+                  Your password has been changed successfully. You can now sign
+                  in with your new password.
                 </p>
 
                 <p className="text-sm text-gray-500">
@@ -129,7 +135,10 @@ export default function ResetPasswordPage() {
   return (
     <div
       className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
-      style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundPosition: "center bottom",
+      }}
     >
       <div className="max-w-xl w-full mx-auto px-6 py-6 relative z-10">
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
@@ -155,17 +164,17 @@ export default function ResetPasswordPage() {
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     value={newPassword}
                     onChange={(e) => {
                       setNewPassword(e.target.value);
-                      setError('');
+                      setError("");
                     }}
                     placeholder="Enter new password"
                     className={`w-full pl-12 pr-12 py-2.5 border rounded-2xl focus:outline-none focus:ring-2 transition-all ${
                       error
-                        ? 'border-red-300 focus:ring-red-200'
-                        : 'border-gray-300 focus:ring-blue-200'
+                        ? "border-red-300 focus:ring-red-200"
+                        : "border-gray-300 focus:ring-blue-200"
                     }`}
                   />
                   <button
@@ -173,7 +182,11 @@ export default function ResetPasswordPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
@@ -189,17 +202,17 @@ export default function ResetPasswordPage() {
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
-                    type={showConfirmPassword ? 'text' : 'password'}
+                    type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => {
                       setConfirmPassword(e.target.value);
-                      setError('');
+                      setError("");
                     }}
                     placeholder="Confirm new password"
                     className={`w-full pl-12 pr-12 py-2.5 border rounded-2xl focus:outline-none focus:ring-2 transition-all ${
                       error
-                        ? 'border-red-300 focus:ring-red-200'
-                        : 'border-gray-300 focus:ring-blue-200'
+                        ? "border-red-300 focus:ring-red-200"
+                        : "border-gray-300 focus:ring-blue-200"
                     }`}
                   />
                   <button
@@ -207,7 +220,11 @@ export default function ResetPasswordPage() {
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -222,7 +239,7 @@ export default function ResetPasswordPage() {
                 disabled={isLoading}
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-2xl transition-all duration-300 font-semibold shadow-md hover:shadow-lg text-base disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? 'Resetting Password...' : 'Reset Password'}
+                {isLoading ? "Resetting Password..." : "Reset Password"}
               </button>
             </form>
           </div>

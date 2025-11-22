@@ -1,9 +1,26 @@
 {
+  "scripts": {
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "client/**/*.{ts,tsx,js,jsx}": [
+      "cd client && npx eslint --fix",
+      "cd client && npx prettier --write"
+    ],
+    "server/**/*.{ts,js}": [
+      "cd server && npx eslint --fix",
+      "cd server && npx prettier --write"
+    ]
+  },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/material": "^7.3.5",
     "@mui/x-date-pickers": "^8.18.0",
     "dayjs": "^1.11.19"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7"
   }
 }

@@ -94,7 +94,7 @@ const PaymentManagement = () => {
         }
         return acc;
       },
-      { totalRevenue: 0, totalTransactions: 0, successfulTxn: 0, failedTxn: 0 }
+      { totalRevenue: 0, totalTransactions: 0, successfulTxn: 0, failedTxn: 0 },
     );
   }, []);
 

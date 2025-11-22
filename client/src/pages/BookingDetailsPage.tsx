@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Download,
@@ -13,14 +13,14 @@ import {
   Mail,
   CheckCircle2,
   Star,
-  Edit
-} from 'lucide-react';
-import Navbar from '@/components/common/Navbar';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import Footer from '@/components/dashboard/Footer';
-import backgroundImage from '@/assets/images/background.png';
-import dayjs from 'dayjs';
+  Edit,
+} from "lucide-react";
+import Navbar from "@/components/common/Navbar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import Footer from "@/components/dashboard/Footer";
+import backgroundImage from "@/assets/images/background.png";
+import dayjs from "dayjs";
 
 interface BookingDetails {
   id: string;
@@ -32,7 +32,7 @@ interface BookingDetails {
   arrivalTime: string;
   seat: string;
   price: number;
-  status: 'completed' | 'upcoming' | 'cancelled';
+  status: "completed" | "upcoming" | "cancelled";
   passengerName: string;
   duration: string;
   busNumber: string;
@@ -50,56 +50,56 @@ interface BookingDetails {
 
 // Mock data for booking details
 const mockBookingDetails: { [key: string]: BookingDetails } = {
-  '1': {
-    id: '1',
-    bookingCode: 'BUS123456',
-    from: 'Ho Chi Minh City',
-    to: 'Da Lat',
-    date: '2024-11-15',
-    departureTime: '08:00',
-    arrivalTime: '14:30',
-    seat: 'A12',
+  "1": {
+    id: "1",
+    bookingCode: "BUS123456",
+    from: "Ho Chi Minh City",
+    to: "Da Lat",
+    date: "2024-11-15",
+    departureTime: "08:00",
+    arrivalTime: "14:30",
+    seat: "A12",
     price: 280000,
-    status: 'completed',
-    passengerName: 'Nguyen Van A',
-    duration: '6h 30m',
-    busNumber: 'SGN-DAL-001',
-    busType: 'Limousine 22 seats',
-    contactPhone: '+84 901 234 567',
-    contactEmail: 'nguyenvana@email.com',
-    pickupLocation: 'Ben xe Mien Dong, 292 Đinh Bộ Lĩnh, Bình Thạnh',
-    dropoffLocation: 'Ben xe Da Lat, 01 Tô Hiến Thành, Phường 3',
-    paymentMethod: 'Credit Card',
-    bookingDate: '2024-11-10',
+    status: "completed",
+    passengerName: "Nguyen Van A",
+    duration: "6h 30m",
+    busNumber: "SGN-DAL-001",
+    busType: "Limousine 22 seats",
+    contactPhone: "+84 901 234 567",
+    contactEmail: "nguyenvana@email.com",
+    pickupLocation: "Ben xe Mien Dong, 292 Đinh Bộ Lĩnh, Bình Thạnh",
+    dropoffLocation: "Ben xe Da Lat, 01 Tô Hiến Thành, Phường 3",
+    paymentMethod: "Credit Card",
+    bookingDate: "2024-11-10",
     insuranceFee: 5000,
     serviceFee: 15000,
-    totalAmount: 300000
+    totalAmount: 300000,
   },
-  '2': {
-    id: '2',
-    bookingCode: 'BUS789012',
-    from: 'Ho Chi Minh City',
-    to: 'Nha Trang',
-    date: '2024-12-01',
-    departureTime: '22:00',
-    arrivalTime: '06:30',
-    seat: 'B08',
+  "2": {
+    id: "2",
+    bookingCode: "BUS789012",
+    from: "Ho Chi Minh City",
+    to: "Nha Trang",
+    date: "2024-12-01",
+    departureTime: "22:00",
+    arrivalTime: "06:30",
+    seat: "B08",
     price: 320000,
-    status: 'upcoming',
-    passengerName: 'Nguyen Van A',
-    duration: '8h 30m',
-    busNumber: 'SGN-NTR-003',
-    busType: 'Sleeper Bus 34 beds',
-    contactPhone: '+84 901 234 567',
-    contactEmail: 'nguyenvana@email.com',
-    pickupLocation: 'Ben xe Mien Dong, 292 Đinh Bộ Lĩnh, Bình Thạnh',
-    dropoffLocation: 'Ben xe Nha Trang, 23 Thang 10, Vĩnh Hải',
-    paymentMethod: 'Bank Transfer',
-    bookingDate: '2024-11-25',
+    status: "upcoming",
+    passengerName: "Nguyen Van A",
+    duration: "8h 30m",
+    busNumber: "SGN-NTR-003",
+    busType: "Sleeper Bus 34 beds",
+    contactPhone: "+84 901 234 567",
+    contactEmail: "nguyenvana@email.com",
+    pickupLocation: "Ben xe Mien Dong, 292 Đinh Bộ Lĩnh, Bình Thạnh",
+    dropoffLocation: "Ben xe Nha Trang, 23 Thang 10, Vĩnh Hải",
+    paymentMethod: "Bank Transfer",
+    bookingDate: "2024-11-25",
     insuranceFee: 8000,
     serviceFee: 17000,
-    totalAmount: 345000
-  }
+    totalAmount: 345000,
+  },
 };
 
 export default function BookingDetailsPage() {
@@ -121,37 +121,49 @@ export default function BookingDetailsPage() {
   }, [id]);
 
   const formatCurrency = (amount: number) => {
-    return amount.toLocaleString('vi-VN') + ' VND';
+    return amount.toLocaleString("vi-VN") + " VND";
   };
 
   const formatDate = (dateStr: string) => {
-    return dayjs(dateStr).format('DD/MM/YYYY');
+    return dayjs(dateStr).format("DD/MM/YYYY");
   };
 
   const formatDateTime = (dateStr: string) => {
-    return dayjs(dateStr).format('DD/MM/YYYY HH:mm');
+    return dayjs(dateStr).format("DD/MM/YYYY HH:mm");
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'completed':
-        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Completed</Badge>;
-      case 'upcoming':
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">Upcoming</Badge>;
-      case 'cancelled':
-        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">Cancelled</Badge>;
+      case "completed":
+        return (
+          <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+            Completed
+          </Badge>
+        );
+      case "upcoming":
+        return (
+          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
+            Upcoming
+          </Badge>
+        );
+      case "cancelled":
+        return (
+          <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
+            Cancelled
+          </Badge>
+        );
       default:
         return <Badge>Unknown</Badge>;
     }
   };
 
   const handleDownloadTicket = () => {
-    console.log('Downloading ticket for:', booking?.bookingCode);
+    console.log("Downloading ticket for:", booking?.bookingCode);
     // Implement download logic
   };
 
   const handleGoBack = () => {
-    navigate('/booking-history');
+    navigate("/booking-history");
   };
 
   const handleRateTrip = () => {
@@ -182,8 +194,12 @@ export default function BookingDetailsPage() {
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Booking Not Found</h2>
-            <p className="text-gray-600 mb-6">The booking you're looking for doesn't exist.</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Booking Not Found
+            </h2>
+            <p className="text-gray-600 mb-6">
+              The booking you're looking for doesn't exist.
+            </p>
             <Button onClick={handleGoBack}>Go Back to History</Button>
           </div>
         </div>
@@ -229,8 +245,12 @@ export default function BookingDetailsPage() {
               <div className="flex items-center gap-4">
                 <CheckCircle2 className="w-8 h-8 text-green-500" />
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Booking Confirmed</h2>
-                  <p className="text-gray-600">Booked on {formatDateTime(booking.bookingDate)}</p>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Booking Confirmed
+                  </h2>
+                  <p className="text-gray-600">
+                    Booked on {formatDateTime(booking.bookingDate)}
+                  </p>
                 </div>
               </div>
               {getStatusBadge(booking.status)}
@@ -244,13 +264,19 @@ export default function BookingDetailsPage() {
             {/* Trip Information */}
             <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.4s_forwards]">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Trip Information</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-6">
+                  Trip Information
+                </h3>
 
                 {/* Route */}
                 <div className="flex items-center justify-between mb-8">
                   <div className="w-50 flex-shrink-0">
-                    <div className="text-2xl font-bold text-gray-900">{booking.from}</div>
-                    <div className="text-lg font-semibold text-gray-900 mt-1">{booking.departureTime}</div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {booking.from}
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900 mt-1">
+                      {booking.departureTime}
+                    </div>
                   </div>
 
                   <div className="flex-1 px-8 text-center">
@@ -266,8 +292,12 @@ export default function BookingDetailsPage() {
                   </div>
 
                   <div className="text-right w-40 flex-shrink-0">
-                    <div className="text-2xl font-bold text-gray-900">{booking.to}</div>
-                    <div className="text-lg font-semibold text-gray-900 mt-1">{booking.arrivalTime}</div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {booking.to}
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900 mt-1">
+                      {booking.arrivalTime}
+                    </div>
                   </div>
                 </div>
 
@@ -278,7 +308,9 @@ export default function BookingDetailsPage() {
                       <Calendar className="w-5 h-5 text-gray-400" />
                       <div>
                         <p className="text-sm text-gray-600">Travel Date</p>
-                        <p className="text-base font-semibold text-gray-900">{formatDate(booking.date)}</p>
+                        <p className="text-base font-semibold text-gray-900">
+                          {formatDate(booking.date)}
+                        </p>
                       </div>
                     </div>
 
@@ -286,7 +318,9 @@ export default function BookingDetailsPage() {
                       <Ticket className="w-5 h-5 text-gray-400" />
                       <div>
                         <p className="text-sm text-gray-600">Seat Number</p>
-                        <p className="text-base font-semibold text-gray-900">{booking.seat}</p>
+                        <p className="text-base font-semibold text-gray-900">
+                          {booking.seat}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -298,7 +332,9 @@ export default function BookingDetailsPage() {
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Bus Number</p>
-                        <p className="text-base font-semibold text-gray-900">{booking.busNumber}</p>
+                        <p className="text-base font-semibold text-gray-900">
+                          {booking.busNumber}
+                        </p>
                       </div>
                     </div>
 
@@ -308,7 +344,9 @@ export default function BookingDetailsPage() {
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Bus Type</p>
-                        <p className="text-base font-semibold text-gray-900">{booking.busType}</p>
+                        <p className="text-base font-semibold text-gray-900">
+                          {booking.busType}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -319,14 +357,18 @@ export default function BookingDetailsPage() {
             {/* Passenger Information */}
             <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Passenger Information</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-6">
+                  Passenger Information
+                </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="flex items-center gap-3">
                     <User className="w-5 h-5 text-gray-400" />
                     <div>
                       <p className="text-sm text-gray-600">Full Name</p>
-                      <p className="text-base font-semibold text-gray-900">{booking.passengerName}</p>
+                      <p className="text-base font-semibold text-gray-900">
+                        {booking.passengerName}
+                      </p>
                     </div>
                   </div>
 
@@ -334,7 +376,9 @@ export default function BookingDetailsPage() {
                     <Phone className="w-5 h-5 text-gray-400" />
                     <div>
                       <p className="text-sm text-gray-600">Phone Number</p>
-                      <p className="text-base font-semibold text-gray-900">{booking.contactPhone}</p>
+                      <p className="text-base font-semibold text-gray-900">
+                        {booking.contactPhone}
+                      </p>
                     </div>
                   </div>
 
@@ -342,7 +386,9 @@ export default function BookingDetailsPage() {
                     <Mail className="w-5 h-5 text-gray-400" />
                     <div>
                       <p className="text-sm text-gray-600">Email</p>
-                      <p className="text-base font-semibold text-gray-900">{booking.contactEmail}</p>
+                      <p className="text-base font-semibold text-gray-900">
+                        {booking.contactEmail}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -352,7 +398,9 @@ export default function BookingDetailsPage() {
             {/* Pickup & Dropoff Locations */}
             <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Pickup & Dropoff</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-6">
+                  Pickup & Dropoff
+                </h3>
 
                 <div className="space-y-6">
                   <div className="flex items-start gap-3">
@@ -361,7 +409,9 @@ export default function BookingDetailsPage() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Pickup Location</p>
-                      <p className="text-base font-semibold text-gray-900">{booking.pickupLocation}</p>
+                      <p className="text-base font-semibold text-gray-900">
+                        {booking.pickupLocation}
+                      </p>
                     </div>
                   </div>
 
@@ -371,7 +421,9 @@ export default function BookingDetailsPage() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Dropoff Location</p>
-                      <p className="text-base font-semibold text-gray-900">{booking.dropoffLocation}</p>
+                      <p className="text-base font-semibold text-gray-900">
+                        {booking.dropoffLocation}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -384,7 +436,9 @@ export default function BookingDetailsPage() {
             {/* Payment Summary */}
             <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.7s_forwards]">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Payment Summary</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-6">
+                  Payment Summary
+                </h3>
 
                 <div className="space-y-4">
                   <div className="flex justify-between text-gray-700">
@@ -404,7 +458,9 @@ export default function BookingDetailsPage() {
 
                   <div className="border-t pt-4 flex justify-between text-xl font-bold text-gray-900">
                     <span>Total Paid</span>
-                    <span className="text-green-600">{formatCurrency(booking.totalAmount)}</span>
+                    <span className="text-green-600">
+                      {formatCurrency(booking.totalAmount)}
+                    </span>
                   </div>
 
                   <div className="pt-4 border-t">
@@ -412,7 +468,9 @@ export default function BookingDetailsPage() {
                       <CreditCard className="w-5 h-5 text-gray-400" />
                       <div>
                         <p className="text-sm text-gray-600">Payment Method</p>
-                        <p className="text-base font-semibold text-gray-900">{booking.paymentMethod}</p>
+                        <p className="text-base font-semibold text-gray-900">
+                          {booking.paymentMethod}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -426,13 +484,13 @@ export default function BookingDetailsPage() {
                 <Button
                   onClick={handleDownloadTicket}
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-2xl font-semibold flex items-center justify-center gap-2"
-                  disabled={booking.status === 'cancelled'}
+                  disabled={booking.status === "cancelled"}
                 >
                   <Download className="w-5 h-5" />
                   Download Ticket
                 </Button>
 
-                {booking.status === 'upcoming' && (
+                {booking.status === "upcoming" && (
                   <Button
                     onClick={handleModifyBooking}
                     className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-2xl font-semibold flex items-center justify-center gap-2"
@@ -442,7 +500,7 @@ export default function BookingDetailsPage() {
                   </Button>
                 )}
 
-                {booking.status === 'completed' && (
+                {booking.status === "completed" && (
                   <Button
                     onClick={handleRateTrip}
                     className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-2xl font-semibold flex items-center justify-center gap-2"

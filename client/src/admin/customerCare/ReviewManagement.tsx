@@ -139,7 +139,7 @@ const ReviewManagement = () => {
               value={ratingFilter}
               onChange={(e) =>
                 setRatingFilter(
-                  e.target.value === "all" ? "all" : Number(e.target.value)
+                  e.target.value === "all" ? "all" : Number(e.target.value),
                 )
               }
             >

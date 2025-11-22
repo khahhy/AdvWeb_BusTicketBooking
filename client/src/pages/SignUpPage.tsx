@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Eye, EyeOff, Phone } from 'lucide-react';
-import { buildApiUrl, API_ENDPOINTS } from '@/lib/api';
-import backgroundImage from '@/assets/images/background.png';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Mail, Lock, User, Eye, EyeOff, Phone } from "lucide-react";
+import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
+import backgroundImage from "@/assets/images/background.png";
 
 // Add CSS to hide browser's default password reveal button for all browsers
 const styleSheet = document.createElement("style");
@@ -28,8 +28,8 @@ styleSheet.textContent = `
     margin: 0;
   }
 `;
-if (!document.head.querySelector('style[data-password-style]')) {
-  styleSheet.setAttribute('data-password-style', 'true');
+if (!document.head.querySelector("style[data-password-style]")) {
+  styleSheet.setAttribute("data-password-style", "true");
   document.head.appendChild(styleSheet);
 }
 
@@ -39,18 +39,18 @@ export default function SignUpPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    email: '',
-    fullName: '',
-    phoneNumber: '',
-    password: '',
-    confirmPassword: '',
+    email: "",
+    fullName: "",
+    phoneNumber: "",
+    password: "",
+    confirmPassword: "",
   });
   const [errors, setErrors] = useState({
-    email: '',
-    fullName: '',
-    phoneNumber: '',
-    password: '',
-    confirmPassword: '',
+    email: "",
+    fullName: "",
+    phoneNumber: "",
+    password: "",
+    confirmPassword: "",
   });
 
   useEffect(() => {
@@ -66,49 +66,52 @@ export default function SignUpPage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field as keyof typeof errors]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }));
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors = {
-      email: '',
-      fullName: '',
-      phoneNumber: '',
-      password: '',
-      confirmPassword: '',
+      email: "",
+      fullName: "",
+      phoneNumber: "",
+      password: "",
+      confirmPassword: "",
     };
 
     // Validation
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
+      newErrors.email = "Please enter a valid email";
     }
 
     if (!formData.fullName) {
-      newErrors.fullName = 'Full name is required';
+      newErrors.fullName = "Full name is required";
     } else if (formData.fullName.length < 2) {
-      newErrors.fullName = 'Full name must be at least 2 characters';
+      newErrors.fullName = "Full name must be at least 2 characters";
     }
 
     if (!formData.phoneNumber) {
-      newErrors.phoneNumber = 'Phone number is required';
-    } else if (!/^[0-9]{10,15}$/.test(formData.phoneNumber.replace(/[\s-]/g, ''))) {
-      newErrors.phoneNumber = 'Please enter a valid phone number (10-15 digits)';
+      newErrors.phoneNumber = "Phone number is required";
+    } else if (
+      !/^[0-9]{10,15}$/.test(formData.phoneNumber.replace(/[\s-]/g, ""))
+    ) {
+      newErrors.phoneNumber =
+        "Please enter a valid phone number (10-15 digits)";
     }
 
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
     } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+      newErrors.password = "Password must be at least 8 characters";
     }
 
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
+      newErrors.confirmPassword = "Please confirm your password";
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     setErrors(newErrors);
@@ -118,9 +121,9 @@ export default function SignUpPage() {
       setIsLoading(true);
       try {
         const response = await fetch(buildApiUrl(API_ENDPOINTS.auth.signup), {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             email: formData.email,
@@ -134,21 +137,30 @@ export default function SignUpPage() {
 
         if (!response.ok) {
           // Handle API errors
-          if (data.message === 'Email already registered') {
-            setErrors((prev) => ({ ...prev, email: 'This email is already registered' }));
+          if (data.message === "Email already registered") {
+            setErrors((prev) => ({
+              ...prev,
+              email: "This email is already registered",
+            }));
           } else {
-            setErrors((prev) => ({ ...prev, email: data.message || 'Sign up failed. Please try again.' }));
+            setErrors((prev) => ({
+              ...prev,
+              email: data.message || "Sign up failed. Please try again.",
+            }));
           }
           setIsLoading(false);
           return;
         }
 
         // Success - navigate to verify email page
-        console.log('Sign up success:', data);
+        console.log("Sign up success:", data);
         navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
       } catch (error) {
-        console.error('Sign up error:', error);
-        setErrors((prev) => ({ ...prev, email: 'Network error. Please check your connection and try again.' }));
+        console.error("Sign up error:", error);
+        setErrors((prev) => ({
+          ...prev,
+          email: "Network error. Please check your connection and try again.",
+        }));
         setIsLoading(false);
       }
     }
@@ -156,13 +168,16 @@ export default function SignUpPage() {
 
   const handleGoogleSignUp = () => {
     // Redirect to backend Google OAuth endpoint
-    window.location.href = buildApiUrl('/auth/google');
+    window.location.href = buildApiUrl("/auth/google");
   };
 
   return (
     <div
       className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
-      style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundPosition: "center bottom",
+      }}
     >
       <div className="max-w-xl w-full mx-auto px-6 py-6 relative z-10">
         {/* Sign Up Form Card */}
@@ -184,12 +199,12 @@ export default function SignUpPage() {
                   <input
                     type="email"
                     value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
                     placeholder="Enter your email"
                     className={`w-full pl-12 pr-4 py-2.5 border rounded-2xl focus:outline-none focus:ring-2 transition-all ${
                       errors.email
-                        ? 'border-red-300 focus:ring-red-200'
-                        : 'border-gray-300 focus:ring-blue-200'
+                        ? "border-red-300 focus:ring-red-200"
+                        : "border-gray-300 focus:ring-blue-200"
                     }`}
                   />
                 </div>
@@ -208,12 +223,14 @@ export default function SignUpPage() {
                   <input
                     type="text"
                     value={formData.fullName}
-                    onChange={(e) => handleInputChange('fullName', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("fullName", e.target.value)
+                    }
                     placeholder="Enter your full name"
                     className={`w-full pl-12 pr-4 py-2.5 border rounded-2xl focus:outline-none focus:ring-2 transition-all ${
                       errors.fullName
-                        ? 'border-red-300 focus:ring-red-200'
-                        : 'border-gray-300 focus:ring-blue-200'
+                        ? "border-red-300 focus:ring-red-200"
+                        : "border-gray-300 focus:ring-blue-200"
                     }`}
                   />
                 </div>
@@ -232,17 +249,21 @@ export default function SignUpPage() {
                   <input
                     type="tel"
                     value={formData.phoneNumber}
-                    onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("phoneNumber", e.target.value)
+                    }
                     placeholder="Enter your phone number"
                     className={`w-full pl-12 pr-4 py-2.5 border rounded-2xl focus:outline-none focus:ring-2 transition-all ${
                       errors.phoneNumber
-                        ? 'border-red-300 focus:ring-red-200'
-                        : 'border-gray-300 focus:ring-blue-200'
+                        ? "border-red-300 focus:ring-red-200"
+                        : "border-gray-300 focus:ring-blue-200"
                     }`}
                   />
                 </div>
                 {errors.phoneNumber && (
-                  <p className="mt-1 text-sm text-red-600">{errors.phoneNumber}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.phoneNumber}
+                  </p>
                 )}
               </div>
 
@@ -254,14 +275,16 @@ export default function SignUpPage() {
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     value={formData.password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("password", e.target.value)
+                    }
                     placeholder="Create a password"
                     className={`w-full pl-12 pr-12 py-2.5 border rounded-2xl focus:outline-none focus:ring-2 transition-all ${
                       errors.password
-                        ? 'border-red-300 focus:ring-red-200'
-                        : 'border-gray-300 focus:ring-blue-200'
+                        ? "border-red-300 focus:ring-red-200"
+                        : "border-gray-300 focus:ring-blue-200"
                     }`}
                   />
                   <button
@@ -269,7 +292,11 @@ export default function SignUpPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
                 {errors.password && (
@@ -288,14 +315,16 @@ export default function SignUpPage() {
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
-                    type={showConfirmPassword ? 'text' : 'password'}
+                    type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
-                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("confirmPassword", e.target.value)
+                    }
                     placeholder="Confirm your password"
                     className={`w-full pl-12 pr-12 py-2.5 border rounded-2xl focus:outline-none focus:ring-2 transition-all ${
                       errors.confirmPassword
-                        ? 'border-red-300 focus:ring-red-200'
-                        : 'border-gray-300 focus:ring-blue-200'
+                        ? "border-red-300 focus:ring-red-200"
+                        : "border-gray-300 focus:ring-blue-200"
                     }`}
                   />
                   <button
@@ -303,11 +332,17 @@ export default function SignUpPage() {
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.confirmPassword}
+                  </p>
                 )}
               </div>
 
@@ -317,11 +352,11 @@ export default function SignUpPage() {
                 disabled={isLoading}
                 className={`w-full py-3 rounded-2xl transition-all duration-300 font-semibold shadow-md hover:shadow-lg text-base ${
                   isLoading
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-primary hover:bg-primary/90 text-primary-foreground"
                 }`}
               >
-                {isLoading ? 'Signing up...' : 'Sign Up'}
+                {isLoading ? "Signing up..." : "Sign Up"}
               </button>
 
               {/* Divider */}
@@ -330,7 +365,9 @@ export default function SignUpPage() {
                   <div className="w-full border-t border-gray-300"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-gray-500">Or continue with</span>
+                  <span className="px-4 bg-white text-gray-500">
+                    Or continue with
+                  </span>
                 </div>
               </div>
 
@@ -363,10 +400,10 @@ export default function SignUpPage() {
 
               {/* Login Link */}
               <div className="text-center text-sm text-gray-600 mt-4">
-                Already have an account?{' '}
+                Already have an account?{" "}
                 <button
                   type="button"
-                  onClick={() => navigate('/login')}
+                  onClick={() => navigate("/login")}
                   className="text-primary font-semibold hover:underline"
                 >
                   Log in

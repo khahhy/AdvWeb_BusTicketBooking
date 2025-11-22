@@ -63,7 +63,14 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         // admin pages
-        <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminLayout /></ProtectedRoute>}>
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<AdminDashboard />} />
           <Route path="users-management">
             <Route path="passengers" element={<PassengerManagement />} />

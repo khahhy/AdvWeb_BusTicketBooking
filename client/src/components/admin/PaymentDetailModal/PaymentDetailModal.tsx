@@ -57,8 +57,8 @@ const PaymentDetailModal = ({
               payment.status === "successful"
                 ? "bg-green-50 border-green-100 text-green-800"
                 : payment.status === "failed"
-                ? "bg-red-50 border-red-100 text-red-800"
-                : "bg-yellow-50 border-yellow-100 text-yellow-800"
+                  ? "bg-red-50 border-red-100 text-red-800"
+                  : "bg-yellow-50 border-yellow-100 text-yellow-800"
             }`}
           >
             {payment.status === "successful" ? (

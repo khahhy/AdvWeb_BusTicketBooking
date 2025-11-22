@@ -1,45 +1,45 @@
-import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { buildApiUrl, API_ENDPOINTS } from '@/lib/api';
-import { Loader2 } from 'lucide-react';
-import backgroundImage from '@/assets/images/background.png';
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
+import { Loader2 } from "lucide-react";
+import backgroundImage from "@/assets/images/background.png";
 
 export default function AuthSuccessPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    const token = searchParams.get('token');
+    const token = searchParams.get("token");
 
     if (token) {
       const fetchUserInfo = async () => {
         try {
           // Save token first
-          localStorage.setItem('accessToken', token);
+          localStorage.setItem("accessToken", token);
 
           // Fetch full user info from backend
           const response = await fetch(buildApiUrl(API_ENDPOINTS.auth.me), {
             headers: {
-              'Authorization': `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
             },
           });
 
           if (response.ok) {
             const userData = await response.json();
-            localStorage.setItem('user', JSON.stringify(userData));
+            localStorage.setItem("user", JSON.stringify(userData));
 
             // Redirect to dashboard
             setTimeout(() => {
-              if (userData.role === 'admin') {
-                navigate('/admin');
+              if (userData.role === "admin") {
+                navigate("/admin");
               } else {
-                navigate('/dashboard');
+                navigate("/dashboard");
               }
             }, 1000);
           } else {
             // Fallback: parse JWT to get basic user info
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const base64Url = token.split(".")[1];
+            const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
             const payload = JSON.parse(window.atob(base64));
 
             const user = {
@@ -48,29 +48,32 @@ export default function AuthSuccessPage() {
               role: payload.role,
             };
 
-            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem("user", JSON.stringify(user));
 
             setTimeout(() => {
-              navigate('/dashboard');
+              navigate("/dashboard");
             }, 1000);
           }
         } catch (error) {
-          console.error('Error fetching user info:', error);
-          navigate('/login');
+          console.error("Error fetching user info:", error);
+          navigate("/login");
         }
       };
 
       fetchUserInfo();
     } else {
       // No token, redirect to login
-      navigate('/login');
+      navigate("/login");
     }
   }, [searchParams, navigate]);
 
   return (
     <div
       className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
-      style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundPosition: "center bottom",
+      }}
     >
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
         <div className="flex flex-col items-center">

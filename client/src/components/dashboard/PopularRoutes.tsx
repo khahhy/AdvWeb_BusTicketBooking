@@ -8,7 +8,7 @@ export default function PopularRoutes() {
 
   if (isLoading) return <div>Loading popular routes...</div>;
   if (error) {
-    console.error('Routes API error:', error);
+    console.error("Routes API error:", error);
     return <div>Failed to load routes.</div>;
   }
 

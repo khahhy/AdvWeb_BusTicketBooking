@@ -122,7 +122,6 @@ model Routes {
   destinationLocationId String
   name                  String
   description           String?
-  price                 Decimal
   isActive              Boolean        @default(false)
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
@@ -133,13 +132,13 @@ model Routes {
 }
 
 model TripRouteMap {
-  id      String @id @default(uuid())
   tripId  String
   routeId String
+  price   Decimal
   route   Routes @relation(fields: [routeId], references: [id])
   trip    Trips  @relation(fields: [tripId], references: [id])
 
-  @@unique([tripId, routeId])
+  @@id([tripId, routeId])
 }
 
 model Bookings {
@@ -169,7 +168,6 @@ model Bookings {
 }
 
 model SeatSegmentLocks {
-  id        String       @id @default(uuid())
   tripId    String
   seatId    String
   segmentId String
@@ -179,7 +177,7 @@ model SeatSegmentLocks {
   segment   TripSegments @relation(fields: [segmentId], references: [id])
   trip      Trips        @relation(fields: [tripId], references: [id])
 
-  @@unique([tripId, seatId, segmentId])
+  @@id([tripId, seatId, segmentId])
 }
 
 model Payments {

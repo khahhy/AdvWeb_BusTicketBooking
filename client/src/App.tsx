@@ -28,6 +28,7 @@ import BookingDetailsPage from "./pages/BookingDetailsPage";
 import FeedbackRatingPage from "./pages/FeedbackRatingPage";
 import ModifyBookingPage from "./pages/ModifyBookingPage";
 import NotificationsPage from "./pages/NotificationsPage";
+import TrackTicketPage from "./pages/TrackTicketPage";
 import Chatbot from "./components/ui/chatbot";
 import "./index.css";
 import CheckoutPage from "./pages/CheckoutPage";
@@ -42,6 +43,7 @@ import EmailVerifiedPage from "./pages/EmailVerifiedPage";
 import AuthSuccessPage from "./pages/AuthSuccessPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProfilePage from "./pages/ProfilePage";
+import AboutPage from "./pages/AboutPage";
 
 function AppContent() {
   const location = useLocation();
@@ -89,8 +91,10 @@ function AppContent() {
           </Route>
         </Route>
         <Route path="/dashboard" element={<UserDashboard />} />
+        <Route path="/about" element={<AboutPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/search" element={<SearchPage />} />
+        <Route path="/track-ticket" element={<TrackTicketPage />} />
         <Route path="/booking-history" element={<BookingHistoryPage />} />
         <Route path="/booking-details/:id" element={<BookingDetailsPage />} />
         <Route path="/feedback/:id" element={<FeedbackRatingPage />} />

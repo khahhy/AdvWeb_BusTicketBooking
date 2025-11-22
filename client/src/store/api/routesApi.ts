@@ -2,6 +2,11 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "./baseQuery";
 import { type Route } from "@/store/type/routesType";
 
+interface ApiResponse<T> {
+  message: string;
+  data: T;
+}
+
 export const routesApi = createApi({
   reducerPath: "api",
   baseQuery: baseQuery,
@@ -11,11 +16,13 @@ export const routesApi = createApi({
     getRoutes: builder.query<Route[], void>({
       query: () => "/routes",
       providesTags: ["Route"],
+      transformResponse: (response: ApiResponse<Route[]>) => response.data,
     }),
 
     getRouteById: builder.query<Route, string>({
       query: (id) => `/routes/${id}`,
       providesTags: (_result, _error, id) => [{ type: "Route", id }],
+      transformResponse: (response: ApiResponse<Route>) => response.data,
     }),
   }),
 });

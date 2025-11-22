@@ -16,7 +16,7 @@ export default function Navbar() {
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     const userStr = localStorage.getItem('user');
-    
+
     if (token && userStr) {
       setIsLoggedIn(true);
       try {
@@ -85,13 +85,8 @@ export default function Navbar() {
       icon: <Ticket className="h-4 w-4" />,
       children: [
         {
-          name: "Book Online",
-          link: "/booking",
-          icon: <Ticket className="h-4 w-4 text-blue-500" />,
-        },
-        {
           name: "Track Ticket",
-          link: "/ticket-lookup",
+          link: "/track-ticket",
           icon: <User className="h-4 w-4 text-green-500" />,
         },
         {
@@ -151,7 +146,7 @@ export default function Navbar() {
             />
           </div>
         ) : (
-          <Button 
+          <Button
             onClick={() => navigate('/login')}
             className="bg-white hover:bg-gray-50 text-black px-6 py-2 rounded-full border border-gray-200 shadow-sm text-base font-medium"
           >

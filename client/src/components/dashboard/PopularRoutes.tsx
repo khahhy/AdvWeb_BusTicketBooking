@@ -7,7 +7,14 @@ export default function PopularRoutes() {
   const { data: routes, isLoading, error } = useGetRoutesQuery();
 
   if (isLoading) return <div>Loading popular routes...</div>;
-  if (error || !routes) return <div>Failed to load routes.</div>;
+  if (error) {
+    console.error('Routes API error:', error);
+    return <div>Failed to load routes.</div>;
+  }
+
+  if (!routes || !Array.isArray(routes) || routes.length === 0) {
+    return <div>No routes available.</div>;
+  }
 
   const popularRoutes = routes.slice(0, 4).map((route) => {
     const price = `$${Number(route.price).toFixed(2)}`;

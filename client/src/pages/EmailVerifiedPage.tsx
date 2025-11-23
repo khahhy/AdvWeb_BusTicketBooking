@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ArrowRight, XCircle, Loader2 } from "lucide-react";
 import backgroundImage from "@/assets/images/background.png";
+import { buildApiUrl } from "@/lib/api";
 
 export default function EmailVerifiedPage() {
   const navigate = useNavigate();

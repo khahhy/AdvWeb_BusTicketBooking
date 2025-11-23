@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Mail, ArrowRight } from "lucide-react";
 import backgroundImage from "@/assets/images/background.png";
+import { buildApiUrl } from "@/lib/api";
 
 export default function VerifyEmailPage() {
   const navigate = useNavigate();

@@ -60,7 +60,7 @@ export default function EmailVerifiedPage() {
       {/* Logo in top-left corner */}
       <div className="absolute top-6 left-6 z-20">
         <button
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate("/dashboard")}
           className="hover:opacity-80 transition-opacity"
         >
           <img src={logoImage} alt="Bus Booking Logo" className="w-32" />

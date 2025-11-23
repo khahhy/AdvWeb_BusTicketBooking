@@ -134,12 +134,24 @@ export default function BookingDetailsPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'completed':
-        return <Badge className="bg-success-100 text-success hover:bg-success-100">Completed</Badge>;
-      case 'upcoming':
-        return <Badge className="bg-primary-50 text-primary hover:bg-primary-50">Upcoming</Badge>;
-      case 'cancelled':
-        return <Badge className="bg-error-50 text-error hover:bg-error-50">Cancelled</Badge>;
+      case "completed":
+        return (
+          <Badge className="bg-success-100 text-success hover:bg-success-100">
+            Completed
+          </Badge>
+        );
+      case "upcoming":
+        return (
+          <Badge className="bg-primary-50 text-primary hover:bg-primary-50">
+            Upcoming
+          </Badge>
+        );
+      case "cancelled":
+        return (
+          <Badge className="bg-error-50 text-error hover:bg-error-50">
+            Cancelled
+          </Badge>
+        );
       default:
         return <Badge>Unknown</Badge>;
     }
@@ -446,7 +458,9 @@ export default function BookingDetailsPage() {
 
                   <div className="border-t pt-4 flex justify-between text-xl font-bold text-gray-900">
                     <span>Total Paid</span>
-                    <span className="text-success">{formatCurrency(booking.totalAmount)}</span>
+                    <span className="text-success">
+                      {formatCurrency(booking.totalAmount)}
+                    </span>
                   </div>
 
                   <div className="pt-4 border-t">

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Eye, EyeOff, Phone } from 'lucide-react';
-import { buildApiUrl, API_ENDPOINTS } from '@/lib/api';
-import backgroundImage from '@/assets/images/background.png';
-import logoImage from '@/assets/images/logo.png';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Mail, Lock, User, Eye, EyeOff, Phone } from "lucide-react";
+import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
+import backgroundImage from "@/assets/images/background.png";
+import logoImage from "@/assets/images/logo.png";
 
 // Add CSS to hide browser's default password reveal button for all browsers
 const styleSheet = document.createElement("style");
@@ -183,7 +183,7 @@ export default function SignUpPage() {
       {/* Logo in top-left corner */}
       <div className="absolute top-6 left-6 z-20">
         <button
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate("/dashboard")}
           className="hover:opacity-80 transition-opacity"
         >
           <img src={logoImage} alt="Bus Booking Logo" className="w-32" />
@@ -272,7 +272,9 @@ export default function SignUpPage() {
                   />
                 </div>
                 {errors.phoneNumber && (
-                  <p className="mt-1 text-sm text-error">{errors.phoneNumber}</p>
+                  <p className="mt-1 text-sm text-error">
+                    {errors.phoneNumber}
+                  </p>
                 )}
               </div>
 
@@ -346,7 +348,9 @@ export default function SignUpPage() {
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="mt-1 text-sm text-error">{errors.confirmPassword}</p>
+                  <p className="mt-1 text-sm text-error">
+                    {errors.confirmPassword}
+                  </p>
                 )}
               </div>
 

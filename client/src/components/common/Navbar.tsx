@@ -118,28 +118,30 @@ export default function Navbar() {
         isLoggedIn ? (
           <div className="relative">
             <ResizableNavbar
-              items={[{
-                name: userName,
-                link: "#",
-                icon: <User className="h-5 w-5" />,
-                children: [
-                  {
-                    name: "Profile",
-                    link: "/profile",
-                    icon: <User className="h-4 w-4 text-primary" />,
-                  },
-                  {
-                    name: "Booking History",
-                    link: "/booking-history",
-                    icon: <CalendarIcon className="h-4 w-4 text-success" />,
-                  },
-                  {
-                    name: "Log Out",
-                    link: "#",
-                    icon: <LogOut className="h-4 w-4 text-error" />,
-                  },
-                ],
-              }]}
+              items={[
+                {
+                  name: userName,
+                  link: "#",
+                  icon: <User className="h-5 w-5" />,
+                  children: [
+                    {
+                      name: "Profile",
+                      link: "/profile",
+                      icon: <User className="h-4 w-4 text-primary" />,
+                    },
+                    {
+                      name: "Booking History",
+                      link: "/booking-history",
+                      icon: <CalendarIcon className="h-4 w-4 text-success" />,
+                    },
+                    {
+                      name: "Log Out",
+                      link: "#",
+                      icon: <LogOut className="h-4 w-4 text-error" />,
+                    },
+                  ],
+                },
+              ]}
               logo={<></>}
               onItemClick={handleNavClick}
               className="!relative !left-0 !transform-none !w-auto !mt-0 !bg-transparent !border-0 !shadow-none"

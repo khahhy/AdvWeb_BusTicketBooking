@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Mail, ArrowRight } from 'lucide-react';
-import backgroundImage from '@/assets/images/background.png';
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Mail, ArrowRight } from "lucide-react";
+import backgroundImage from "@/assets/images/background.png";
 import { buildApiUrl } from "@/lib/api";
-import logoImage from '@/assets/images/logo.png';
+import logoImage from "@/assets/images/logo.png";
 
 export default function VerifyEmailPage() {
   const navigate = useNavigate();
@@ -59,7 +59,7 @@ export default function VerifyEmailPage() {
       {/* Logo in top-left corner */}
       <div className="absolute top-6 left-6 z-20">
         <button
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate("/dashboard")}
           className="hover:opacity-80 transition-opacity"
         >
           <img src={logoImage} alt="Bus Booking Logo" className="w-32" />

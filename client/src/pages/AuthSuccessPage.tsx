@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { buildApiUrl, API_ENDPOINTS } from '@/lib/api';
-import { Loader2 } from 'lucide-react';
-import backgroundImage from '@/assets/images/background.png';
-import logoImage from '@/assets/images/logo.png';
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
+import { Loader2 } from "lucide-react";
+import backgroundImage from "@/assets/images/background.png";
+import logoImage from "@/assets/images/logo.png";
 
 export default function AuthSuccessPage() {
   const navigate = useNavigate();
@@ -79,7 +79,7 @@ export default function AuthSuccessPage() {
       {/* Logo in top-left corner */}
       <div className="absolute top-6 left-6 z-20">
         <button
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate("/dashboard")}
           className="hover:opacity-80 transition-opacity"
         >
           <img src={logoImage} alt="Bus Booking Logo" className="w-32" />

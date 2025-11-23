@@ -1,5 +1,6 @@
 import { Eye, Star, Trash2, EyeOff } from "lucide-react";
-import { Review, formatDate } from "@/admin/customerCare/ReviewManagement";
+import { Review } from "@/admin/customerCare/ReviewManagement";
+import { formatDate } from "@/utils/formatDate";
 
 interface ReviewTableProps {
   reviews: Review[];

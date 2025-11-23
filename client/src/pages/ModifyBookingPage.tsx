@@ -8,13 +8,10 @@ import {
   MapPin,
   Calendar,
   Clock,
-  User,
-  Ticket,
   RefreshCw,
 } from "lucide-react";
 import Navbar from "@/components/common/Navbar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -321,7 +318,9 @@ export default function ModifyBookingPage() {
               </div>
               <div>
                 <span className="text-gray-600">Price:</span>
-                <div className="font-semibold text-success">{formatCurrency(booking.price)}</div>
+                <div className="font-semibold text-success">
+                  {formatCurrency(booking.price)}
+                </div>
               </div>
             </div>
           </div>
@@ -352,15 +351,9 @@ export default function ModifyBookingPage() {
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <CalendarComponent
-                      mode="single"
-                      selected={selectedDate?.toDate()}
-                      onSelect={(date: Date | undefined) =>
-                        setSelectedDate(date ? dayjs(date) : null)
-                      }
-                      disabled={(date: Date) =>
-                        dayjs(date).isBefore(dayjs(), "day")
-                      }
-                      initialFocus
+                      value={selectedDate || null}
+                      onChange={(date: Dayjs | null) => setSelectedDate(date)}
+                      minDate={new Dayjs()}
                     />
                   </PopoverContent>
                 </Popover>
@@ -421,10 +414,15 @@ export default function ModifyBookingPage() {
             {/* Changes Summary */}
             {hasChanges() && (
               <div className="mt-6 p-4 bg-primary-50 border border-blue-200 rounded-lg">
-                <h4 className="font-semibold text-primary mb-2">Changes Summary:</h4>
+                <h4 className="font-semibold text-primary mb-2">
+                  Changes Summary:
+                </h4>
                 <ul className="text-sm text-primary space-y-1">
-                  {selectedDate?.format('YYYY-MM-DD') !== booking.date && (
-                    <li>• Date changed from {formatDate(dayjs(booking.date))} to {formatDate(selectedDate)}</li>
+                  {selectedDate?.format("YYYY-MM-DD") !== booking.date && (
+                    <li>
+                      • Date changed from {formatDate(dayjs(booking.date))} to{" "}
+                      {formatDate(selectedDate)}
+                    </li>
                   )}
                   {selectedTime !== booking.departureTime && (
                     <li>
@@ -503,7 +501,9 @@ export default function ModifyBookingPage() {
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
               <AlertTriangle className="w-6 h-6 text-error" />
-              <h3 className="text-xl font-bold text-gray-900">Cancel Booking?</h3>
+              <h3 className="text-xl font-bold text-gray-900">
+                Cancel Booking?
+              </h3>
             </div>
 
             <p className="text-gray-600 mb-6">

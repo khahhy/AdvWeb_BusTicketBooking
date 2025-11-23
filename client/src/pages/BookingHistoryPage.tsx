@@ -219,7 +219,7 @@ export default function BookingHistoryPage() {
 
         {/* Booking Cards */}
         <div className="space-y-6">
-          {filteredBookings.map((booking, index) => (
+          {filteredBookings.map((booking) => (
             <div
               key={booking.id}
               className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]"

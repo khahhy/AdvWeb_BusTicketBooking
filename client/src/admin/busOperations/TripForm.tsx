@@ -41,7 +41,17 @@ import L from "leaflet";
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 
-let DefaultIcon = L.icon({
+// temporary to fix eslint
+export interface Location {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  lat: number;
+  lng: number;
+}
+
+const DefaultIcon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
   iconSize: [25, 41],
@@ -59,6 +69,7 @@ const mockLocations = [
     id: "LOC-001",
     name: "Bến xe Miền Đông",
     address: "292 Đinh Bộ Lĩnh, P.26, Q. Bình Thạnh, TPHCM",
+    city: "TPHCM",
     lat: 10.8142,
     lng: 106.7025,
   },
@@ -66,6 +77,7 @@ const mockLocations = [
     id: "LOC-002",
     name: "Trạm Dầu Giây (Đồng Nai)",
     address: "QL1A, H. Thống Nhất, Đồng Nai",
+    city: "Đồng Nai",
     lat: 10.9414,
     lng: 107.1622,
   },
@@ -73,6 +85,7 @@ const mockLocations = [
     id: "LOC-003",
     name: "Bến xe Đà Lạt",
     address: "01 Tô Hiến Thành, P.3, TP. Đà Lạt",
+    city: "TP. Đà Lạt",
     lat: 11.9381,
     lng: 108.4459,
   },
@@ -80,6 +93,7 @@ const mockLocations = [
     id: "LOC-004",
     name: "Trạm Bảo Lộc",
     address: "QL20, TP. Bảo Lộc, Lâm Đồng",
+    city: "Lâm Đồng",
     lat: 11.5473,
     lng: 107.8061,
   },
@@ -147,7 +161,7 @@ const TripForm = () => {
   const [tripStops, setTripStops] = useState<TripStop[]>([]);
 
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<any>(null);
+  const [selectedLocation, setSelectedLocation] = useState<Location>();
   const [tempArrivalTime, setTempArrivalTime] = useState("");
   const [tempDepartureTime, setTempDepartureTime] = useState("");
 
@@ -165,7 +179,7 @@ const TripForm = () => {
     }
   }, [tripStops]);
 
-  const handleMapMarkerClick = (location: any) => {
+  const handleMapMarkerClick = (location: Location) => {
     setSelectedLocation(location);
 
     const now = new Date().toISOString().slice(0, 16);

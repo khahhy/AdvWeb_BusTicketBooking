@@ -1,15 +1,43 @@
-import {
-  Sheet,
-  SheetContent,
-  SheetFooter,
-  SheetClose,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dispatch, SetStateAction } from "react";
+
+// temporary to fix eslint
+export interface BusDetailsDrawerProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  bus: Bus | null;
+  name: string;
+  plate: string;
+  amenities: string[];
+  setName: Dispatch<SetStateAction<string>>;
+  setPlate: Dispatch<SetStateAction<string>>;
+  onAmenityChange: (amenities: string[]) => void;
+  relatedTrips: Trip[];
+  onSave: () => void;
+}
+
+export interface Bus {
+  id: string;
+  name: string;
+  plate: string;
+  amenities: string[];
+  status: string;
+}
+
+export interface Trip {
+  id: string;
+  routeName: string;
+  origin: string;
+  destination: string;
+  departureTime: string;
+  arrivalTime: string;
+}
 
 const allPossibleAmenities = [
   { id: "wifi", label: "Wifi" },
@@ -32,7 +60,7 @@ const BusDetailsDrawer = ({
   onAmenityChange,
   relatedTrips,
   onSave,
-}: any) => {
+}: BusDetailsDrawerProps) => {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-2xl">
@@ -87,9 +115,15 @@ const BusDetailsDrawer = ({
                         <Checkbox
                           id={amenity.id}
                           checked={amenities.includes(amenity.id)}
-                          onCheckedChange={(checked) =>
-                            onAmenityChange(amenity.id, !!checked)
-                          }
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              onAmenityChange([...amenities, amenity.id]);
+                            } else {
+                              onAmenityChange(
+                                amenities.filter((id) => id !== amenity.id),
+                              );
+                            }
+                          }}
                         />
                         <label
                           htmlFor={amenity.id}
@@ -111,7 +145,7 @@ const BusDetailsDrawer = ({
             <TabsContent value="trips">
               <div className="mt-4 space-y-4">
                 {relatedTrips.length ? (
-                  relatedTrips.map((trip: any) => (
+                  relatedTrips.map((trip: Trip) => (
                     <div key={trip.id} className="p-4 border rounded-md">
                       <p className="font-semibold">{trip.routeName}</p>
                       <p className="text-sm">

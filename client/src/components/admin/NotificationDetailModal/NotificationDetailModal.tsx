@@ -1,8 +1,6 @@
 import { XCircle, Mail, MessageSquare, Clock, RotateCcw } from "lucide-react";
-import {
-  NotificationLog,
-  formatDate,
-} from "@/admin/customerCare/NotificationManagement";
+import { NotificationLog } from "@/admin/customerCare/NotificationManagement";
+import { formatDate } from "@/utils/formatDate";
 
 interface NotificationDetailModalProps {
   isOpen: boolean;

@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
+// import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
 import Navbar from "@/components/common/Navbar";
 import Footer from "@/components/dashboard/Footer";
 import backgroundImage from "@/assets/images/background.png";
@@ -129,11 +129,11 @@ export default function TrackTicketPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'completed':
+      case "completed":
         return <Badge className="bg-success-100 text-success">Completed</Badge>;
-      case 'upcoming':
+      case "upcoming":
         return <Badge className="bg-primary-50 text-primary">Upcoming</Badge>;
-      case 'cancelled':
+      case "cancelled":
         return <Badge className="bg-error-50 text-error">Cancelled</Badge>;
       default:
         return <Badge className="bg-gray-100 text-gray-700">Unknown</Badge>;

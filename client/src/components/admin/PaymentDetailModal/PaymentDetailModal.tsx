@@ -8,11 +8,9 @@ import {
   FileText,
   Activity,
 } from "lucide-react";
-import {
-  Payment,
-  formatCurrency,
-  formatDate,
-} from "@/admin/saleAndBooking/PaymentManagement";
+import { Payment } from "@/admin/saleAndBooking/PaymentManagement";
+import { formatDate } from "@/utils/formatDate";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 interface PaymentDetailModalProps {
   isOpen: boolean;

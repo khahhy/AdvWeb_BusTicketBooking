@@ -16,16 +16,8 @@ export interface Review {
   rating: number;
   comment: string;
   createdAt: string;
-  status?: "visible" | "hidden";
+  status: "visible" | "hidden";
 }
-
-export const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-};
 
 const MOCK_REVIEWS: Review[] = [
   {

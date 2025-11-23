@@ -43,7 +43,7 @@ const MapBounds = ({ markers }: { markers: GeocodedLocation[] }) => {
   return null;
 };
 
-const LocationMap = ({ locations, selectedId, onSelect }: LocationMapProps) => {
+const LocationMap = ({ locations, onSelect }: LocationMapProps) => {
   const [geocodedLocations, setGeocodedLocations] = useState<
     GeocodedLocation[]
   >([]);

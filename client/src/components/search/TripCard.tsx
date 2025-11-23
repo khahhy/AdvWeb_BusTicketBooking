@@ -11,12 +11,12 @@ interface TripCardProps {
   onToggle: (tripId: string) => void;
 }
 
+type TabId = "schedule" | "seat" | "shipment" | "policy";
+
 export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState<
-    "schedule" | "seat" | "shipment" | "policy" | null
-  >(null);
+  const [activeTab, setActiveTab] = useState<TabId | null>(null);
   const [seats, setSeats] = useState<Seat[]>(() =>
     generateSeats(32, 32 - trip.availableSeats, trip.price),
   );
@@ -191,12 +191,12 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
                 onClick={() => {
                   if (!isOpen) {
                     onToggle(trip.id);
-                    setActiveTab(tab.id as any);
+                    setActiveTab(tab.id as TabId);
                   } else if (activeTab === tab.id) {
                     onToggle(trip.id);
                     setActiveTab(null);
                   } else {
-                    setActiveTab(tab.id as any);
+                    setActiveTab(tab.id as TabId);
                   }
                 }}
                 className={`px-6 py-2 text-sm font-medium rounded-2xl transition-all duration-200 ${

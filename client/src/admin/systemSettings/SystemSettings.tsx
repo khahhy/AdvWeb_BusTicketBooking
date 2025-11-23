@@ -74,10 +74,10 @@ const SystemSettings = () => {
   const [config, setConfig] = useState<SystemConfig>(INITIAL_CONFIG);
   const [isSaving, setIsSaving] = useState(false);
 
-  const updateConfig = (
-    section: keyof SystemConfig,
-    field: string,
-    value: any,
+  const updateConfig = <K extends keyof SystemConfig>(
+    section: K,
+    field: keyof SystemConfig[K],
+    value: SystemConfig[K][keyof SystemConfig[K]],
   ) => {
     setConfig((prev) => ({
       ...prev,

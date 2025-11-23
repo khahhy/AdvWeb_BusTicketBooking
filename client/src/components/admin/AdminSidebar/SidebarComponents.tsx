@@ -14,7 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { NavItem } from "./adminSidebar.config";
 
-export const getNavLinkClass = (
+const getNavLinkClass = (
   path: string,
   currentPath: string,
   isCollapsed: boolean,

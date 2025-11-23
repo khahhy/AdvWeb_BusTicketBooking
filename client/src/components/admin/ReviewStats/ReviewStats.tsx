@@ -1,7 +1,20 @@
 import { Star, MessageSquare, AlertTriangle } from "lucide-react";
 
+export interface BookingReview {
+  id: string;
+  bookingId: string;
+  userId: string;
+  userName: string;
+  routeName: string;
+  tripDate: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  status: "visible" | "hidden";
+}
+
 interface ReviewStatsProps {
-  reviews: any[];
+  reviews: BookingReview[];
 }
 
 const ReviewStats = ({ reviews }: ReviewStatsProps) => {

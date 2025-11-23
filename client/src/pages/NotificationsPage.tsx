@@ -5,10 +5,7 @@ import {
   CheckCircle,
   AlertTriangle,
   Info,
-  X,
-  MoreVertical,
   Trash2,
-  MarkAsRead,
   Filter,
 } from "lucide-react";
 import Navbar from "@/components/common/Navbar";
@@ -209,12 +206,18 @@ export default function NotificationsPage() {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'booking': return 'bg-green-100 text-green-700';
-      case 'payment': return 'bg-blue-100 text-blue-700';
-      case 'reminder': return 'bg-orange-100 text-orange-700';
-      case 'system': return 'bg-gray-100 text-gray-700';
-      case 'promotion': return 'bg-secondary-100 text-secondary';
-      default: return 'bg-gray-100 text-gray-700';
+      case "booking":
+        return "bg-green-100 text-green-700";
+      case "payment":
+        return "bg-blue-100 text-blue-700";
+      case "reminder":
+        return "bg-orange-100 text-orange-700";
+      case "system":
+        return "bg-gray-100 text-gray-700";
+      case "promotion":
+        return "bg-secondary-100 text-secondary";
+      default:
+        return "bg-gray-100 text-gray-700";
     }
   };
 
@@ -322,7 +325,7 @@ export default function NotificationsPage() {
 
                 <Select
                   value={filter}
-                  onValueChange={(value: any) => setFilter(value)}
+                  onValueChange={(value) => setFilter(value as typeof filter)}
                 >
                   <SelectTrigger className="w-40">
                     <SelectValue />
@@ -511,7 +514,7 @@ export default function NotificationsPage() {
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-secondary">
-                    {notifications.filter(n => n.type === 'promotion').length}
+                    {notifications.filter((n) => n.type === "promotion").length}
                   </div>
                   <div className="text-sm text-gray-600">Promotions</div>
                 </div>

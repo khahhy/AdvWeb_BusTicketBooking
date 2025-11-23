@@ -7,6 +7,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { StatCard, PaymentDetailModal, PaymentTable } from "@/components/admin";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 export interface Payment {
   id: string;
@@ -19,23 +20,6 @@ export interface Payment {
   status: "pending" | "successful" | "failed" | "refunded";
   createdAt: string;
 }
-
-export const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(amount);
-};
-
-export const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
 
 const MOCK_PAYMENTS: Payment[] = [
   {

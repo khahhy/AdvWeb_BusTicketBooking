@@ -13,6 +13,36 @@ import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { Calendar, Clock, MapPin, Bus } from "lucide-react";
 
+// temporary to fix eslint
+export interface Trip {
+  id: string;
+  tripName: string;
+  busId: string;
+  busLicensePlate: string;
+  startTime: Date;
+  endTime: Date;
+  status: TripStatus;
+}
+
+export interface TripStop {
+  name: string;
+  time: string;
+}
+
+export interface TripRoute {
+  name: string;
+  price: number;
+}
+export interface TripDetailsDrawerProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  trip: Trip | null;
+  stops: TripStop[];
+  routes: TripRoute[];
+  onEdit: (tripId: string) => void;
+  onCancel: (tripId: string) => void;
+}
+
 type TripStatus = "Scheduled" | "Ongoing" | "Completed" | "Cancelled";
 
 const TripDetailsDrawer = ({
@@ -23,7 +53,7 @@ const TripDetailsDrawer = ({
   routes,
   onEdit,
   onCancel,
-}: any) => {
+}: TripDetailsDrawerProps) => {
   if (!trip) return null;
 
   const getStatusBadgeVariant = (status: TripStatus) => {
@@ -127,7 +157,7 @@ const TripDetailsDrawer = ({
               <Separator />
               {stops && stops.length > 0 ? (
                 <div className="relative border-l-2 border-muted ml-2 pl-6 py-2 space-y-6">
-                  {stops.map((stop: any, index: number) => (
+                  {stops.map((stop: TripStop, index: number) => (
                     <div key={index} className="relative">
                       <span className="absolute -left-[29px] top-1 bg-background border-2 border-primary rounded-full w-3 h-3"></span>
                       <p className="font-medium text-sm">{stop.name}</p>
@@ -149,7 +179,7 @@ const TripDetailsDrawer = ({
             <div className="rounded-md border">
               {routes && routes.length > 0 ? (
                 <div className="divide-y">
-                  {routes.map((route: any, index: number) => (
+                  {routes.map((route: TripRoute, index: number) => (
                     <div
                       key={index}
                       className="flex justify-between items-center p-4 hover:bg-muted/50 transition-colors"

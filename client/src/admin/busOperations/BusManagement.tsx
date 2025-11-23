@@ -13,14 +13,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { AddBusDialog, BusDetailsDrawer } from "@/components/admin";
 
-const amenities = [
-  { id: "wifi", label: "Wifi" },
-  { id: "charging", label: "Cổng sạc USB" },
-  { id: "wc", label: "WC (Nhà vệ sinh)" },
-  { id: "blanket", label: "Chăn đắp" },
-  { id: "water", label: "Nước uống" },
-  { id: "cold_towel", label: "Khăn lạnh" },
-];
+// const amenities = [
+//   { id: "wifi", label: "Wifi" },
+//   { id: "charging", label: "Cổng sạc USB" },
+//   { id: "wc", label: "WC (Nhà vệ sinh)" },
+//   { id: "blanket", label: "Chăn đắp" },
+//   { id: "water", label: "Nước uống" },
+//   { id: "cold_towel", label: "Khăn lạnh" },
+// ];
 
 type Bus = {
   id: string;
@@ -230,16 +230,10 @@ const BusManagement = () => {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {bus.amenities.includes("wifi") && (
-                            <Wifi
-                              className="h-4 w-4 text-blue-500"
-                              title="Wifi"
-                            />
+                            <Wifi className="h-4 w-4 text-blue-500" />
                           )}
                           {bus.amenities.includes("charging") && (
-                            <Plug
-                              className="h-4 w-4 text-green-500"
-                              title="Cổng sạc"
-                            />
+                            <Plug className="h-4 w-4 text-green-500" />
                           )}
                           {bus.amenities.length > 2 && (
                             <span className="text-xs text-muted-foreground bg-slate-100 px-1.5 py-0.5 rounded">

@@ -1,7 +1,6 @@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -10,6 +9,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Dispatch, SetStateAction } from "react";
+
+export interface AddBusDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  name: string;
+  plate: string;
+  amenities: string[];
+  setName: Dispatch<SetStateAction<string>>;
+  setPlate: Dispatch<SetStateAction<string>>;
+  onAmenityChange: (amenities: string[]) => void;
+  onCreate: () => void;
+}
 
 const allPossibleAmenities = [
   { id: "wifi", label: "Wifi" },
@@ -30,7 +42,7 @@ const AddBusDialog = ({
   setPlate,
   onAmenityChange,
   onCreate,
-}: any) => {
+}: AddBusDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl w-full">
@@ -71,9 +83,15 @@ const AddBusDialog = ({
                   <Checkbox
                     id={amenity.id}
                     checked={amenities.includes(amenity.id)}
-                    onCheckedChange={(checked) =>
-                      onAmenityChange(amenity.id, !!checked)
-                    }
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        onAmenityChange([...amenities, amenity.id]);
+                      } else {
+                        onAmenityChange(
+                          amenities.filter((id) => id !== amenity.id),
+                        );
+                      }
+                    }}
                   />
                   <label htmlFor={amenity.id} className="text-sm font-medium">
                     {amenity.label}

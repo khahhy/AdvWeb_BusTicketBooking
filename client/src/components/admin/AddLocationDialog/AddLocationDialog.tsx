@@ -9,11 +9,18 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useState, useEffect } from "react";
+
+interface AddLocationFormData {
+  name: string;
+  city: string;
+  address: string;
+}
 
 interface AddLocationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: AddLocationFormData) => void;
 }
 
 const AddLocationDialog = ({
@@ -21,6 +28,22 @@ const AddLocationDialog = ({
   onOpenChange,
   onSubmit,
 }: AddLocationDialogProps) => {
+  const [name, setName] = useState("");
+  const [city, setCity] = useState("");
+  const [address, setAddress] = useState("");
+
+  // temporary to fix eslint
+  useEffect(() => {
+    if (open) {
+      setName("");
+      setCity("");
+      setAddress("");
+    }
+  }, [open]);
+  const handleSubmit = () => {
+    onSubmit({ name, city, address });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogOverlay className="bg-black/50 backdrop-blur-sm z-[9999]" />
@@ -49,7 +72,7 @@ const AddLocationDialog = ({
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit" onClick={() => onSubmit({})}>
+          <Button type="submit" onClick={handleSubmit}>
             Create
           </Button>
         </DialogFooter>

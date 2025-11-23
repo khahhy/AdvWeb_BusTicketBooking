@@ -1,7 +1,27 @@
 import { Mail, MessageSquare, XCircle, Activity } from "lucide-react";
 
+export interface NotificationLog {
+  id: string;
+  userId: string;
+  userName: string;
+  contactInfo: string;
+  bookingId?: string;
+  bookingTicketCode?: string;
+  type: "email" | "sms";
+  template:
+    | "booking_confirmation"
+    | "trip_reminder"
+    | "delay_alert"
+    | "cancellation_notice"
+    | "otp_verification";
+  content: string;
+  status: "pending" | "sent" | "failed";
+  sentAt?: string;
+  createdAt: string;
+}
+
 interface NotificationStatsProps {
-  logs: any[];
+  logs: NotificationLog[];
 }
 
 const NotificationStats = ({ logs }: NotificationStatsProps) => {

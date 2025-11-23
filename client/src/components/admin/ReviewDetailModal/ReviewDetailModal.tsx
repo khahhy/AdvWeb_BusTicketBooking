@@ -1,5 +1,6 @@
 import { XCircle, Star, MapPin, Calendar, Quote } from "lucide-react";
-import { Review, formatDate } from "@/admin/customerCare/ReviewManagement";
+import { Review } from "@/admin/customerCare/ReviewManagement";
+import { formatDate } from "@/utils/formatDate";
 
 interface ReviewDetailModalProps {
   isOpen: boolean;

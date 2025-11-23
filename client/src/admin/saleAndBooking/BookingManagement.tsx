@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 
 import { StatCard, BookingDetailModal } from "@/components/admin";
+import { formatDate } from "@/utils/formatDate";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 export interface CustomerInfo {
   fullName: string;
@@ -36,23 +38,6 @@ export interface Booking {
   createdAt: string;
   paymentGateway?: string;
 }
-
-export const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(amount);
-};
-
-export const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
 
 const MOCK_BOOKINGS: Booking[] = [
   {

@@ -27,7 +27,10 @@ interface LocationDetailsDrawerProps {
   onOpenChange: (open: boolean) => void;
   location: Location | null;
   allRoutes: RouteTime[];
-  onSave: (id: string, data: any) => void;
+  onSave: (
+    id: string,
+    data: { name: string; city: string; address: string },
+  ) => void;
   onDelete: (id: string) => void;
 }
 

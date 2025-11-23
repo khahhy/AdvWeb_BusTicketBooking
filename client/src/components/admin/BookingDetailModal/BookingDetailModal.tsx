@@ -1,10 +1,8 @@
 import React from "react";
 import { XCircle, Ticket, MapPin, CreditCard } from "lucide-react";
-import {
-  Booking,
-  formatCurrency,
-  formatDate,
-} from "@/admin/saleAndBooking/BookingManagement";
+import { Booking } from "@/admin/saleAndBooking/BookingManagement";
+import { formatDate } from "@/utils/formatDate";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 interface BookingDetailModalProps {
   isOpen: boolean;

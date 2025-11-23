@@ -29,6 +29,7 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TripDetailsDrawer } from "@/components/admin";
+import { Dayjs } from "dayjs";
 
 type TripStatus = "Scheduled" | "Ongoing" | "Completed" | "Cancelled";
 
@@ -42,14 +43,29 @@ type Trip = {
   status: TripStatus;
 };
 
-const mockTripStopsView: any = {
+// temporary to fix eslint
+export interface TripStopsView {
+  [tripId: string]: {
+    name: string;
+    time: string;
+  }[];
+}
+
+export interface RoutesView {
+  [tripId: string]: {
+    name: string;
+    price: string;
+  }[];
+}
+
+const mockTripStopsView: TripStopsView = {
   "T-001": [
     { name: "Bến xe Miền Đông", time: "08:00" },
     { name: "Trạm Dầu Giây", time: "09:30" },
     { name: "Bến xe Đà Lạt", time: "14:00" },
   ],
 };
-const mockRoutesView: any = {
+const mockRoutesView: RoutesView = {
   "T-001": [{ name: "Sài Gòn - Đà Lạt", price: "350,000" }],
 };
 
@@ -109,7 +125,7 @@ const getStatusBadgeVariant = (status: TripStatus) => {
 
 const TripManagement = () => {
   const navigate = useNavigate();
-  const [date, setDate] = useState<Date | undefined>(new Date("2025-11-17"));
+  const [date, setDate] = useState<Dayjs | null>(null);
 
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -171,16 +187,11 @@ const TripManagement = () => {
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                    {date ? date.format("LL") : <span>Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    autoFocus
-                  />
+                  <Calendar value={date} onChange={setDate} />
                 </PopoverContent>
               </Popover>
             </div>

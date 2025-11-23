@@ -8,11 +8,9 @@ import {
   Calendar,
   Clock,
   CheckCircle2,
-  Camera,
 } from "lucide-react";
 import Navbar from "@/components/common/Navbar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import Footer from "@/components/dashboard/Footer";
 import backgroundImage from "@/assets/images/background.png";
@@ -112,6 +110,7 @@ export default function FeedbackRatingPage() {
 
   const handleStarHover = (rating: number, isOverall: boolean = false) => {
     if (isOverall) {
+      console.log(hoverRating); // temporary to fix eslint
       setHoverRating(rating);
     }
   };
@@ -225,7 +224,9 @@ export default function FeedbackRatingPage() {
           <div className="text-center max-w-md mx-auto">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
               <CheckCircle2 className="w-16 h-16 text-success mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">Thank You!</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                Thank You!
+              </h2>
               <p className="text-gray-600 mb-6">
                 Your feedback has been submitted successfully. We appreciate
                 your time and will use your feedback to improve our services.

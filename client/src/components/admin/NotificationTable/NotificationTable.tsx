@@ -7,10 +7,8 @@ import {
   XCircle,
   Clock,
 } from "lucide-react";
-import {
-  NotificationLog,
-  formatDate,
-} from "@/admin/customerCare/NotificationManagement";
+import { NotificationLog } from "@/admin/customerCare/NotificationManagement";
+import { formatDate } from "@/utils/formatDate";
 
 interface NotificationTableProps {
   logs: NotificationLog[];

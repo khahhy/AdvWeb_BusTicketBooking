@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { XCircle, Send, Users, User, Bus } from "lucide-react";
 
 interface SendNotificationModalProps {
@@ -16,6 +16,9 @@ const SendNotificationModal = ({
     "all" | "specific_user" | "specific_trip"
   >("all");
   const [channel, setChannel] = useState<"email" | "sms" | "push">("email");
+  useEffect(() => {
+    if (isOpen) setChannel("email");
+  }, [isOpen]); // temporary
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,7 +124,9 @@ const SendNotificationModal = ({
             <select
               className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
               value={channel}
-              onChange={(e) => setChannel(e.target.value as any)}
+              onChange={(e) =>
+                setChannel(e.target.value as "email" | "sms" | "push")
+              }
             >
               <option value="email">Email</option>
               <option value="sms">SMS (Twilio/eSMS)</option>

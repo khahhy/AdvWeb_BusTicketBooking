@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import { buildApiUrl, API_ENDPOINTS } from '@/lib/api';
-import backgroundImage from '@/assets/images/background.png';
-import logoImage from '@/assets/images/logo.png';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
+import backgroundImage from "@/assets/images/background.png";
+import logoImage from "@/assets/images/logo.png";
 
 // Add CSS to hide browser's default password reveal button for all browsers
 const styleSheet = document.createElement("style");
@@ -118,7 +118,7 @@ export default function LoginPage() {
 
           // Navigate based on user role
           if (data.user.role === "admin") {
-            navigate("/admin/bus-operations/locations");
+            navigate("/admin");
           } else {
             navigate("/dashboard");
           }
@@ -155,7 +155,7 @@ export default function LoginPage() {
       {/* Logo in top-left corner */}
       <div className="absolute top-6 left-6 z-20">
         <button
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate("/dashboard")}
           className="hover:opacity-80 transition-opacity"
         >
           <img src={logoImage} alt="Bus Booking Logo" className="w-32" />

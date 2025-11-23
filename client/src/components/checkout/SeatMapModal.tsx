@@ -1,6 +1,7 @@
 import { X, Bus } from "lucide-react";
 import { Trip } from "@/data/mockTrips";
 import SeatMap from "@/components/search/SeatMap";
+import type { Seat } from "@/data/mockTrips";
 
 interface SeatMapModalProps {
   show: boolean;
@@ -10,7 +11,7 @@ interface SeatMapModalProps {
   formatCurrency: (amount: number) => string;
   selectedSeat: string;
   ticketPrice: number;
-  seats: any[];
+  seats: Seat[];
 }
 
 export default function SeatMapModal({

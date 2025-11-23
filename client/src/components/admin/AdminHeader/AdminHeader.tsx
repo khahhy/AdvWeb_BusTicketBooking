@@ -18,16 +18,16 @@ const AdminHeader = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('user');
-    navigate('/login');
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("user");
+    navigate("/login");
   };
 
   return (
     <header
       className={cn(
         "flex h-16 items-center gap-4 rounded-lg shadow-sm bg-white dark:bg-gray-900 px-4 lg:px-6",
-        "sticky top-0 z-50"
+        "sticky top-0 z-50",
       )}
     >
       <Sheet>

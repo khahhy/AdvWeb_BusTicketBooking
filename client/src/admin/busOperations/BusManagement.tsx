@@ -166,7 +166,7 @@ const BusManagement = () => {
 
   function handleAmenityChange(id: string, checked: boolean) {
     setCurrentAmenities((prev) =>
-      checked ? [...prev, id] : prev.filter((x) => x !== id)
+      checked ? [...prev, id] : prev.filter((x) => x !== id),
     );
   }
 

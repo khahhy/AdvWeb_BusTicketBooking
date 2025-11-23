@@ -13,10 +13,13 @@ const ReviewStats = ({ reviews }: ReviewStatsProps) => {
         ).toFixed(1)
       : "0.0";
 
-  const starCounts = reviews.reduce((acc, cur) => {
-    acc[cur.rating] = (acc[cur.rating] || 0) + 1;
-    return acc;
-  }, {} as Record<number, number>);
+  const starCounts = reviews.reduce(
+    (acc, cur) => {
+      acc[cur.rating] = (acc[cur.rating] || 0) + 1;
+      return acc;
+    },
+    {} as Record<number, number>,
+  );
 
   const lowRatingCount = (starCounts[1] || 0) + (starCounts[2] || 0);
 
@@ -89,8 +92,8 @@ const ReviewStats = ({ reviews }: ReviewStatsProps) => {
                       star >= 4
                         ? "bg-green-500"
                         : star === 3
-                        ? "bg-yellow-400"
-                        : "bg-red-500"
+                          ? "bg-yellow-400"
+                          : "bg-red-500"
                     }`}
                     style={{ width: `${percent}%` }}
                   />

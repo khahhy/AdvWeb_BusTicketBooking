@@ -368,13 +368,26 @@ export class RoutesService {
         finalPrice = pricingCalc.details.finalPrice;
       }
 
-      const newTripRouteMap = await this.prisma.tripRouteMap.create({
-        data: {
-          tripId,
-          routeId,
-          price: finalPrice,
-        },
-      });
+      const operations: Prisma.PrismaPromise<unknown>[] = [
+        this.prisma.tripRouteMap.create({
+          data: {
+            tripId,
+            routeId,
+            price: finalPrice,
+          },
+        }),
+      ];
+
+      if (!route.isActive) {
+        operations.push(
+          this.prisma.routes.update({
+            where: { id: routeId },
+            data: { isActive: true },
+          }),
+        );
+      }
+
+      const [newTripRouteMap] = await this.prisma.$transaction(operations);
 
       return {
         message: 'Trip Route Map created successfully',

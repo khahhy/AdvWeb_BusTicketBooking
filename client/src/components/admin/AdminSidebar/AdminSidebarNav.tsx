@@ -29,7 +29,7 @@ const AdminSidebarNav = ({ isCollapsed }: AdminSidebarNavProps) => {
               isCollapsed={isCollapsed}
               currentPath={currentPath}
             />
-          )
+          ),
         )}
       </TooltipProvider>
     </div>

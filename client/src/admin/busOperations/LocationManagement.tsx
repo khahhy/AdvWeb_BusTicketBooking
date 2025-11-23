@@ -23,7 +23,7 @@ import type { RouteTime } from "@/store/type/routesType";
 
 const LocationManagement = () => {
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(
-    null
+    null,
   );
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -110,7 +110,7 @@ const LocationManagement = () => {
                     "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all hover:bg-accent",
                     selectedLocation?.id === loc.id
                       ? "bg-accent border-primary/50 ring-1 ring-primary/20"
-                      : "bg-card border-transparent hover:border-border"
+                      : "bg-card border-transparent hover:border-border",
                   )}
                 >
                   <div
@@ -118,7 +118,7 @@ const LocationManagement = () => {
                       "p-2 rounded-md mt-0.5",
                       selectedLocation?.id === loc.id
                         ? "bg-primary/10 text-primary"
-                        : "bg-muted text-muted-foreground"
+                        : "bg-muted text-muted-foreground",
                     )}
                   >
                     <MapPin className="h-4 w-4" />

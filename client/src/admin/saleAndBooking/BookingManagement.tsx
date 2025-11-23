@@ -140,7 +140,7 @@ const BookingManagement = () => {
 
         return acc;
       },
-      { totalRevenue: 0, monthlyRevenue: 0, dailyRevenue: 0 }
+      { totalRevenue: 0, monthlyRevenue: 0, dailyRevenue: 0 },
     );
   }, []);
 
@@ -307,8 +307,8 @@ const BookingManagement = () => {
                         booking.status === "confirmed"
                           ? "bg-green-100 text-green-800 border-green-200"
                           : booking.status === "pending_payment"
-                          ? "bg-yellow-100 text-yellow-800 border-yellow-200"
-                          : "bg-red-100 text-red-800 border-red-200"
+                            ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                            : "bg-red-100 text-red-800 border-red-200"
                       }`}
                     >
                       {booking.status === "confirmed" ? (
@@ -321,8 +321,8 @@ const BookingManagement = () => {
                       {booking.status === "confirmed"
                         ? "Paid"
                         : booking.status === "pending_payment"
-                        ? "Pending"
-                        : "Cancelled"}
+                          ? "Pending"
+                          : "Cancelled"}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-gray-500 text-xs whitespace-nowrap">

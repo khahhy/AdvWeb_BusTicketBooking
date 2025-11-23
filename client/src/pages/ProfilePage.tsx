@@ -1,13 +1,19 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { buildApiUrl, API_ENDPOINTS } from '@/lib/api';
-import Navbar from '@/components/common/Navbar';
-import Footer from '@/components/dashboard/Footer';
-import backgroundImage from '@/assets/images/background.png';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
+import Navbar from "@/components/common/Navbar";
+import Footer from "@/components/dashboard/Footer";
+import backgroundImage from "@/assets/images/background.png";
 import {
   Mail,
   Calendar,
@@ -19,17 +25,17 @@ import {
   Bell,
   History,
   CreditCard,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface UserProfile {
   id: string;
   email: string;
   fullName: string | null;
   phoneNumber: string | null;
-  role: 'passenger' | 'admin';
-  status: 'unverified' | 'active' | 'banned';
+  role: "passenger" | "admin";
+  status: "unverified" | "active" | "banned";
   emailVerified: boolean;
-  authProvider: 'local' | 'google' | 'firebase';
+  authProvider: "local" | "google" | "firebase";
   createdAt: string;
 }
 
@@ -39,8 +45,8 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: '',
-    phoneNumber: '',
+    fullName: "",
+    phoneNumber: "",
   });
 
   const navigate = useNavigate();
@@ -48,9 +54,9 @@ export default function ProfilePage() {
   useEffect(() => {
     const loadUserProfile = async () => {
       try {
-        const token = localStorage.getItem('accessToken');
+        const token = localStorage.getItem("accessToken");
         if (!token) {
-          navigate('/login');
+          navigate("/login");
           return;
         }
 
@@ -60,33 +66,35 @@ export default function ProfilePage() {
           },
         });
 
-        console.log('Profile response status:', response.status);
+        console.log("Profile response status:", response.status);
 
         if (!response.ok) {
           const errorData = await response.text();
-          console.error('Profile fetch error:', {
+          console.error("Profile fetch error:", {
             status: response.status,
             statusText: response.statusText,
-            body: errorData
+            body: errorData,
           });
           if (response.status === 401) {
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('user');
-            navigate('/login');
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("user");
+            navigate("/login");
             return;
           }
-          throw new Error(`Failed to fetch profile: ${response.status} ${response.statusText}`);
+          throw new Error(
+            `Failed to fetch profile: ${response.status} ${response.statusText}`,
+          );
         }
 
         const userData = await response.json();
         setUser(userData);
         setFormData({
-          fullName: userData.fullName || '',
-          phoneNumber: userData.phoneNumber || '',
+          fullName: userData.fullName || "",
+          phoneNumber: userData.phoneNumber || "",
         });
       } catch (error) {
-        console.error('Error loading profile:', error);
-        alert('Error: Failed to load profile information.');
+        console.error("Error loading profile:", error);
+        alert("Error: Failed to load profile information.");
       } finally {
         setIsLoading(false);
       }
@@ -100,18 +108,18 @@ export default function ProfilePage() {
 
     setIsSaving(true);
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       const response = await fetch(buildApiUrl(API_ENDPOINTS.auth.profile), {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update profile');
+        throw new Error("Failed to update profile");
       }
 
       const updatedUser = await response.json();
@@ -119,12 +127,12 @@ export default function ProfilePage() {
       setIsEditing(false);
 
       // Update localStorage with new user data
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      localStorage.setItem("user", JSON.stringify(updatedUser));
 
-      alert('Success: Profile updated successfully.');
+      alert("Success: Profile updated successfully.");
     } catch (error) {
-      console.error('Error updating profile:', error);
-      alert('Error: Failed to update profile. Please try again.');
+      console.error("Error updating profile:", error);
+      alert("Error: Failed to update profile. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -133,30 +141,34 @@ export default function ProfilePage() {
   const handleCancel = () => {
     if (user) {
       setFormData({
-        fullName: user.fullName || '',
-        phoneNumber: user.phoneNumber || '',
+        fullName: user.fullName || "",
+        phoneNumber: user.phoneNumber || "",
       });
     }
     setIsEditing(false);
   };
 
   const getStatusBadge = (status: string, emailVerified: boolean) => {
-    if (status === 'banned') {
+    if (status === "banned") {
       return <Badge variant="destructive">Banned</Badge>;
     }
     if (!emailVerified) {
       return <Badge variant="secondary">Email Not Verified</Badge>;
     }
-    if (status === 'active') {
-      return <Badge variant="default" className="bg-green-100 text-green-800">Active</Badge>;
+    if (status === "active") {
+      return (
+        <Badge variant="default" className="bg-green-100 text-green-800">
+          Active
+        </Badge>
+      );
     }
     return <Badge variant="secondary">{status}</Badge>;
   };
 
   const getRoleBadge = (role: string) => {
     return (
-      <Badge variant={role === 'admin' ? 'default' : 'outline'}>
-        {role === 'admin' ? 'Administrator' : 'Passenger'}
+      <Badge variant={role === "admin" ? "default" : "outline"}>
+        {role === "admin" ? "Administrator" : "Passenger"}
       </Badge>
     );
   };
@@ -164,9 +176,9 @@ export default function ProfilePage() {
   const getInitials = (name: string | null, email: string) => {
     if (name) {
       return name
-        .split(' ')
-        .map(word => word[0])
-        .join('')
+        .split(" ")
+        .map((word) => word[0])
+        .join("")
         .toUpperCase()
         .slice(0, 2);
     }
@@ -185,15 +197,22 @@ export default function ProfilePage() {
         </div>
       </div>
     );
-  }  if (!user) {
+  }
+  if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Profile Not Found</h2>
-            <p className="text-gray-600 mb-6">Unable to load your profile information.</p>
-            <Button onClick={() => navigate('/dashboard')}>Go to Dashboard</Button>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Profile Not Found
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Unable to load your profile information.
+            </p>
+            <Button onClick={() => navigate("/dashboard")}>
+              Go to Dashboard
+            </Button>
           </div>
         </div>
       </div>
@@ -225,7 +244,6 @@ export default function ProfilePage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8 pb-8 -mt-16 relative z-10">
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
-
           {/* Profile Overview Card */}
           <Card className="mb-8 bg-white/95 backdrop-blur-sm shadow-xl border-0">
             <CardContent className="p-8">
@@ -234,19 +252,18 @@ export default function ProfilePage() {
                 <div className="relative">
                   <div className="absolute -inset-1 bg-gradient-to-r from-pink-400 to-rose-400 rounded-full blur opacity-75"></div>
                   <Avatar className="relative h-32 w-32 border-4 border-white shadow-2xl">
-                    <AvatarImage src="" alt={user.fullName || 'User'} />
+                    <AvatarImage src="" alt={user.fullName || "User"} />
                     <AvatarFallback className="text-3xl bg-gradient-to-br from-pink-500 to-rose-600 text-white font-bold">
                       {getInitials(user.fullName, user.email)}
                     </AvatarFallback>
                   </Avatar>
-                  
                 </div>
 
                 {/* Profile Info */}
                 <div className="flex-1 text-center lg:text-left">
                   <div className="mb-4">
                     <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                      {user.fullName || 'Welcome!'}
+                      {user.fullName || "Welcome!"}
                     </h1>
                     <p className="text-lg text-gray-600 mb-3">{user.email}</p>
                     <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
@@ -262,7 +279,9 @@ export default function ProfilePage() {
                       <div className="text-sm text-gray-600">Bookings</div>
                     </div>
                     <div className="text-center p-3 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl">
-                      <div className="text-2xl font-bold text-blue-600">4.9</div>
+                      <div className="text-2xl font-bold text-blue-600">
+                        4.9
+                      </div>
                       <div className="text-sm text-gray-600">Rating</div>
                     </div>
                     <div className="text-center p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl">
@@ -273,18 +292,14 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 </div>
-
-
               </div>
             </CardContent>
           </Card>
 
           {/* Main Content Grid */}
           <div className="grid lg:grid-cols-3 gap-8">
-
             {/* Left Column - Quick Actions */}
             <div className="lg:col-span-1 space-y-6">
-
               {/* Quick Actions Card */}
               <Card className="bg-white/95 backdrop-blur-sm shadow-xl border-0">
                 <CardHeader>
@@ -296,7 +311,7 @@ export default function ProfilePage() {
                 <CardContent className="space-y-3">
                   <Button
                     variant="ghost"
-                    onClick={() => navigate('/booking-history')}
+                    onClick={() => navigate("/booking-history")}
                     className="w-full justify-start h-12 hover:bg-pink-50 hover:text-pink-700 rounded-xl"
                   >
                     <History className="w-5 h-5 mr-3 text-pink-500" />
@@ -304,7 +319,7 @@ export default function ProfilePage() {
                   </Button>
                   <Button
                     variant="ghost"
-                    onClick={() => navigate('/notifications')}
+                    onClick={() => navigate("/notifications")}
                     className="w-full justify-start h-12 hover:bg-blue-50 hover:text-blue-700 rounded-xl"
                   >
                     <Bell className="w-5 h-5 mr-3 text-blue-500" />
@@ -341,7 +356,9 @@ export default function ProfilePage() {
                   <div className="flex items-center justify-between p-3 bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl">
                     <div className="flex items-center gap-3">
                       <Calendar className="w-5 h-5 text-rose-500" />
-                      <span className="text-sm font-medium text-gray-700">Joined</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        Joined
+                      </span>
                     </div>
                     <span className="text-sm text-gray-600">
                       {new Date(user.createdAt).toLocaleDateString()}
@@ -350,10 +367,14 @@ export default function ProfilePage() {
                   <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl">
                     <div className="flex items-center gap-3">
                       <Shield className="w-5 h-5 text-blue-500" />
-                      <span className="text-sm font-medium text-gray-700">Provider</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        Provider
+                      </span>
                     </div>
                     <span className="text-sm text-gray-600 capitalize">
-                      {user.authProvider === 'local' ? 'Email' : user.authProvider}
+                      {user.authProvider === "local"
+                        ? "Email"
+                        : user.authProvider}
                     </span>
                   </div>
                 </CardContent>
@@ -364,14 +385,15 @@ export default function ProfilePage() {
             <div className="lg:col-span-2">
               <Card className="bg-white/95 backdrop-blur-sm shadow-xl border-0">
                 <CardHeader>
-                  <CardTitle className="text-2xl font-bold text-gray-800">Personal Information</CardTitle>
+                  <CardTitle className="text-2xl font-bold text-gray-800">
+                    Personal Information
+                  </CardTitle>
                   <CardDescription className="text-gray-600">
                     Manage your personal details and contact information
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-6">
-
                     {/* Email Field */}
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-semibold text-gray-700">
@@ -403,16 +425,23 @@ export default function ProfilePage() {
                         <input
                           type="text"
                           value={formData.fullName}
-                          onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              fullName: e.target.value,
+                            })
+                          }
                           disabled={!isEditing}
                           placeholder="Enter your full name"
                           className={`w-full pl-12 pr-4 py-4 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
                             isEditing
-                              ? 'border-gray-300 focus:ring-pink-200 focus:border-pink-400 bg-white'
-                              : 'border-gray-200 bg-gray-50 text-gray-700'
+                              ? "border-gray-300 focus:ring-pink-200 focus:border-pink-400 bg-white"
+                              : "border-gray-200 bg-gray-50 text-gray-700"
                           }`}
                         />
-                        <Edit2 className={`absolute left-4 top-4 w-5 h-5 ${isEditing ? 'text-rose-500' : 'text-gray-400'}`} />
+                        <Edit2
+                          className={`absolute left-4 top-4 w-5 h-5 ${isEditing ? "text-rose-500" : "text-gray-400"}`}
+                        />
                       </div>
                     </div>
 
@@ -426,16 +455,23 @@ export default function ProfilePage() {
                         <input
                           type="tel"
                           value={formData.phoneNumber}
-                          onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              phoneNumber: e.target.value,
+                            })
+                          }
                           disabled={!isEditing}
                           placeholder="Enter your phone number"
                           className={`w-full pl-12 pr-4 py-4 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
                             isEditing
-                              ? 'border-gray-300 focus:ring-blue-200 focus:border-blue-400 bg-white'
-                              : 'border-gray-200 bg-gray-50 text-gray-700'
+                              ? "border-gray-300 focus:ring-blue-200 focus:border-blue-400 bg-white"
+                              : "border-gray-200 bg-gray-50 text-gray-700"
                           }`}
                         />
-                        <History className={`absolute left-4 top-4 w-5 h-5 ${isEditing ? 'text-blue-500' : 'text-gray-400'}`} />
+                        <History
+                          className={`absolute left-4 top-4 w-5 h-5 ${isEditing ? "text-blue-500" : "text-gray-400"}`}
+                        />
                       </div>
                     </div>
 
@@ -465,7 +501,7 @@ export default function ProfilePage() {
                             className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl disabled:opacity-50"
                           >
                             <Save className="w-5 h-5 mr-2" />
-                            {isSaving ? 'Saving...' : 'Save Changes'}
+                            {isSaving ? "Saving..." : "Save Changes"}
                           </Button>
                         </>
                       )}

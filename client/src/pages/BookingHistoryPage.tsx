@@ -1,12 +1,21 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Clock, Ticket, Download, Eye, Star, Edit } from 'lucide-react';
-import Navbar from '@/components/common/Navbar';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import Footer from '@/components/dashboard/Footer';
-import backgroundImage from '@/assets/images/background.png';
-import dayjs from 'dayjs';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Calendar,
+  MapPin,
+  Clock,
+  Ticket,
+  Download,
+  Eye,
+  Star,
+  Edit,
+} from "lucide-react";
+import Navbar from "@/components/common/Navbar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import Footer from "@/components/dashboard/Footer";
+import backgroundImage from "@/assets/images/background.png";
+import dayjs from "dayjs";
 
 interface BookingHistoryItem {
   id: string;
@@ -18,7 +27,7 @@ interface BookingHistoryItem {
   arrivalTime: string;
   seat: string;
   price: number;
-  status: 'completed' | 'upcoming' | 'cancelled';
+  status: "completed" | "upcoming" | "cancelled";
   passengerName: string;
   duration: string;
 }
@@ -26,67 +35,69 @@ interface BookingHistoryItem {
 // Mock data for booking history
 const mockBookingHistory: BookingHistoryItem[] = [
   {
-    id: '1',
-    bookingCode: 'BUS123456',
-    from: 'Ho Chi Minh City',
-    to: 'Da Lat',
-    date: '2024-11-15',
-    departureTime: '08:00',
-    arrivalTime: '14:30',
-    seat: 'A12',
+    id: "1",
+    bookingCode: "BUS123456",
+    from: "Ho Chi Minh City",
+    to: "Da Lat",
+    date: "2024-11-15",
+    departureTime: "08:00",
+    arrivalTime: "14:30",
+    seat: "A12",
     price: 280000,
-    status: 'completed',
-    passengerName: 'Nguyen Van A',
-    duration: '6h 30m'
+    status: "completed",
+    passengerName: "Nguyen Van A",
+    duration: "6h 30m",
   },
   {
-    id: '2',
-    bookingCode: 'BUS789012',
-    from: 'Ho Chi Minh City',
-    to: 'Nha Trang',
-    date: '2024-12-01',
-    departureTime: '22:00',
-    arrivalTime: '06:30',
-    seat: 'B08',
+    id: "2",
+    bookingCode: "BUS789012",
+    from: "Ho Chi Minh City",
+    to: "Nha Trang",
+    date: "2024-12-01",
+    departureTime: "22:00",
+    arrivalTime: "06:30",
+    seat: "B08",
     price: 320000,
-    status: 'upcoming',
-    passengerName: 'Nguyen Van A',
-    duration: '8h 30m'
+    status: "upcoming",
+    passengerName: "Nguyen Van A",
+    duration: "8h 30m",
   },
   {
-    id: '3',
-    bookingCode: 'BUS345678',
-    from: 'Da Lat',
-    to: 'Ho Chi Minh City',
-    date: '2024-10-20',
-    departureTime: '15:00',
-    arrivalTime: '21:30',
-    seat: 'C15',
+    id: "3",
+    bookingCode: "BUS345678",
+    from: "Da Lat",
+    to: "Ho Chi Minh City",
+    date: "2024-10-20",
+    departureTime: "15:00",
+    arrivalTime: "21:30",
+    seat: "C15",
     price: 280000,
-    status: 'cancelled',
-    passengerName: 'Nguyen Van A',
-    duration: '6h 30m'
+    status: "cancelled",
+    passengerName: "Nguyen Van A",
+    duration: "6h 30m",
   },
   {
-    id: '4',
-    bookingCode: 'BUS901234',
-    from: 'Hanoi',
-    to: 'Sapa',
-    date: '2024-09-10',
-    departureTime: '07:00',
-    arrivalTime: '12:30',
-    seat: 'D05',
+    id: "4",
+    bookingCode: "BUS901234",
+    from: "Hanoi",
+    to: "Sapa",
+    date: "2024-09-10",
+    departureTime: "07:00",
+    arrivalTime: "12:30",
+    seat: "D05",
     price: 180000,
-    status: 'completed',
-    passengerName: 'Nguyen Van A',
-    duration: '5h 30m'
-  }
+    status: "completed",
+    passengerName: "Nguyen Van A",
+    duration: "5h 30m",
+  },
 ];
 
 export default function BookingHistoryPage() {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<BookingHistoryItem[]>([]);
-  const [filter, setFilter] = useState<'all' | 'completed' | 'upcoming' | 'cancelled'>('all');
+  const [filter, setFilter] = useState<
+    "all" | "completed" | "upcoming" | "cancelled"
+  >("all");
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -94,30 +105,43 @@ export default function BookingHistoryPage() {
   }, []);
 
   const formatCurrency = (amount: number) => {
-    return amount.toLocaleString('vi-VN') + ' VND';
+    return amount.toLocaleString("vi-VN") + " VND";
   };
 
   const formatDate = (dateStr: string) => {
-    return dayjs(dateStr).format('DD/MM/YYYY');
+    return dayjs(dateStr).format("DD/MM/YYYY");
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'completed':
-        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Completed</Badge>;
-      case 'upcoming':
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">Upcoming</Badge>;
-      case 'cancelled':
-        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">Cancelled</Badge>;
+      case "completed":
+        return (
+          <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+            Completed
+          </Badge>
+        );
+      case "upcoming":
+        return (
+          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
+            Upcoming
+          </Badge>
+        );
+      case "cancelled":
+        return (
+          <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
+            Cancelled
+          </Badge>
+        );
       default:
         return <Badge>Unknown</Badge>;
     }
   };
 
-  const filteredBookings = bookings.filter(booking =>
-    filter === 'all' ? true : booking.status === filter
-  );  const handleDownloadTicket = (bookingCode: string) => {
-    console.log('Downloading ticket for:', bookingCode);
+  const filteredBookings = bookings.filter((booking) =>
+    filter === "all" ? true : booking.status === filter,
+  );
+  const handleDownloadTicket = (bookingCode: string) => {
+    console.log("Downloading ticket for:", bookingCode);
     // Implement download logic
   };
 
@@ -162,29 +186,29 @@ export default function BookingHistoryPage() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
             <div className="flex flex-wrap gap-4">
               <Button
-                variant={filter === 'all' ? 'default' : 'outline'}
-                onClick={() => setFilter('all')}
+                variant={filter === "all" ? "default" : "outline"}
+                onClick={() => setFilter("all")}
                 className="rounded-full"
               >
                 All Bookings
               </Button>
               <Button
-                variant={filter === 'upcoming' ? 'default' : 'outline'}
-                onClick={() => setFilter('upcoming')}
+                variant={filter === "upcoming" ? "default" : "outline"}
+                onClick={() => setFilter("upcoming")}
                 className="rounded-full"
               >
                 Upcoming
               </Button>
               <Button
-                variant={filter === 'completed' ? 'default' : 'outline'}
-                onClick={() => setFilter('completed')}
+                variant={filter === "completed" ? "default" : "outline"}
+                onClick={() => setFilter("completed")}
                 className="rounded-full"
               >
                 Completed
               </Button>
               <Button
-                variant={filter === 'cancelled' ? 'default' : 'outline'}
-                onClick={() => setFilter('cancelled')}
+                variant={filter === "cancelled" ? "default" : "outline"}
+                onClick={() => setFilter("cancelled")}
                 className="rounded-full"
               >
                 Cancelled
@@ -217,8 +241,12 @@ export default function BookingHistoryPage() {
                 {/* Trip Info */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="w-48 flex-shrink-0">
-                    <div className="text-xl font-bold text-gray-900">{booking.from}</div>
-                    <div className="text-lg font-semibold text-gray-900 mt-1">{booking.departureTime}</div>
+                    <div className="text-xl font-bold text-gray-900">
+                      {booking.from}
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900 mt-1">
+                      {booking.departureTime}
+                    </div>
                   </div>
 
                   <div className="flex-1 px-8 text-center">
@@ -234,8 +262,12 @@ export default function BookingHistoryPage() {
                   </div>
 
                   <div className="text-right w-48 flex-shrink-0">
-                    <div className="text-xl font-bold text-gray-900">{booking.to}</div>
-                    <div className="text-lg font-semibold text-gray-900 mt-1">{booking.arrivalTime}</div>
+                    <div className="text-xl font-bold text-gray-900">
+                      {booking.to}
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900 mt-1">
+                      {booking.arrivalTime}
+                    </div>
                   </div>
                 </div>
 
@@ -271,7 +303,7 @@ export default function BookingHistoryPage() {
                       <Eye className="w-4 h-4" />
                       Details
                     </Button>
-                    {booking.status === 'upcoming' && (
+                    {booking.status === "upcoming" && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -282,7 +314,7 @@ export default function BookingHistoryPage() {
                         Modify
                       </Button>
                     )}
-                    {booking.status === 'completed' && (
+                    {booking.status === "completed" && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -293,10 +325,12 @@ export default function BookingHistoryPage() {
                         Rate
                       </Button>
                     )}
-                    {booking.status !== 'cancelled' && (
+                    {booking.status !== "cancelled" && (
                       <Button
                         size="sm"
-                        onClick={() => handleDownloadTicket(booking.bookingCode)}
+                        onClick={() =>
+                          handleDownloadTicket(booking.bookingCode)
+                        }
                         className="flex items-center gap-1"
                       >
                         <Download className="w-4 h-4" />
@@ -319,12 +353,11 @@ export default function BookingHistoryPage() {
                 No bookings found
               </h3>
               <p className="text-gray-600 mb-6">
-                {filter === 'all'
+                {filter === "all"
                   ? "You haven't made any bookings yet."
-                  : `No ${filter} bookings found.`
-                }
+                  : `No ${filter} bookings found.`}
               </p>
-              <Button onClick={() => setFilter('all')} className="rounded-full">
+              <Button onClick={() => setFilter("all")} className="rounded-full">
                 View All Bookings
               </Button>
             </div>

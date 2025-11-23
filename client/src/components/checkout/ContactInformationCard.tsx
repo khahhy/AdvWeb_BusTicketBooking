@@ -1,5 +1,11 @@
-import { X } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ContactInformationCardProps {
   contactName: string;
@@ -12,8 +18,8 @@ interface ContactInformationCardProps {
   setContactPersonalId: (value: string) => void;
   countryCode: string;
   setCountryCode: (value: string) => void;
-  errors: {[key: string]: string};
-  setErrors: (errors: {[key: string]: string}) => void;
+  errors: { [key: string]: string };
+  setErrors: (errors: { [key: string]: string }) => void;
 }
 
 export default function ContactInformationCard({
@@ -32,9 +38,12 @@ export default function ContactInformationCard({
 }: ContactInformationCardProps) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-2">Contact information</h2>
+      <h2 className="text-xl font-bold text-gray-900 mb-2">
+        Contact information
+      </h2>
       <p className="text-sm text-gray-500 mb-6">
-        The system will confirm the booking, refund, or change the schedule through this information
+        The system will confirm the booking, refund, or change the schedule
+        through this information
       </p>
 
       <div className="space-y-4">
@@ -47,16 +56,16 @@ export default function ContactInformationCard({
               onChange={(e) => {
                 setContactName(e.target.value);
                 if (errors.contactName) {
-                  setErrors({...errors, contactName: ''});
+                  setErrors({ ...errors, contactName: "" });
                 }
               }}
               className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 ${
-                errors.contactName ? 'border-red-500' : 'border-gray-300'
+                errors.contactName ? "border-red-500" : "border-gray-300"
               }`}
             />
             {contactName && (
               <button
-                onClick={() => setContactName('')}
+                onClick={() => setContactName("")}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <X className="w-4 h-4" />
@@ -89,16 +98,16 @@ export default function ContactInformationCard({
                   onChange={(e) => {
                     setPhoneNumber(e.target.value);
                     if (errors.phoneNumber) {
-                      setErrors({...errors, phoneNumber: ''});
+                      setErrors({ ...errors, phoneNumber: "" });
                     }
                   }}
                   className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 ${
-                    errors.phoneNumber ? 'border-red-500' : 'border-gray-300'
+                    errors.phoneNumber ? "border-red-500" : "border-gray-300"
                   }`}
                 />
                 {phoneNumber && (
                   <button
-                    onClick={() => setPhoneNumber('')}
+                    onClick={() => setPhoneNumber("")}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
                     <X className="w-4 h-4" />
@@ -106,7 +115,9 @@ export default function ContactInformationCard({
                 )}
               </div>
               {errors.phoneNumber && (
-                <p className="text-red-500 text-xs mt-1">{errors.phoneNumber}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.phoneNumber}
+                </p>
               )}
             </div>
           </div>
@@ -121,16 +132,16 @@ export default function ContactInformationCard({
               onChange={(e) => {
                 setEmail(e.target.value);
                 if (errors.email) {
-                  setErrors({...errors, email: ''});
+                  setErrors({ ...errors, email: "" });
                 }
               }}
               className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 ${
-                errors.email ? 'border-red-500' : 'border-gray-300'
+                errors.email ? "border-red-500" : "border-gray-300"
               }`}
             />
             {email && (
               <button
-                onClick={() => setEmail('')}
+                onClick={() => setEmail("")}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <X className="w-4 h-4" />
@@ -149,15 +160,17 @@ export default function ContactInformationCard({
               onChange={(e) => {
                 setContactPersonalId(e.target.value);
                 if (errors.contactPersonalId) {
-                  setErrors({...errors, contactPersonalId: ''});
+                  setErrors({ ...errors, contactPersonalId: "" });
                 }
               }}
               className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 ${
-                errors.contactPersonalId ? 'border-red-500' : 'border-gray-300'
+                errors.contactPersonalId ? "border-red-500" : "border-gray-300"
               }`}
             />
             {errors.contactPersonalId && (
-              <p className="text-red-500 text-xs mt-1">{errors.contactPersonalId}</p>
+              <p className="text-red-500 text-xs mt-1">
+                {errors.contactPersonalId}
+              </p>
             )}
           </div>
         </div>

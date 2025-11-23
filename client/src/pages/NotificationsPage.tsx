@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Bell,
   CheckCircle,
@@ -9,27 +9,33 @@ import {
   MoreVertical,
   Trash2,
   MarkAsRead,
-  Filter
-} from 'lucide-react';
-import Navbar from '@/components/common/Navbar';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import Footer from '@/components/dashboard/Footer';
-import backgroundImage from '@/assets/images/background.png';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
+  Filter,
+} from "lucide-react";
+import Navbar from "@/components/common/Navbar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import Footer from "@/components/dashboard/Footer";
+import backgroundImage from "@/assets/images/background.png";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 
 dayjs.extend(relativeTime);
 
 interface Notification {
   id: string;
-  type: 'booking' | 'payment' | 'promotion' | 'system' | 'reminder';
+  type: "booking" | "payment" | "promotion" | "system" | "reminder";
   title: string;
   message: string;
   timestamp: string;
   isRead: boolean;
-  priority: 'low' | 'medium' | 'high';
+  priority: "low" | "medium" | "high";
   actionUrl?: string;
   bookingCode?: string;
 }
@@ -37,115 +43,133 @@ interface Notification {
 // Mock notifications data - sorted by newest first
 const mockNotifications: Notification[] = [
   {
-    id: '1',
-    type: 'booking',
-    title: 'Booking Confirmed',
-    message: 'Your booking BUS123456 for Ho Chi Minh City to Da Lat has been confirmed. Trip date: 20/11/2025.',
-    timestamp: '2025-11-18T10:30:00',
+    id: "1",
+    type: "booking",
+    title: "Booking Confirmed",
+    message:
+      "Your booking BUS123456 for Ho Chi Minh City to Da Lat has been confirmed. Trip date: 20/11/2025.",
+    timestamp: "2025-11-18T10:30:00",
     isRead: false,
-    priority: 'high',
-    actionUrl: '/booking-details/1',
-    bookingCode: 'BUS123456'
+    priority: "high",
+    actionUrl: "/booking-details/1",
+    bookingCode: "BUS123456",
   },
   {
-    id: '2',
-    type: 'reminder',
-    title: 'Trip Reminder',
-    message: 'Don\'t forget! Your trip to Nha Trang departs tomorrow at 22:00. Please arrive 30 minutes early.',
-    timestamp: '2025-11-17T18:00:00',
+    id: "2",
+    type: "reminder",
+    title: "Trip Reminder",
+    message:
+      "Don't forget! Your trip to Nha Trang departs tomorrow at 22:00. Please arrive 30 minutes early.",
+    timestamp: "2025-11-17T18:00:00",
     isRead: false,
-    priority: 'high',
-    actionUrl: '/booking-details/2',
-    bookingCode: 'BUS789012'
+    priority: "high",
+    actionUrl: "/booking-details/2",
+    bookingCode: "BUS789012",
   },
   {
-    id: '3',
-    type: 'system',
-    title: 'Maintenance Notice',
-    message: 'Our booking system will be under maintenance on 25/11/2025 from 2:00 AM to 4:00 AM. We apologize for any inconvenience.',
-    timestamp: '2025-11-16T16:00:00',
+    id: "3",
+    type: "system",
+    title: "Maintenance Notice",
+    message:
+      "Our booking system will be under maintenance on 25/11/2025 from 2:00 AM to 4:00 AM. We apologize for any inconvenience.",
+    timestamp: "2025-11-16T16:00:00",
     isRead: false,
-    priority: 'low'
+    priority: "low",
   },
   {
-    id: '4',
-    type: 'payment',
-    title: 'Payment Successful',
-    message: 'Payment of 320,000 VND for booking BUS789012 has been processed successfully.',
-    timestamp: '2025-11-15T14:15:00',
+    id: "4",
+    type: "payment",
+    title: "Payment Successful",
+    message:
+      "Payment of 320,000 VND for booking BUS789012 has been processed successfully.",
+    timestamp: "2025-11-15T14:15:00",
     isRead: true,
-    priority: 'medium',
-    bookingCode: 'BUS789012'
+    priority: "medium",
+    bookingCode: "BUS789012",
   },
   {
-    id: '5',
-    type: 'promotion',
-    title: 'Special Discount Available!',
-    message: 'Get 20% off on your next booking to Da Lat. Use code DALAT20. Valid until 31/12/2025.',
-    timestamp: '2025-11-14T09:00:00',
+    id: "5",
+    type: "promotion",
+    title: "Special Discount Available!",
+    message:
+      "Get 20% off on your next booking to Da Lat. Use code DALAT20. Valid until 31/12/2025.",
+    timestamp: "2025-11-14T09:00:00",
     isRead: true,
-    priority: 'medium',
-    actionUrl: '/search?to=dalat'
+    priority: "medium",
+    actionUrl: "/search?to=dalat",
   },
   {
-    id: '6',
-    type: 'booking',
-    title: 'Booking Modification Confirmed',
-    message: 'Your seat change request for booking BUS789012 has been confirmed. New seat: A05.',
-    timestamp: '2025-11-13T11:20:00',
+    id: "6",
+    type: "booking",
+    title: "Booking Modification Confirmed",
+    message:
+      "Your seat change request for booking BUS789012 has been confirmed. New seat: A05.",
+    timestamp: "2025-11-13T11:20:00",
     isRead: true,
-    priority: 'medium',
-    actionUrl: '/booking-details/2',
-    bookingCode: 'BUS789012'
+    priority: "medium",
+    actionUrl: "/booking-details/2",
+    bookingCode: "BUS789012",
   },
   {
-    id: '7',
-    type: 'promotion',
-    title: 'Weekend Flash Sale!',
-    message: 'Flash sale this weekend only! Up to 30% off on all routes. Book now before seats run out!',
-    timestamp: '2025-11-12T12:00:00',
+    id: "7",
+    type: "promotion",
+    title: "Weekend Flash Sale!",
+    message:
+      "Flash sale this weekend only! Up to 30% off on all routes. Book now before seats run out!",
+    timestamp: "2025-11-12T12:00:00",
     isRead: true,
-    priority: 'medium',
-    actionUrl: '/search'
+    priority: "medium",
+    actionUrl: "/search",
   },
   {
-    id: '8',
-    type: 'booking',
-    title: 'Seat Selection Updated',
-    message: 'Your preferred seat for booking BUS456789 has been updated to seat B12.',
-    timestamp: '2025-11-11T15:45:00',
+    id: "8",
+    type: "booking",
+    title: "Seat Selection Updated",
+    message:
+      "Your preferred seat for booking BUS456789 has been updated to seat B12.",
+    timestamp: "2025-11-11T15:45:00",
     isRead: false,
-    priority: 'medium',
-    actionUrl: '/booking-details/3',
-    bookingCode: 'BUS456789'
+    priority: "medium",
+    actionUrl: "/booking-details/3",
+    bookingCode: "BUS456789",
   },
   {
-    id: '9',
-    type: 'reminder',
-    title: 'Check-in Available',
-    message: 'Online check-in is now available for your trip to Can Tho. Complete check-in to save time.',
-    timestamp: '2025-11-10T08:00:00',
+    id: "9",
+    type: "reminder",
+    title: "Check-in Available",
+    message:
+      "Online check-in is now available for your trip to Can Tho. Complete check-in to save time.",
+    timestamp: "2025-11-10T08:00:00",
     isRead: false,
-    priority: 'medium',
-    actionUrl: '/booking-details/4',
-    bookingCode: 'BUS321654'
+    priority: "medium",
+    actionUrl: "/booking-details/4",
+    bookingCode: "BUS321654",
   },
   {
-    id: '10',
-    type: 'promotion',
-    title: 'Black Friday Deals!',
-    message: 'Don\'t miss our Black Friday sale! Up to 50% off on selected routes. Limited time offer.',
-    timestamp: '2025-11-09T10:30:00',
+    id: "10",
+    type: "promotion",
+    title: "Black Friday Deals!",
+    message:
+      "Don't miss our Black Friday sale! Up to 50% off on selected routes. Limited time offer.",
+    timestamp: "2025-11-09T10:30:00",
     isRead: true,
-    priority: 'high',
-    actionUrl: '/search'
-  }
+    priority: "high",
+    actionUrl: "/search",
+  },
 ];
 
 export default function NotificationsPage() {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [filter, setFilter] = useState<'all' | 'unread' | 'booking' | 'payment' | 'promotion' | 'system' | 'reminder'>('all');
+  const [filter, setFilter] = useState<
+    | "all"
+    | "unread"
+    | "booking"
+    | "payment"
+    | "promotion"
+    | "system"
+    | "reminder"
+  >("all");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -160,20 +184,23 @@ export default function NotificationsPage() {
 
   const getNotificationIcon = (type: string, priority: string) => {
     const iconClass = `w-5 h-5 ${
-      priority === 'high' ? 'text-red-500' :
-      priority === 'medium' ? 'text-blue-500' : 'text-gray-500'
+      priority === "high"
+        ? "text-red-500"
+        : priority === "medium"
+          ? "text-blue-500"
+          : "text-gray-500"
     }`;
 
     switch (type) {
-      case 'booking':
+      case "booking":
         return <CheckCircle className={iconClass} />;
-      case 'payment':
+      case "payment":
         return <CheckCircle className={iconClass} />;
-      case 'reminder':
+      case "reminder":
         return <Bell className={iconClass} />;
-      case 'system':
+      case "system":
         return <AlertTriangle className={iconClass} />;
-      case 'promotion':
+      case "promotion":
         return <Info className={iconClass} />;
       default:
         return <Bell className={iconClass} />;
@@ -193,10 +220,8 @@ export default function NotificationsPage() {
 
   const handleNotificationClick = (notification: Notification) => {
     // Mark as read
-    setNotifications(prev =>
-      prev.map(n =>
-        n.id === notification.id ? { ...n, isRead: true } : n
-      )
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n)),
     );
 
     // Navigate if has action URL
@@ -205,37 +230,36 @@ export default function NotificationsPage() {
     }
   };
 
-  const handleMarkAsRead = (notificationId: string, event: React.MouseEvent) => {
+  const handleMarkAsRead = (
+    notificationId: string,
+    event: React.MouseEvent,
+  ) => {
     event.stopPropagation();
-    setNotifications(prev =>
-      prev.map(n =>
-        n.id === notificationId ? { ...n, isRead: true } : n
-      )
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)),
     );
   };
 
   const handleMarkAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(n => ({ ...n, isRead: true }))
-    );
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
   };
 
   const handleDelete = (notificationId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    setNotifications(prev => prev.filter(n => n.id !== notificationId));
+    setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
   };
 
-  const filteredNotifications = notifications.filter(notification => {
-    if (filter === 'all') return true;
-    if (filter === 'unread') return !notification.isRead;
+  const filteredNotifications = notifications.filter((notification) => {
+    if (filter === "all") return true;
+    if (filter === "unread") return !notification.isRead;
     return notification.type === filter;
   });
 
-  console.log('Total notifications:', notifications.length);
-  console.log('Filtered notifications:', filteredNotifications.length);
-  console.log('Current filter:', filter);
+  console.log("Total notifications:", notifications.length);
+  console.log("Filtered notifications:", filteredNotifications.length);
+  console.log("Current filter:", filter);
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const formatRelativeTime = (timestamp: string) => {
     return dayjs(timestamp).fromNow();
@@ -270,9 +294,7 @@ export default function NotificationsPage() {
           <div className="flex items-center gap-3 mb-6 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.1s_forwards]">
             <Bell className="w-8 h-8 text-foreground/80" />
             {unreadCount > 0 && (
-              <Badge className="bg-red-500 text-white">
-                {unreadCount} new
-              </Badge>
+              <Badge className="bg-red-500 text-white">{unreadCount} new</Badge>
             )}
           </div>
 
@@ -293,10 +315,15 @@ export default function NotificationsPage() {
               <div className="flex items-center gap-4 flex-wrap">
                 <div className="flex items-center gap-2">
                   <Filter className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm font-medium text-gray-700">Filter:</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Filter:
+                  </span>
                 </div>
 
-                <Select value={filter} onValueChange={(value: any) => setFilter(value)}>
+                <Select
+                  value={filter}
+                  onValueChange={(value: any) => setFilter(value)}
+                >
                   <SelectTrigger className="w-40">
                     <SelectValue />
                   </SelectTrigger>
@@ -333,14 +360,19 @@ export default function NotificationsPage() {
             <div key={notification.id}>
               <div
                 className={`bg-white rounded-2xl shadow-sm border border-gray-200 p-6 cursor-pointer transition-all duration-200 hover:shadow-md ${
-                  !notification.isRead ? 'ring-2 ring-blue-100 bg-blue-50/50' : ''
+                  !notification.isRead
+                    ? "ring-2 ring-blue-100 bg-blue-50/50"
+                    : ""
                 }`}
                 onClick={() => handleNotificationClick(notification)}
               >
                 <div className="flex items-start gap-4">
                   {/* Icon */}
                   <div className="flex-shrink-0 mt-1">
-                    {getNotificationIcon(notification.type, notification.priority)}
+                    {getNotificationIcon(
+                      notification.type,
+                      notification.priority,
+                    )}
                   </div>
 
                   {/* Content */}
@@ -348,13 +380,19 @@ export default function NotificationsPage() {
                     <div className="flex items-start justify-between gap-4 mb-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className={`text-lg font-semibold ${
-                            !notification.isRead ? 'text-gray-900' : 'text-gray-700'
-                          }`}>
+                          <h3
+                            className={`text-lg font-semibold ${
+                              !notification.isRead
+                                ? "text-gray-900"
+                                : "text-gray-700"
+                            }`}
+                          >
                             {notification.title}
                           </h3>
 
-                          <Badge className={`text-xs ${getTypeColor(notification.type)}`}>
+                          <Badge
+                            className={`text-xs ${getTypeColor(notification.type)}`}
+                          >
                             {notification.type}
                           </Badge>
 
@@ -378,7 +416,9 @@ export default function NotificationsPage() {
                         <div className="flex items-center gap-1">
                           {!notification.isRead && (
                             <Button
-                              onClick={(e) => handleMarkAsRead(notification.id, e)}
+                              onClick={(e) =>
+                                handleMarkAsRead(notification.id, e)
+                              }
                               size="sm"
                               variant="ghost"
                               className="h-8 w-8 p-0 hover:bg-blue-100"
@@ -401,9 +441,11 @@ export default function NotificationsPage() {
                       </div>
                     </div>
 
-                    <p className={`text-sm leading-relaxed ${
-                      !notification.isRead ? 'text-gray-800' : 'text-gray-600'
-                    }`}>
+                    <p
+                      className={`text-sm leading-relaxed ${
+                        !notification.isRead ? "text-gray-800" : "text-gray-600"
+                      }`}
+                    >
                       {notification.message}
                     </p>
 
@@ -430,12 +472,11 @@ export default function NotificationsPage() {
                 No notifications found
               </h3>
               <p className="text-gray-600 mb-6">
-                {filter === 'all'
+                {filter === "all"
                   ? "You don't have any notifications yet."
-                  : `No ${filter} notifications found.`
-                }
+                  : `No ${filter} notifications found.`}
               </p>
-              <Button onClick={() => setFilter('all')} className="rounded-full">
+              <Button onClick={() => setFilter("all")} className="rounded-full">
                 View All Notifications
               </Button>
             </div>
@@ -446,19 +487,25 @@ export default function NotificationsPage() {
         {notifications.length > 0 && (
           <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mt-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Summary</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Summary
+              </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                 <div>
-                  <div className="text-2xl font-bold text-blue-600">{notifications.length}</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {notifications.length}
+                  </div>
                   <div className="text-sm text-gray-600">Total</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-red-600">{unreadCount}</div>
+                  <div className="text-2xl font-bold text-red-600">
+                    {unreadCount}
+                  </div>
                   <div className="text-sm text-gray-600">Unread</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-green-600">
-                    {notifications.filter(n => n.type === 'booking').length}
+                    {notifications.filter((n) => n.type === "booking").length}
                   </div>
                   <div className="text-sm text-gray-600">Bookings</div>
                 </div>

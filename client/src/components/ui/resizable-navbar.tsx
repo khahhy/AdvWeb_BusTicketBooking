@@ -56,19 +56,19 @@ export const ResizableNavbar: React.FC<ResizableNavbarProps> = ({
       }}
       className={cn(
         "fixed top-0 left-1/2 transform -translate-x-1/2 z-50 backdrop-blur-md border transition-all duration-300",
-        isScrolled 
-          ? "bg-white/80 border-gray-200/20 shadow-lg" 
+        isScrolled
+          ? "bg-white/80 border-gray-200/20 shadow-lg"
           : "bg-transparent border-transparent shadow-none",
-        className
+        className,
       )}
     >
-      <motion.div 
+      <motion.div
         className="transition-all duration-300"
         animate={{
           paddingTop: isScrolled ? "12px" : "16px",
           paddingBottom: isScrolled ? "12px" : "16px",
           paddingLeft: "24px",
-          paddingRight: "24px"
+          paddingRight: "24px",
         }}
       >
         <div className="flex items-center justify-between">
@@ -94,16 +94,19 @@ export const ResizableNavbar: React.FC<ResizableNavbarProps> = ({
                   href={item.link}
                   className={cn(
                     "flex items-center px-4 py-2 text-base font-medium text-gray-600 hover:text-gray-900 transition-colors duration-200 rounded-lg",
-                    activeDropdown === item.name && "text-gray-900 bg-gray-50/50"
+                    activeDropdown === item.name &&
+                      "text-gray-900 bg-gray-50/50",
                   )}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   {item.icon && <span className="mr-2">{item.icon}</span>}
-                  <span className={cn(
-                    "transition-all duration-200",
-                    isScrolled && "text-sm"
-                  )}>
+                  <span
+                    className={cn(
+                      "transition-all duration-200",
+                      isScrolled && "text-sm",
+                    )}
+                  >
                     {item.name}
                   </span>
                   {item.children && (
@@ -111,7 +114,7 @@ export const ResizableNavbar: React.FC<ResizableNavbarProps> = ({
                       className={cn(
                         "ml-1 h-4 w-4 transition-transform duration-200",
                         activeDropdown === item.name && "rotate-180",
-                        isScrolled && "h-3 w-3"
+                        isScrolled && "h-3 w-3",
                       )}
                     />
                   )}
@@ -255,9 +258,7 @@ export const ResizableNavbar: React.FC<ResizableNavbarProps> = ({
                   )}
                 </motion.div>
               ))}
-              <div className="pt-4 border-t border-gray-200/20">
-                {button}
-              </div>
+              <div className="pt-4 border-t border-gray-200/20">{button}</div>
             </div>
           </motion.div>
         )}

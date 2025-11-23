@@ -1,19 +1,29 @@
-import { useState } from 'react';
-import { ArrowLeftRight, Search } from 'lucide-react';
-import dayjs, { Dayjs } from 'dayjs';
-import Navbar from '@/components/common/Navbar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import backgroundImage from '@/assets/images/background.png';
-import TripCard from '@/components/search/TripCard';
-import FilterPanel from '@/components/search/FilterPanel';
-import Footer from '@/components/dashboard/Footer';
-import { mockTrips } from '@/data/mockTrips';
+import { useState } from "react";
+import { ArrowLeftRight, Search } from "lucide-react";
+import dayjs, { Dayjs } from "dayjs";
+import Navbar from "@/components/common/Navbar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import backgroundImage from "@/assets/images/background.png";
+import TripCard from "@/components/search/TripCard";
+import FilterPanel from "@/components/search/FilterPanel";
+import Footer from "@/components/dashboard/Footer";
+import { mockTrips } from "@/data/mockTrips";
 
 export default function SearchPage() {
-  const [fromLocation, setFromLocation] = useState('Ho Chi Minh City');
-  const [toLocation, setToLocation] = useState('Mui Ne');
+  const [fromLocation, setFromLocation] = useState("Ho Chi Minh City");
+  const [toLocation, setToLocation] = useState("Mui Ne");
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
   const [openTripId, setOpenTripId] = useState<string | null>(null);
 
@@ -24,12 +34,12 @@ export default function SearchPage() {
   };
 
   const handleSearch = () => {
-    console.log('Searching...', { fromLocation, toLocation, selectedDate });
+    console.log("Searching...", { fromLocation, toLocation, selectedDate });
   };
 
   const formatDate = () => {
-    if (!selectedDate) return 'Select date';
-    return selectedDate.format('MMM DD, YYYY');
+    if (!selectedDate) return "Select date";
+    return selectedDate.format("MMM DD, YYYY");
   };
 
   return (
@@ -61,17 +71,23 @@ export default function SearchPage() {
             <div className="flex items-center gap-4 bg-white rounded-full shadow-2xl p-2 border border-gray-200">
               {/* From Field */}
               <div className="flex-1 px-6 py-4">
-                <div className="text-xs font-medium text-gray-500 mb-1">From</div>
+                <div className="text-xs font-medium text-gray-500 mb-1">
+                  From
+                </div>
                 <Select value={fromLocation} onValueChange={setFromLocation}>
                   <SelectTrigger className="w-full text-lg font-medium border-0 focus:ring-0 bg-transparent h-auto p-0">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Ho Chi Minh City">Ho Chi Minh City</SelectItem>
+                    <SelectItem value="Ho Chi Minh City">
+                      Ho Chi Minh City
+                    </SelectItem>
                     <SelectItem value="Mui Ne">Mui Ne</SelectItem>
                     <SelectItem value="Da Lat">Da Lat</SelectItem>
                     <SelectItem value="Nha Trang">Nha Trang</SelectItem>
-                    <SelectItem value="Ba Ria - Vung Tau">Ba Ria - Vung Tau</SelectItem>
+                    <SelectItem value="Ba Ria - Vung Tau">
+                      Ba Ria - Vung Tau
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -96,8 +112,12 @@ export default function SearchPage() {
                     <SelectItem value="Mui Ne">Mui Ne</SelectItem>
                     <SelectItem value="Da Lat">Da Lat</SelectItem>
                     <SelectItem value="Nha Trang">Nha Trang</SelectItem>
-                    <SelectItem value="Ho Chi Minh City">Ho Chi Minh City</SelectItem>
-                    <SelectItem value="Ba Ria - Vung Tau">Ba Ria - Vung Tau</SelectItem>
+                    <SelectItem value="Ho Chi Minh City">
+                      Ho Chi Minh City
+                    </SelectItem>
+                    <SelectItem value="Ba Ria - Vung Tau">
+                      Ba Ria - Vung Tau
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -106,8 +126,12 @@ export default function SearchPage() {
               <Popover>
                 <PopoverTrigger asChild>
                   <div className="flex-1 px-6 py-4 cursor-pointer">
-                    <div className="text-xs font-medium text-gray-500 mb-1">Date</div>
-                    <div className="text-lg font-medium text-gray-900">{formatDate()}</div>
+                    <div className="text-xs font-medium text-gray-500 mb-1">
+                      Date
+                    </div>
+                    <div className="text-lg font-medium text-gray-900">
+                      {formatDate()}
+                    </div>
                   </div>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="center">
@@ -167,7 +191,9 @@ export default function SearchPage() {
                 key={trip.id}
                 trip={trip}
                 isOpen={openTripId === trip.id}
-                onToggle={(tripId) => setOpenTripId(openTripId === tripId ? null : tripId)}
+                onToggle={(tripId) =>
+                  setOpenTripId(openTripId === tripId ? null : tripId)
+                }
               />
             ))}
 

@@ -60,7 +60,7 @@ const LocationMap = ({ locations, selectedId, onSelect }: LocationMapProps) => {
         try {
           const query = encodeURIComponent(location.address || location.name);
           const response = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`
+            `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`,
           );
           const data = await response.json();
 

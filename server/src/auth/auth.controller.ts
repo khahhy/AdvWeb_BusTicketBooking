@@ -1,4 +1,14 @@
-import { Controller, Post, Body, Get, Query, UseGuards, Req, Res, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Query,
+  UseGuards,
+  Req,
+  Res,
+  Patch,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignUpDto } from './dto/signup.dto';
 import { SignInDto } from './dto/signin.dto';
@@ -64,9 +74,11 @@ export class AuthController {
   async googleAuthCallback(@Req() req, @Res() res) {
     // Handle the Google OAuth callback
     const token = await this.authService.googleLogin(req.user);
-    
+
     // Redirect to frontend with token
-    res.redirect(`${process.env.FRONTEND_URL}/auth-success?token=${token.accessToken}`);
+    res.redirect(
+      `${process.env.FRONTEND_URL}/auth-success?token=${token.accessToken}`,
+    );
   }
 
   @ApiOperation({ summary: 'Get current user info' })

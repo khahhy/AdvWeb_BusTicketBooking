@@ -1,9 +1,9 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Clock, MapPin } from 'lucide-react';
-import { Trip, Seat, generateSeats } from '@/data/mockTrips';
-import SeatMap from './SeatMap';
-import dayjs from 'dayjs';
+import { useState, useMemo, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Clock, MapPin } from "lucide-react";
+import { Trip, Seat, generateSeats } from "@/data/mockTrips";
+import SeatMap from "./SeatMap";
+import dayjs from "dayjs";
 
 interface TripCardProps {
   trip: Trip;
@@ -14,9 +14,11 @@ interface TripCardProps {
 export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState<'schedule' | 'seat' | 'shipment' | 'policy' | null>(null);
-  const [seats, setSeats] = useState<Seat[]>(() => 
-    generateSeats(32, 32 - trip.availableSeats, trip.price)
+  const [activeTab, setActiveTab] = useState<
+    "schedule" | "seat" | "shipment" | "policy" | null
+  >(null);
+  const [seats, setSeats] = useState<Seat[]>(() =>
+    generateSeats(32, 32 - trip.availableSeats, trip.price),
   );
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
 
@@ -29,9 +31,10 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
   useEffect(() => {
     if (isOpen && activeTab && cardRef.current) {
       const navbarHeight = 110;
-      const cardTop = cardRef.current.getBoundingClientRect().top + window.scrollY;
+      const cardTop =
+        cardRef.current.getBoundingClientRect().top + window.scrollY;
       const scrollPosition = cardTop - navbarHeight - 20;
-      
+
       // Use requestAnimationFrame for smoother custom scroll
       const duration = 800; // 800ms for smoother, slower scroll
       const startPosition = window.scrollY;
@@ -39,18 +42,16 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
       const startTime = performance.now();
 
       const easeInOutCubic = (t: number): number => {
-        return t < 0.5 
-          ? 4 * t * t * t 
-          : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
       };
 
       const animateScroll = (currentTime: number) => {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
         const easeProgress = easeInOutCubic(progress);
-        
+
         window.scrollTo(0, startPosition + distance * easeProgress);
-        
+
         if (progress < 1) {
           requestAnimationFrame(animateScroll);
         }
@@ -65,7 +66,8 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
     setSeats((prevSeats) => {
       const newSeats = prevSeats.map((seat) => {
         if (seat.id === seatId) {
-          const newType: Seat['type'] = seat.type === 'selected' ? 'available' : 'selected';
+          const newType: Seat["type"] =
+            seat.type === "selected" ? "available" : "selected";
           return { ...seat, type: newType };
         }
         return seat;
@@ -74,7 +76,7 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
       // Compute new selected list (deduplicated)
       const newSelected: string[] = [];
       for (const s of newSeats) {
-        if (s.type === 'selected') newSelected.push(s.id);
+        if (s.type === "selected") newSelected.push(s.id);
       }
       // Apply selected seats in one shot
       setSelectedSeats(() => newSelected);
@@ -88,22 +90,26 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
   }, [selectedSeats, trip.price]);
 
   const handleSelectTrip = () => {
-    const seat = selectedSeats.length > 0 
-      ? seats.find(s => s.id === selectedSeats[0])?.number || '01'
-      : '01';
-    const date = dayjs().format('YYYY-MM-DD');
+    const seat =
+      selectedSeats.length > 0
+        ? seats.find((s) => s.id === selectedSeats[0])?.number || "01"
+        : "01";
+    const date = dayjs().format("YYYY-MM-DD");
     navigate(`/checkout?tripId=${trip.id}&seat=${seat}&date=${date}`);
   };
 
   const tabs = [
-    { id: 'schedule', label: 'Schedule' },
-    { id: 'seat', label: 'Choose seat' },
-    { id: 'shipment', label: 'Transshipment' },
-    { id: 'policy', label: 'Policy' },
+    { id: "schedule", label: "Schedule" },
+    { id: "seat", label: "Choose seat" },
+    { id: "shipment", label: "Transshipment" },
+    { id: "policy", label: "Policy" },
   ];
 
   return (
-    <div ref={cardRef} className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-100">
+    <div
+      ref={cardRef}
+      className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-100"
+    >
       {/* Trip Header */}
       <div className="p-6">
         <div className="flex items-start justify-between">
@@ -111,8 +117,12 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
           <div className="flex items-center gap-8 flex-1">
             {/* Departure */}
             <div className="text-center w-32 flex-shrink-0">
-              <div className="text-3xl font-bold text-gray-900 mb-1">{trip.departureTime}</div>
-              <div className="text-sm font-medium text-gray-700">{trip.from}</div>
+              <div className="text-3xl font-bold text-gray-900 mb-1">
+                {trip.departureTime}
+              </div>
+              <div className="text-sm font-medium text-gray-700">
+                {trip.from}
+              </div>
             </div>
 
             {/* Duration */}
@@ -122,13 +132,17 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
                 <div className="h-0.5 w-20 border-t-2 border-dashed border-gray-300"></div>
                 <MapPin className="w-4 h-4 text-gray-400" />
               </div>
-              <div className="text-xs text-gray-500 font-medium">{trip.duration}</div>
+              <div className="text-xs text-gray-500 font-medium">
+                {trip.duration}
+              </div>
               <div className="text-xs text-gray-400">(Asian/Ho Chi Minh)</div>
             </div>
 
             {/* Arrival */}
             <div className="text-center w-32 flex-shrink-0">
-              <div className="text-3xl font-bold text-gray-900 mb-1">{trip.arrivalTime}</div>
+              <div className="text-3xl font-bold text-gray-900 mb-1">
+                {trip.arrivalTime}
+              </div>
               <div className="text-sm font-medium text-gray-700">{trip.to}</div>
             </div>
           </div>
@@ -137,18 +151,21 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
           <div className="flex flex-col items-center gap-2 px-8 border-l border-gray-200">
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <Clock className="w-4 h-4" />
-              <span className="font-medium">{trip.availableSeats} blank seats</span>
+              <span className="font-medium">
+                {trip.availableSeats} blank seats
+              </span>
             </div>
           </div>
 
           {/* Price */}
           <div className="text-right pl-8 border-l border-gray-200">
             <div className="text-3xl font-bold text-foreground mb-1">
-              {trip.price.toLocaleString('vi-VN')}đ
+              {trip.price.toLocaleString("vi-VN")}đ
             </div>
             {selectedSeats.length > 0 && (
               <div className="text-xs text-gray-500">
-                {selectedSeats.length} seats: {totalPrice.toLocaleString('vi-VN')}đ
+                {selectedSeats.length} seats:{" "}
+                {totalPrice.toLocaleString("vi-VN")}đ
               </div>
             )}
           </div>
@@ -184,8 +201,8 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
                 }}
                 className={`px-6 py-2 text-sm font-medium rounded-2xl transition-all duration-200 ${
                   activeTab === tab.id && isOpen
-                    ? 'bg-foreground text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? "bg-foreground text-white"
+                    : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
                 {tab.label}
@@ -193,7 +210,7 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
             ))}
           </div>
 
-          <button 
+          <button
             onClick={handleSelectTrip}
             className="px-8 py-2 bg-foreground text-white font-semibold rounded-2xl hover:bg-foreground/90 active:bg-foreground/80 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
           >
@@ -203,28 +220,32 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'seat' && (
+      {activeTab === "seat" && (
         <div className="p-6 bg-gray-50 border-t border-gray-200">
           <div className="max-w-4xl mx-auto">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Choose Your Seat</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">
+              Choose Your Seat
+            </h3>
             <SeatMap seats={seats} onSeatSelect={handleSeatSelect} />
-            
+
             {selectedSeats.length > 0 && (
               <div className="mt-6 p-4 bg-white rounded-2xl border border-gray-200">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">Selected {selectedSeats.length} seats:</p>
+                    <p className="text-sm text-gray-600">
+                      Selected {selectedSeats.length} seats:
+                    </p>
                     <p className="text-lg font-bold text-gray-900 mt-1">
                       {seats
-                        .filter(seat => selectedSeats.includes(seat.id))
-                        .map(seat => seat.number)
-                        .join(', ')}
+                        .filter((seat) => selectedSeats.includes(seat.id))
+                        .map((seat) => seat.number)
+                        .join(", ")}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-gray-600">Total</p>
                     <p className="text-2xl font-bold text-foreground">
-                      {totalPrice.toLocaleString('vi-VN')}đ
+                      {totalPrice.toLocaleString("vi-VN")}đ
                     </p>
                   </div>
                 </div>
@@ -234,7 +255,7 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
         </div>
       )}
 
-      {activeTab === 'schedule' && (
+      {activeTab === "schedule" && (
         <div className="p-6 bg-gray-50 border-t border-gray-200">
           <div className="max-w-2xl">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Schedule</h3>
@@ -245,19 +266,23 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">{trip.from}</p>
-                  <p className="text-sm text-gray-500">Departure: {trip.departureTime}</p>
+                  <p className="text-sm text-gray-500">
+                    Departure: {trip.departureTime}
+                  </p>
                 </div>
               </div>
-              
+
               <div className="ml-6 border-l-2 border-dashed border-gray-300 h-12"></div>
-              
+
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-full bg-foreground/5 flex items-center justify-center flex-shrink-0">
                   <MapPin className="w-5 h-5 text-foreground/70" />
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">{trip.to}</p>
-                  <p className="text-sm text-gray-500">Arrival: {trip.arrivalTime}</p>
+                  <p className="text-sm text-gray-500">
+                    Arrival: {trip.arrivalTime}
+                  </p>
                 </div>
               </div>
             </div>
@@ -265,14 +290,18 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
         </div>
       )}
 
-      {activeTab === 'shipment' && (
+      {activeTab === "shipment" && (
         <div className="p-6 bg-gray-50 border-t border-gray-200">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Transshipment Information</h3>
-          <p className="text-gray-600">Information about transportation and delivery services.</p>
+          <h3 className="text-lg font-bold text-gray-900 mb-4">
+            Transshipment Information
+          </h3>
+          <p className="text-gray-600">
+            Information about transportation and delivery services.
+          </p>
         </div>
       )}
 
-      {activeTab === 'policy' && (
+      {activeTab === "policy" && (
         <div className="p-6 bg-gray-50 border-t border-gray-200">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Policy</h3>
           <div className="space-y-3 text-sm text-gray-600">

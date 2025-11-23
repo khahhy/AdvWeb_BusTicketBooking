@@ -104,4 +104,25 @@ export class TripsController {
   async remove(@Param('id') id: string) {
     return this.tripsService.remove(id);
   }
+
+  @ApiOperation({
+    summary: 'Get real-time seat status for a specific Trip and Route',
+    description:
+      'Returns seat map with status (AVAILABLE/BOOKED) based on the segments of the selected Route.',
+  })
+  @ApiParam({ name: 'id', description: 'Trip ID', type: String })
+  @ApiQuery({
+    name: 'routeId',
+    description: 'Route ID (to calculate segments)',
+    type: String,
+  })
+  @ApiResponse({ status: 200, description: 'Fetched seat map successfully.' })
+  @ApiResponse({ status: 404, description: 'Trip or Route not found.' })
+  @Get(':id/seats')
+  async getSeatsStatus(
+    @Param('id') tripId: string,
+    @Query('routeId') routeId: string,
+  ) {
+    return this.tripsService.getSeatsStatus(tripId, routeId);
+  }
 }

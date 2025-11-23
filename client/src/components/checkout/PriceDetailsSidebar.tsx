@@ -1,4 +1,4 @@
-import { Info } from 'lucide-react';
+import { Info } from "lucide-react";
 
 interface PriceDetailsSidebarProps {
   selectedSeat: string;
@@ -39,18 +39,26 @@ export default function PriceDetailsSidebar({
         <div className="flex justify-between items-start">
           <div>
             <div className="font-semibold text-gray-900">Adult 1</div>
-            <div className="text-sm text-gray-500">Coach 1 - Seat {selectedSeat} (Soft seat)</div>
+            <div className="text-sm text-gray-500">
+              Coach 1 - Seat {selectedSeat} (Soft seat)
+            </div>
           </div>
           <div className="text-right">
-            <div className="font-semibold text-gray-900">{formatCurrency(ticketPrice)}</div>
-            <div className="text-sm text-gray-500">{formatCurrency(ticketPrice)}</div>
+            <div className="font-semibold text-gray-900">
+              {formatCurrency(ticketPrice)}
+            </div>
+            <div className="text-sm text-gray-500">
+              {formatCurrency(ticketPrice)}
+            </div>
           </div>
         </div>
 
         <div className="border-t border-gray-200 pt-4">
           <div className="flex justify-between text-sm mb-2">
             <span className="text-gray-600">Insurance fees</span>
-            <span className="text-gray-900">{formatCurrency(insuranceFee)}</span>
+            <span className="text-gray-900">
+              {formatCurrency(insuranceFee)}
+            </span>
           </div>
           <div className="flex justify-between text-sm items-center">
             <div className="flex items-center gap-1">
@@ -59,14 +67,20 @@ export default function PriceDetailsSidebar({
             </div>
             <span className="text-gray-900">{formatCurrency(serviceFee)}</span>
           </div>
-          <p className="text-xs text-gray-500 mt-1">*This fee is non-refundable</p>
+          <p className="text-xs text-gray-500 mt-1">
+            *This fee is non-refundable
+          </p>
         </div>
       </div>
 
       <div className="border-t border-gray-200 pt-4 mb-6">
         <div className="flex justify-between items-center">
-          <span className="font-semibold text-gray-900">Total amount for 1 passenger:</span>
-          <span className="text-2xl font-bold text-gray-900">{formatCurrency(totalPrice)}</span>
+          <span className="font-semibold text-gray-900">
+            Total amount for 1 passenger:
+          </span>
+          <span className="text-2xl font-bold text-gray-900">
+            {formatCurrency(totalPrice)}
+          </span>
         </div>
       </div>
 
@@ -78,10 +92,10 @@ export default function PriceDetailsSidebar({
       </button>
 
       <div className="mt-4 text-xs text-gray-500 text-center">
-        By tapping I have transferred, you agree to our{' '}
+        By tapping I have transferred, you agree to our{" "}
         <a href="#" className="text-blue-600 hover:underline">
           Payment Security Policy
-        </a>{' '}
+        </a>{" "}
         of Vexere
       </div>
     </div>

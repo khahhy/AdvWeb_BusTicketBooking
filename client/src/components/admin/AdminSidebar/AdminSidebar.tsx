@@ -15,7 +15,7 @@ const AdminSidebar = ({ isCollapsed }: AdminSidebarProps) => {
         "h-[calc(100vh-2rem)]",
         "transition-all duration-300 group",
         isCollapsed ? "w-[88px]" : "w-[280px]",
-        isCollapsed && "hover:w-[280px] z-50"
+        isCollapsed && "hover:w-[280px] z-50",
       )}
     >
       <div className="flex-1 overflow-y-auto p-2 pt-4">

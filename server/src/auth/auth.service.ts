@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SignUpDto } from './dto/signup.dto';
@@ -32,7 +37,7 @@ export class AuthService {
 
     // Generate verification token
     const verificationToken = randomBytes(32).toString('hex');
-    
+
     // Token expires in 24 hours
     const tokenExpiresAt = new Date();
     tokenExpiresAt.setHours(tokenExpiresAt.getHours() + 24);
@@ -54,14 +59,18 @@ export class AuthService {
 
     // Send verification email
     try {
-      await this.emailService.sendVerificationEmail(user.email, verificationToken);
+      await this.emailService.sendVerificationEmail(
+        user.email,
+        verificationToken,
+      );
     } catch (error) {
       console.error('Failed to send verification email:', error);
       // Don't fail registration if email fails, but log the error
     }
 
     return {
-      message: 'Registration successful. Please check your email to verify your account.',
+      message:
+        'Registration successful. Please check your email to verify your account.',
       email: user.email,
     };
   }
@@ -71,13 +80,13 @@ export class AuthService {
     const cleanToken = decodeURIComponent(token.trim());
     console.log('Verifying token:', cleanToken);
     console.log('Token length:', cleanToken.length);
-    
+
     const user = await this.prisma.users.findUnique({
       where: { verificationToken: cleanToken },
     });
 
     console.log('User found by token:', user ? `Yes (${user.email})` : 'No');
-    
+
     if (!user) {
       throw new NotFoundException('Invalid verification token');
     }
@@ -85,7 +94,7 @@ export class AuthService {
     // If already verified, return success (idempotent)
     if (user.emailVerified) {
       console.log('Email already verified, returning success');
-      
+
       // Clear token after successful re-verification (cleanup)
       if (user.verificationToken) {
         await this.prisma.users.update({
@@ -96,7 +105,7 @@ export class AuthService {
           },
         });
       }
-      
+
       return {
         message: 'Email verified successfully. Your account is now active.',
         email: user.email,
@@ -110,11 +119,11 @@ export class AuthService {
     }
 
     console.log('Updating user to verified status...');
-    
+
     // Update user to verified but keep token for 10 minutes
     // This allows the same verification link to work if user refreshes the page
     const tokenExpiryExtended = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
-    
+
     await this.prisma.users.update({
       where: { id: user.id },
       data: {
@@ -161,7 +170,10 @@ export class AuthService {
 
     // Send verification email
     try {
-      await this.emailService.sendVerificationEmail(user.email, verificationToken);
+      await this.emailService.sendVerificationEmail(
+        user.email,
+        verificationToken,
+      );
     } catch (error) {
       console.error('Failed to resend verification email:', error);
       throw new BadRequestException('Failed to send verification email');
@@ -198,7 +210,9 @@ export class AuthService {
 
     // Check if account is active
     if (user.status === 'banned') {
-      throw new UnauthorizedException('Your account has been banned. Please contact support.');
+      throw new UnauthorizedException(
+        'Your account has been banned. Please contact support.',
+      );
     }
 
     // Verify password
@@ -239,7 +253,8 @@ export class AuthService {
     // Don't reveal if user exists or not for security
     if (!user) {
       return {
-        message: 'If an account with that email exists, a password reset link has been sent.',
+        message:
+          'If an account with that email exists, a password reset link has been sent.',
       };
     }
 
@@ -273,7 +288,8 @@ export class AuthService {
     }
 
     return {
-      message: 'If an account with that email exists, a password reset link has been sent.',
+      message:
+        'If an account with that email exists, a password reset link has been sent.',
     };
   }
 
@@ -307,7 +323,8 @@ export class AuthService {
     });
 
     return {
-      message: 'Password reset successfully. You can now sign in with your new password.',
+      message:
+        'Password reset successfully. You can now sign in with your new password.',
     };
   }
 

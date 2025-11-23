@@ -31,12 +31,12 @@ export const NavbarMenu: React.FC<NavbarMenuProps> = ({ items, className }) => {
               href={item.href}
               className={cn(
                 "px-4 py-2 text-sm font-medium text-gray-700 hover:text-black transition-colors duration-200 relative z-10",
-                activeItem === item.title && "text-black"
+                activeItem === item.title && "text-black",
               )}
             >
               {item.title}
             </a>
-            
+
             {item.children && (
               <AnimatePresence>
                 {activeItem === item.title && (

@@ -1,4 +1,4 @@
-import { Seat } from '@/data/mockTrips';
+import { Seat } from "@/data/mockTrips";
 
 interface SeatMapProps {
   seats: Seat[];
@@ -9,32 +9,30 @@ export default function SeatMap({ seats, onSeatSelect }: SeatMapProps) {
   const renderSeat = (seat: Seat) => {
     const getSeatStyle = () => {
       switch (seat.type) {
-        case 'booked':
-          return 'bg-gray-200 border-gray-300 text-gray-400 cursor-not-allowed';
-        case 'selected':
-          return 'bg-yellow-400 border-yellow-500 text-white cursor-pointer hover:bg-yellow-500';
-        case 'available':
-          return 'bg-white border-foreground/40 text-foreground/40 cursor-pointer hover:bg-blue-50';
+        case "booked":
+          return "bg-gray-200 border-gray-300 text-gray-400 cursor-not-allowed";
+        case "selected":
+          return "bg-yellow-400 border-yellow-500 text-white cursor-pointer hover:bg-yellow-500";
+        case "available":
+          return "bg-white border-foreground/40 text-foreground/40 cursor-pointer hover:bg-blue-50";
         default:
-          return 'bg-white border-gray-300';
+          return "bg-white border-gray-300";
       }
     };
 
     return (
       <button
         key={seat.id}
-        onClick={() => seat.type !== 'booked' && onSeatSelect(seat.id)}
-        disabled={seat.type === 'booked'}
+        onClick={() => seat.type !== "booked" && onSeatSelect(seat.id)}
+        disabled={seat.type === "booked"}
         className={`relative w-9 h-9 rounded-md border-2 font-semibold text-xs transition-all duration-200 ${getSeatStyle()}`}
-        title={seat.type === 'booked' ? 'Booked' : `Seat ${seat.number}`}
+        title={seat.type === "booked" ? "Booked" : `Seat ${seat.number}`}
       >
         {/* Seat number */}
         <span className="relative z-10">{seat.number}</span>
       </button>
     );
   };
-
-
 
   return (
     <div className="space-y-3">
@@ -61,27 +59,35 @@ export default function SeatMap({ seats, onSeatSelect }: SeatMapProps) {
           <div className="flex gap-2 justify-center">
             {/* Left Column 1 */}
             <div className="flex flex-col gap-1.5">
-              {seats.filter((_, i) => i % 4 === 0).map((seat) => renderSeat(seat))}
+              {seats
+                .filter((_, i) => i % 4 === 0)
+                .map((seat) => renderSeat(seat))}
             </div>
-            
+
             {/* Left Column 2 */}
             <div className="flex flex-col gap-1.5">
-              {seats.filter((_, i) => i % 4 === 1).map((seat) => renderSeat(seat))}
+              {seats
+                .filter((_, i) => i % 4 === 1)
+                .map((seat) => renderSeat(seat))}
             </div>
-            
+
             {/* Aisle */}
             <div className="w-4 flex items-center justify-center">
               <div className="h-full w-px bg-gray-300"></div>
             </div>
-            
+
             {/* Right Column 1 */}
             <div className="flex flex-col gap-1.5">
-              {seats.filter((_, i) => i % 4 === 2).map((seat) => renderSeat(seat))}
+              {seats
+                .filter((_, i) => i % 4 === 2)
+                .map((seat) => renderSeat(seat))}
             </div>
-            
+
             {/* Right Column 2 */}
             <div className="flex flex-col gap-1.5">
-              {seats.filter((_, i) => i % 4 === 3).map((seat) => renderSeat(seat))}
+              {seats
+                .filter((_, i) => i % 4 === 3)
+                .map((seat) => renderSeat(seat))}
             </div>
           </div>
         </div>

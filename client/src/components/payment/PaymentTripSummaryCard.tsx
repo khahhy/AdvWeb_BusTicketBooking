@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { MapPin, User, ChevronUp, Mail } from 'lucide-react';
-import { Trip } from '@/data/mockTrips';
+import { useState } from "react";
+import { MapPin, User, ChevronUp, Mail } from "lucide-react";
+import { Trip } from "@/data/mockTrips";
 
 interface PaymentTripSummaryCardProps {
   trip: Trip;
@@ -27,13 +27,15 @@ export default function PaymentTripSummaryCard({
         </span>
         <span className="text-sm text-gray-600">{formatDate()}</span>
       </div>
-      
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className="text-2xl font-bold text-gray-900">{trip.from}</div>
-          <div className="text-xl font-semibold text-gray-900 mt-1">{trip.departureTime}</div>
+          <div className="text-xl font-semibold text-gray-900 mt-1">
+            {trip.departureTime}
+          </div>
         </div>
-        
+
         <div className="flex-1 px-4 md:px-8 text-center">
           <div className="flex items-center justify-center gap-2 md:gap-3 mb-1">
             <MapPin className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
@@ -42,10 +44,12 @@ export default function PaymentTripSummaryCard({
           </div>
           <div className="text-xs text-gray-500">{trip.duration}</div>
         </div>
-        
+
         <div className="text-right">
           <div className="text-2xl font-bold text-gray-900">{trip.to}</div>
-          <div className="text-xl font-semibold text-gray-900 mt-1">{trip.arrivalTime}</div>
+          <div className="text-xl font-semibold text-gray-900 mt-1">
+            {trip.arrivalTime}
+          </div>
         </div>
       </div>
 
@@ -61,7 +65,7 @@ export default function PaymentTripSummaryCard({
           </div>
           <ChevronUp
             className={`w-5 h-5 text-gray-400 transition-transform ${
-              showPassengerDetails ? 'rotate-180' : ''
+              showPassengerDetails ? "rotate-180" : ""
             }`}
           />
         </button>
@@ -77,9 +81,7 @@ export default function PaymentTripSummaryCard({
           <Mail className="w-4 h-4" />
           <span>Tickets will be sent via email</span>
         </div>
-        <div className="mt-2 text-sm text-gray-600 ml-6">
-          {email}
-        </div>
+        <div className="mt-2 text-sm text-gray-600 ml-6">{email}</div>
       </div>
     </div>
   );

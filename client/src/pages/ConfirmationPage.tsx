@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Download, Mail, MapPin } from 'lucide-react';
-import Navbar from '@/components/common/Navbar';
-import backgroundImage from '@/assets/images/background.png';
-import Footer from '@/components/dashboard/Footer';
-import { mockTrips } from '@/data/mockTrips';
-import dayjs from 'dayjs';
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Download, Mail, MapPin } from "lucide-react";
+import Navbar from "@/components/common/Navbar";
+import backgroundImage from "@/assets/images/background.png";
+import Footer from "@/components/dashboard/Footer";
+import { mockTrips } from "@/data/mockTrips";
+import dayjs from "dayjs";
 
 export default function ConfirmationPage() {
   const navigate = useNavigate();
@@ -16,13 +16,15 @@ export default function ConfirmationPage() {
   }, []);
 
   // Get data from URL params
-  const tripId = searchParams.get('tripId') || '1';
-  const selectedSeat = searchParams.get('seat') || '25';
-  const travelDate = searchParams.get('date') || dayjs().format('YYYY-MM-DD');
-  const passengerName = searchParams.get('passengerName') || 'VO LE VIET TU';
-  const passengerId = searchParams.get('passengerId') || '123456789012';
-  const email = searchParams.get('email') || 'example@gmail.com';
-  const bookingCode = searchParams.get('bookingCode') || 'BUS' + Math.random().toString(36).substr(2, 9).toUpperCase();
+  const tripId = searchParams.get("tripId") || "1";
+  const selectedSeat = searchParams.get("seat") || "25";
+  const travelDate = searchParams.get("date") || dayjs().format("YYYY-MM-DD");
+  const passengerName = searchParams.get("passengerName") || "VO LE VIET TU";
+  const passengerId = searchParams.get("passengerId") || "123456789012";
+  const email = searchParams.get("email") || "example@gmail.com";
+  const bookingCode =
+    searchParams.get("bookingCode") ||
+    "BUS" + Math.random().toString(36).substr(2, 9).toUpperCase();
 
   const trip = mockTrips.find((t) => t.id === tripId) || mockTrips[0];
 
@@ -32,15 +34,15 @@ export default function ConfirmationPage() {
   const totalPrice = ticketPrice + insuranceFee + serviceFee;
 
   const formatDate = () => {
-    return dayjs(travelDate).format('ddd, MMM DD, YYYY');
+    return dayjs(travelDate).format("ddd, MMM DD, YYYY");
   };
 
   const formatCurrency = (amount: number) => {
-    return amount.toLocaleString('vi-VN') + 'VND';
+    return amount.toLocaleString("vi-VN") + "VND";
   };
 
   const handleDownloadTicket = () => {
-    console.log('Downloading ticket...');
+    console.log("Downloading ticket...");
     // Implement download logic
   };
 
@@ -74,8 +76,12 @@ export default function ConfirmationPage() {
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-6 text-center">
             <p className="text-sm text-gray-600 mb-2">Booking Code</p>
-            <p className="text-4xl font-bold text-primary tracking-wider">{bookingCode}</p>
-            <p className="text-sm text-gray-500 mt-3">Please save this code for ticket pickup</p>
+            <p className="text-4xl font-bold text-primary tracking-wider">
+              {bookingCode}
+            </p>
+            <p className="text-sm text-gray-500 mt-3">
+              Please save this code for ticket pickup
+            </p>
           </div>
         </div>
 
@@ -83,7 +89,9 @@ export default function ConfirmationPage() {
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Trip Information</h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                Trip Information
+              </h2>
               <span className="inline-block bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">
                 CONFIRMED
               </span>
@@ -91,8 +99,12 @@ export default function ConfirmationPage() {
 
             <div className="flex items-center justify-between mb-6">
               <div className="w-32 flex-shrink-0">
-                <div className="text-2xl font-bold text-gray-900">{trip.from}</div>
-                <div className="text-xl font-semibold text-gray-900 mt-1">{trip.departureTime}</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {trip.from}
+                </div>
+                <div className="text-xl font-semibold text-gray-900 mt-1">
+                  {trip.departureTime}
+                </div>
               </div>
 
               <div className="flex-1 px-4 md:px-8 text-center">
@@ -105,19 +117,27 @@ export default function ConfirmationPage() {
               </div>
 
               <div className="text-right w-32 flex-shrink-0">
-                <div className="text-2xl font-bold text-gray-900">{trip.to}</div>
-                <div className="text-xl font-semibold text-gray-900 mt-1">{trip.arrivalTime}</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {trip.to}
+                </div>
+                <div className="text-xl font-semibold text-gray-900 mt-1">
+                  {trip.arrivalTime}
+                </div>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Date</p>
-                <p className="text-base font-semibold text-gray-900">{formatDate()}</p>
+                <p className="text-base font-semibold text-gray-900">
+                  {formatDate()}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600 mb-1">Seat Number</p>
-                <p className="text-base font-semibold text-gray-900">{selectedSeat}</p>
+                <p className="text-base font-semibold text-gray-900">
+                  {selectedSeat}
+                </p>
               </div>
             </div>
           </div>
@@ -126,15 +146,21 @@ export default function ConfirmationPage() {
         {/* Passenger Information Card */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Passenger Information</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">
+              Passenger Information
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Full Name</p>
-                <p className="text-base font-semibold text-gray-900">{passengerName}</p>
+                <p className="text-base font-semibold text-gray-900">
+                  {passengerName}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600 mb-1">ID Number</p>
-                <p className="text-base font-semibold text-gray-900">{passengerId}</p>
+                <p className="text-base font-semibold text-gray-900">
+                  {passengerId}
+                </p>
               </div>
               <div className="md:col-span-2">
                 <p className="text-sm text-gray-600 mb-1">Email</p>
@@ -147,7 +173,9 @@ export default function ConfirmationPage() {
         {/* Payment Summary Card */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.7s_forwards]">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Payment Summary</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">
+              Payment Summary
+            </h2>
             <div className="space-y-3">
               <div className="flex justify-between text-gray-700">
                 <span>Ticket Price (Seat {selectedSeat})</span>
@@ -163,7 +191,9 @@ export default function ConfirmationPage() {
               </div>
               <div className="border-t border-gray-200 pt-3 flex justify-between text-xl font-bold text-gray-900">
                 <span>Total Paid</span>
-                <span className="text-green-600">{formatCurrency(totalPrice)}</span>
+                <span className="text-green-600">
+                  {formatCurrency(totalPrice)}
+                </span>
               </div>
             </div>
           </div>
@@ -174,9 +204,12 @@ export default function ConfirmationPage() {
           <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6 flex items-start gap-3">
             <Mail className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-blue-900">Ticket sent to your email</p>
+              <p className="text-sm font-semibold text-blue-900">
+                Ticket sent to your email
+              </p>
               <p className="text-sm text-blue-700 mt-1">
-                We've sent your ticket confirmation to <span className="font-semibold">{email}</span>
+                We've sent your ticket confirmation to{" "}
+                <span className="font-semibold">{email}</span>
               </p>
             </div>
           </div>
@@ -193,7 +226,7 @@ export default function ConfirmationPage() {
               Download Ticket
             </button>
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate("/dashboard")}
               className="flex-1 bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-300 py-4 rounded-2xl transition-all duration-300 font-semibold"
             >
               Back to Home

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Save,
@@ -10,17 +10,27 @@ import {
   Clock,
   User,
   Ticket,
-  RefreshCw
-} from 'lucide-react';
-import Navbar from '@/components/common/Navbar';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import Footer from '@/components/dashboard/Footer';
-import backgroundImage from '@/assets/images/background.png';
-import dayjs, { Dayjs } from 'dayjs';
+  RefreshCw,
+} from "lucide-react";
+import Navbar from "@/components/common/Navbar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import Footer from "@/components/dashboard/Footer";
+import backgroundImage from "@/assets/images/background.png";
+import dayjs, { Dayjs } from "dayjs";
 
 interface BookingData {
   id: string;
@@ -32,7 +42,7 @@ interface BookingData {
   arrivalTime: string;
   seat: string;
   price: number;
-  status: 'completed' | 'upcoming' | 'cancelled';
+  status: "completed" | "upcoming" | "cancelled";
   passengerName: string;
   duration: string;
   busNumber: string;
@@ -41,26 +51,38 @@ interface BookingData {
 
 // Mock booking data
 const mockBookings: { [key: string]: BookingData } = {
-  '2': {
-    id: '2',
-    bookingCode: 'BUS789012',
-    from: 'Ho Chi Minh City',
-    to: 'Nha Trang',
-    date: '2024-12-01',
-    departureTime: '22:00',
-    arrivalTime: '06:30',
-    seat: 'B08',
+  "2": {
+    id: "2",
+    bookingCode: "BUS789012",
+    from: "Ho Chi Minh City",
+    to: "Nha Trang",
+    date: "2024-12-01",
+    departureTime: "22:00",
+    arrivalTime: "06:30",
+    seat: "B08",
     price: 320000,
-    status: 'upcoming',
-    passengerName: 'Nguyen Van A',
-    duration: '8h 30m',
-    busNumber: 'SGN-NTR-003',
-    busType: 'Sleeper Bus 34 beds'
-  }
+    status: "upcoming",
+    passengerName: "Nguyen Van A",
+    duration: "8h 30m",
+    busNumber: "SGN-NTR-003",
+    busType: "Sleeper Bus 34 beds",
+  },
 };
 
 // Available seats for modification
-const availableSeats = ['A01', 'A02', 'A03', 'B01', 'B02', 'B03', 'B05', 'B06', 'B07', 'C01', 'C02'];
+const availableSeats = [
+  "A01",
+  "A02",
+  "A03",
+  "B01",
+  "B02",
+  "B03",
+  "B05",
+  "B06",
+  "B07",
+  "C01",
+  "C02",
+];
 
 export default function ModifyBookingPage() {
   const { id } = useParams<{ id: string }>();
@@ -74,14 +96,14 @@ export default function ModifyBookingPage() {
 
   // Modifiable fields
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
-  const [selectedSeat, setSelectedSeat] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
+  const [selectedSeat, setSelectedSeat] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
 
   // Available times for the route
   const availableTimes = [
-    { value: '06:00', label: '06:00 AM', arrival: '14:30' },
-    { value: '14:00', label: '02:00 PM', arrival: '22:30' },
-    { value: '22:00', label: '10:00 PM', arrival: '06:30+1' }
+    { value: "06:00", label: "06:00 AM", arrival: "14:30" },
+    { value: "14:00", label: "02:00 PM", arrival: "22:30" },
+    { value: "22:00", label: "10:00 PM", arrival: "06:30+1" },
   ];
 
   useEffect(() => {
@@ -101,12 +123,12 @@ export default function ModifyBookingPage() {
   }, [id]);
 
   const formatDate = (dateObj: Dayjs | null) => {
-    if (!dateObj) return '';
-    return dateObj.format('DD/MM/YYYY');
+    if (!dateObj) return "";
+    return dateObj.format("DD/MM/YYYY");
   };
 
   const formatCurrency = (amount: number) => {
-    return amount.toLocaleString('vi-VN') + ' VND';
+    return amount.toLocaleString("vi-VN") + " VND";
   };
 
   const handleSaveChanges = async () => {
@@ -117,8 +139,8 @@ export default function ModifyBookingPage() {
     // Simulate API call
     setTimeout(() => {
       setSaving(false);
-      alert('Booking updated successfully!');
-      navigate('/booking-history');
+      alert("Booking updated successfully!");
+      navigate("/booking-history");
     }, 2000);
   };
 
@@ -131,8 +153,8 @@ export default function ModifyBookingPage() {
     setTimeout(() => {
       setCancelling(false);
       setShowCancelModal(false);
-      alert('Booking cancelled successfully!');
-      navigate('/booking-history');
+      alert("Booking cancelled successfully!");
+      navigate("/booking-history");
     }, 1500);
   };
 
@@ -140,14 +162,14 @@ export default function ModifyBookingPage() {
     if (!booking || !selectedDate) return false;
 
     return (
-      selectedDate.format('YYYY-MM-DD') !== booking.date ||
+      selectedDate.format("YYYY-MM-DD") !== booking.date ||
       selectedSeat !== booking.seat ||
       selectedTime !== booking.departureTime
     );
   };
 
   const getSelectedTimeDetails = () => {
-    return availableTimes.find(time => time.value === selectedTime);
+    return availableTimes.find((time) => time.value === selectedTime);
   };
 
   if (loading) {
@@ -170,27 +192,38 @@ export default function ModifyBookingPage() {
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Booking Not Found</h2>
-            <p className="text-gray-600 mb-6">The booking you're trying to modify doesn't exist.</p>
-            <Button onClick={() => navigate('/booking-history')}>Go Back to History</Button>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Booking Not Found
+            </h2>
+            <p className="text-gray-600 mb-6">
+              The booking you're trying to modify doesn't exist.
+            </p>
+            <Button onClick={() => navigate("/booking-history")}>
+              Go Back to History
+            </Button>
           </div>
         </div>
       </div>
     );
   }
 
-  if (booking.status !== 'upcoming') {
+  if (booking.status !== "upcoming") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <AlertTriangle className="w-16 h-16 text-orange-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Cannot Modify Booking</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Cannot Modify Booking
+            </h2>
             <p className="text-gray-600 mb-6">
-              Only upcoming bookings can be modified. This booking is {booking.status}.
+              Only upcoming bookings can be modified. This booking is{" "}
+              {booking.status}.
             </p>
-            <Button onClick={() => navigate('/booking-history')}>Go Back to History</Button>
+            <Button onClick={() => navigate("/booking-history")}>
+              Go Back to History
+            </Button>
           </div>
         </div>
       </div>
@@ -211,7 +244,7 @@ export default function ModifyBookingPage() {
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <Button
             variant="outline"
-            onClick={() => navigate('/booking-history')}
+            onClick={() => navigate("/booking-history")}
             className="mb-6 bg-white/80 hover:bg-white border-white/50 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.1s_forwards]"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -231,12 +264,18 @@ export default function ModifyBookingPage() {
         {/* Current Booking Info */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Current Booking</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">
+              Current Booking
+            </h3>
 
             <div className="flex items-center justify-between mb-4">
               <div className="w-40 flex-shrink-0">
-                <div className="text-xl font-bold text-gray-900">{booking.from}</div>
-                <div className="text-base font-semibold text-gray-900 mt-1">{booking.departureTime}</div>
+                <div className="text-xl font-bold text-gray-900">
+                  {booking.from}
+                </div>
+                <div className="text-base font-semibold text-gray-900 mt-1">
+                  {booking.departureTime}
+                </div>
               </div>
 
               <div className="flex-1 px-8 text-center">
@@ -252,23 +291,33 @@ export default function ModifyBookingPage() {
               </div>
 
               <div className="text-right w-40 flex-shrink-0">
-                <div className="text-xl font-bold text-gray-900">{booking.to}</div>
-                <div className="text-base font-semibold text-gray-900 mt-1">{booking.arrivalTime}</div>
+                <div className="text-xl font-bold text-gray-900">
+                  {booking.to}
+                </div>
+                <div className="text-base font-semibold text-gray-900 mt-1">
+                  {booking.arrivalTime}
+                </div>
               </div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200 text-sm">
               <div>
                 <span className="text-gray-600">Travel Date:</span>
-                <div className="font-semibold text-gray-900">{formatDate(dayjs(booking.date))}</div>
+                <div className="font-semibold text-gray-900">
+                  {formatDate(dayjs(booking.date))}
+                </div>
               </div>
               <div>
                 <span className="text-gray-600">Seat:</span>
-                <div className="font-semibold text-gray-900">{booking.seat}</div>
+                <div className="font-semibold text-gray-900">
+                  {booking.seat}
+                </div>
               </div>
               <div>
                 <span className="text-gray-600">Passenger:</span>
-                <div className="font-semibold text-gray-900">{booking.passengerName}</div>
+                <div className="font-semibold text-gray-900">
+                  {booking.passengerName}
+                </div>
               </div>
               <div>
                 <span className="text-gray-600">Price:</span>
@@ -281,12 +330,16 @@ export default function ModifyBookingPage() {
         {/* Modify Options */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.4s_forwards]">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Modify Details</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-6">
+              Modify Details
+            </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Change Date */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Travel Date</label>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Travel Date
+                </label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -294,24 +347,30 @@ export default function ModifyBookingPage() {
                       className="w-full justify-start text-left font-normal"
                     >
                       <Calendar className="mr-2 h-4 w-4" />
-                      {selectedDate ? formatDate(selectedDate) : 'Select date'}
+                      {selectedDate ? formatDate(selectedDate) : "Select date"}
                     </Button>
                   </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0" align="start">
                     <CalendarComponent
                       mode="single"
                       selected={selectedDate?.toDate()}
-                      onSelect={(date: Date | undefined) => setSelectedDate(date ? dayjs(date) : null)}
-                      disabled={(date: Date) => dayjs(date).isBefore(dayjs(), 'day')}
+                      onSelect={(date: Date | undefined) =>
+                        setSelectedDate(date ? dayjs(date) : null)
+                      }
+                      disabled={(date: Date) =>
+                        dayjs(date).isBefore(dayjs(), "day")
+                      }
                       initialFocus
                     />
-                    </PopoverContent>
+                  </PopoverContent>
                 </Popover>
               </div>
 
               {/* Change Time */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Departure Time</label>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Departure Time
+                </label>
                 <Select value={selectedTime} onValueChange={setSelectedTime}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select departure time" />
@@ -328,7 +387,9 @@ export default function ModifyBookingPage() {
 
               {/* Change Seat */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Seat Number</label>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Seat Number
+                </label>
                 <Select value={selectedSeat} onValueChange={setSelectedSeat}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select seat" />
@@ -345,7 +406,9 @@ export default function ModifyBookingPage() {
 
               {/* Show Updated Arrival */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">New Arrival Time</label>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  New Arrival Time
+                </label>
                 <div className="flex items-center h-10 px-3 py-2 border border-input bg-gray-50 rounded-md">
                   <Clock className="mr-2 h-4 w-4 text-gray-400" />
                   <span className="text-gray-700">
@@ -364,10 +427,15 @@ export default function ModifyBookingPage() {
                     <li>• Date changed from {formatDate(dayjs(booking.date))} to {formatDate(selectedDate)}</li>
                   )}
                   {selectedTime !== booking.departureTime && (
-                    <li>• Time changed from {booking.departureTime} to {selectedTime}</li>
+                    <li>
+                      • Time changed from {booking.departureTime} to{" "}
+                      {selectedTime}
+                    </li>
                   )}
                   {selectedSeat !== booking.seat && (
-                    <li>• Seat changed from {booking.seat} to {selectedSeat}</li>
+                    <li>
+                      • Seat changed from {booking.seat} to {selectedSeat}
+                    </li>
                   )}
                 </ul>
               </div>
@@ -413,7 +481,9 @@ export default function ModifyBookingPage() {
             <div className="flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-semibold text-yellow-900 mb-2">Important Notes:</h4>
+                <h4 className="font-semibold text-yellow-900 mb-2">
+                  Important Notes:
+                </h4>
                 <ul className="text-sm text-yellow-700 space-y-1">
                   <li>• Changes can be made up to 2 hours before departure</li>
                   <li>• Seat changes are subject to availability</li>
@@ -437,8 +507,9 @@ export default function ModifyBookingPage() {
             </div>
 
             <p className="text-gray-600 mb-6">
-              Are you sure you want to cancel this booking? This action cannot be undone.
-              You will receive an 80% refund ({formatCurrency(booking.price * 0.8)}) within 3-5 business days.
+              Are you sure you want to cancel this booking? This action cannot
+              be undone. You will receive an 80% refund (
+              {formatCurrency(booking.price * 0.8)}) within 3-5 business days.
             </p>
 
             <div className="flex gap-3">

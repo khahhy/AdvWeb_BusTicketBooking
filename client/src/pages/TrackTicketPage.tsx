@@ -1,12 +1,18 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { buildApiUrl, API_ENDPOINTS } from '@/lib/api';
-import Navbar from '@/components/common/Navbar';
-import Footer from '@/components/dashboard/Footer';
-import backgroundImage from '@/assets/images/background.png';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
+import Navbar from "@/components/common/Navbar";
+import Footer from "@/components/dashboard/Footer";
+import backgroundImage from "@/assets/images/background.png";
 import {
   Mail,
   Phone,
@@ -17,7 +23,7 @@ import {
   Ticket,
   User,
   AlertCircle,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface BookingResult {
   id: string;
@@ -29,7 +35,7 @@ interface BookingResult {
   arrivalTime: string;
   seat: string;
   price: number;
-  status: 'completed' | 'upcoming' | 'cancelled';
+  status: "completed" | "upcoming" | "cancelled";
   passengerName: string;
   duration: string;
 }
@@ -37,45 +43,47 @@ interface BookingResult {
 export default function TrackTicketPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [formData, setFormData] = useState({
-    email: '',
-    phoneNumber: '',
+    email: "",
+    phoneNumber: "",
   });
   const [bookingResults, setBookingResults] = useState<BookingResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchAttempted, setSearchAttempted] = useState(false);
   const [errors, setErrors] = useState({
-    email: '',
-    phoneNumber: '',
+    email: "",
+    phoneNumber: "",
   });
 
   const navigate = useNavigate();
 
   useEffect(() => {
     // Check if user is logged in
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     if (token) {
       setIsLoggedIn(true);
       // Redirect to booking history if already logged in
-      navigate('/booking-history');
+      navigate("/booking-history");
     }
   }, [navigate]);
 
   const validateForm = () => {
     const newErrors = {
-      email: '',
-      phoneNumber: '',
+      email: "",
+      phoneNumber: "",
     };
 
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
+      newErrors.email = "Please enter a valid email";
     }
 
     if (!formData.phoneNumber) {
-      newErrors.phoneNumber = 'Phone number is required';
-    } else if (!/^[0-9]{10,11}$/.test(formData.phoneNumber.replace(/\s/g, ''))) {
-      newErrors.phoneNumber = 'Please enter a valid phone number';
+      newErrors.phoneNumber = "Phone number is required";
+    } else if (
+      !/^[0-9]{10,11}$/.test(formData.phoneNumber.replace(/\s/g, ""))
+    ) {
+      newErrors.phoneNumber = "Please enter a valid phone number";
     }
 
     setErrors(newErrors);
@@ -90,29 +98,29 @@ export default function TrackTicketPage() {
 
     try {
       // Mock API call - replace with actual API
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Mock results based on form data
       const mockResults: BookingResult[] = [
         {
-          id: '1',
-          bookingCode: 'BUS123456',
-          from: 'Ho Chi Minh City',
-          to: 'Da Lat',
-          date: '2024-12-01',
-          departureTime: '08:00',
-          arrivalTime: '14:30',
-          seat: 'A12',
+          id: "1",
+          bookingCode: "BUS123456",
+          from: "Ho Chi Minh City",
+          to: "Da Lat",
+          date: "2024-12-01",
+          departureTime: "08:00",
+          arrivalTime: "14:30",
+          seat: "A12",
           price: 280000,
-          status: 'upcoming',
-          passengerName: 'Guest User',
-          duration: '6h 30m'
-        }
+          status: "upcoming",
+          passengerName: "Guest User",
+          duration: "6h 30m",
+        },
       ];
 
       setBookingResults(mockResults);
     } catch (error) {
-      console.error('Error tracking ticket:', error);
+      console.error("Error tracking ticket:", error);
       setBookingResults([]);
     } finally {
       setIsSearching(false);
@@ -133,9 +141,9 @@ export default function TrackTicketPage() {
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
     }).format(price);
   };
 
@@ -168,7 +176,6 @@ export default function TrackTicketPage() {
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-6 py-8 pb-8 -mt-16 relative z-10">
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
-
           {/* Track Form */}
           <Card className="bg-white/95 backdrop-blur-sm shadow-xl border-0 mb-8">
             <CardHeader className="text-center">
@@ -182,7 +189,6 @@ export default function TrackTicketPage() {
 
             <CardContent>
               <div className="grid md:grid-cols-2 gap-6 mb-6">
-
                 {/* Email Field */}
                 <div className="space-y-2">
                   <label className="flex items-center text-sm font-semibold text-gray-700">
@@ -192,12 +198,14 @@ export default function TrackTicketPage() {
                     <input
                       type="email"
                       value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
                       placeholder="Enter your email"
                       className={`w-full pl-12 pr-4 py-4 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
                         errors.email
-                          ? 'border-red-300 focus:ring-red-200 focus:border-red-400'
-                          : 'border-gray-300 focus:ring-pink-200 focus:border-pink-400'
+                          ? "border-red-300 focus:ring-red-200 focus:border-red-400"
+                          : "border-gray-300 focus:ring-pink-200 focus:border-pink-400"
                       } bg-white`}
                     />
                     <Mail className="absolute left-4 top-4 w-5 h-5 text-gray-400" />
@@ -219,12 +227,17 @@ export default function TrackTicketPage() {
                     <input
                       type="tel"
                       value={formData.phoneNumber}
-                      onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          phoneNumber: e.target.value,
+                        })
+                      }
                       placeholder="Enter your phone number"
                       className={`w-full pl-12 pr-4 py-4 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
                         errors.phoneNumber
-                          ? 'border-red-300 focus:ring-red-200 focus:border-red-400'
-                          : 'border-gray-300 focus:ring-blue-200 focus:border-blue-400'
+                          ? "border-red-300 focus:ring-red-200 focus:border-red-400"
+                          : "border-gray-300 focus:ring-blue-200 focus:border-blue-400"
                       } bg-white`}
                     />
                     <Phone className="absolute left-4 top-4 w-5 h-5 text-gray-400" />
@@ -266,22 +279,30 @@ export default function TrackTicketPage() {
             <div className="space-y-6">
               {bookingResults.length > 0 ? (
                 <>
-                  <h2 className="text-2xl font-bold text-gray-800">Your Bookings</h2>
+                  <h2 className="text-2xl font-bold text-gray-800">
+                    Your Bookings
+                  </h2>
                   {bookingResults.map((booking) => (
-                    <Card key={booking.id} className="bg-white shadow-lg border-0">
+                    <Card
+                      key={booking.id}
+                      className="bg-white shadow-lg border-0"
+                    >
                       <CardContent className="p-6">
                         <div className="grid md:grid-cols-3 gap-6 items-center">
-
                           {/* Trip Info */}
                           <div className="space-y-3">
                             <div className="flex items-center gap-2">
                               <Ticket className="w-5 h-5 text-pink-500" />
-                              <span className="font-bold text-lg">{booking.bookingCode}</span>
+                              <span className="font-bold text-lg">
+                                {booking.bookingCode}
+                              </span>
                               {getStatusBadge(booking.status)}
                             </div>
                             <div className="flex items-center gap-2 text-gray-600">
                               <MapPin className="w-4 h-4" />
-                              <span>{booking.from} → {booking.to}</span>
+                              <span>
+                                {booking.from} → {booking.to}
+                              </span>
                             </div>
                             <div className="flex items-center gap-2 text-gray-600">
                               <User className="w-4 h-4" />
@@ -293,11 +314,15 @@ export default function TrackTicketPage() {
                           <div className="space-y-3">
                             <div className="flex items-center gap-2 text-gray-600">
                               <Calendar className="w-4 h-4" />
-                              <span>{new Date(booking.date).toLocaleDateString()}</span>
+                              <span>
+                                {new Date(booking.date).toLocaleDateString()}
+                              </span>
                             </div>
                             <div className="flex items-center gap-2 text-gray-600">
                               <Clock className="w-4 h-4" />
-                              <span>{booking.departureTime} - {booking.arrivalTime}</span>
+                              <span>
+                                {booking.departureTime} - {booking.arrivalTime}
+                              </span>
                             </div>
                             <div className="text-sm text-gray-500">
                               Duration: {booking.duration}
@@ -310,12 +335,17 @@ export default function TrackTicketPage() {
                               {formatPrice(booking.price)}
                             </div>
                             <div className="text-gray-600">
-                              Seat: <span className="font-semibold">{booking.seat}</span>
+                              Seat:{" "}
+                              <span className="font-semibold">
+                                {booking.seat}
+                              </span>
                             </div>
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => navigate(`/booking-details/${booking.id}`)}
+                              onClick={() =>
+                                navigate(`/booking-details/${booking.id}`)
+                              }
                               className="border-blue-300 text-blue-600 hover:bg-blue-50"
                             >
                               View Details
@@ -332,14 +362,25 @@ export default function TrackTicketPage() {
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Search className="w-8 h-8 text-gray-400" />
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-800 mb-2">No Bookings Found</h3>
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                      No Bookings Found
+                    </h3>
                     <p className="text-gray-600 mb-6">
-                      We couldn't find any bookings with the provided email and phone number.
+                      We couldn't find any bookings with the provided email and
+                      phone number.
                     </p>
                     <div className="space-y-2 text-sm text-gray-500">
-                      <p>• Make sure you entered the correct email and phone number</p>
-                      <p>• Check if the booking was made with a different contact information</p>
-                      <p>• Contact our customer support if you need assistance</p>
+                      <p>
+                        • Make sure you entered the correct email and phone
+                        number
+                      </p>
+                      <p>
+                        • Check if the booking was made with a different contact
+                        information
+                      </p>
+                      <p>
+                        • Contact our customer support if you need assistance
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -355,19 +396,22 @@ export default function TrackTicketPage() {
                   <User className="w-6 h-6 text-blue-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-blue-800 mb-2">Have an account?</h3>
+                  <h3 className="font-semibold text-blue-800 mb-2">
+                    Have an account?
+                  </h3>
                   <p className="text-blue-700 mb-4">
-                    Log in to view all your bookings, manage your trips, and enjoy a personalized experience.
+                    Log in to view all your bookings, manage your trips, and
+                    enjoy a personalized experience.
                   </p>
                   <div className="flex gap-3">
                     <Button
-                      onClick={() => navigate('/login')}
+                      onClick={() => navigate("/login")}
                       className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       Sign In
                     </Button>
                     <Button
-                      onClick={() => navigate('/signup')}
+                      onClick={() => navigate("/signup")}
                       variant="outline"
                       className="border-blue-300 text-blue-600 hover:bg-blue-50"
                     >

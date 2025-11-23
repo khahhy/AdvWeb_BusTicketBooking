@@ -1,17 +1,17 @@
-"use client"
-import { motion, useInView } from "framer-motion"
-import { useRef, useState, useEffect } from "react"
+"use client";
+import { motion, useInView } from "framer-motion";
+import { useRef, useState, useEffect } from "react";
 
 interface BlurTextProps {
-  text: string
-  className?: string
-  animateBy?: "words" | "letters"
-  direction?: "top" | "bottom"
-  delay?: number
-  stepDuration?: number
-  threshold?: number
-  rootMargin?: string
-  onAnimationComplete?: () => void
+  text: string;
+  className?: string;
+  animateBy?: "words" | "letters";
+  direction?: "top" | "bottom";
+  delay?: number;
+  stepDuration?: number;
+  threshold?: number;
+  rootMargin?: string;
+  onAnimationComplete?: () => void;
 }
 
 export function BlurText({
@@ -25,32 +25,45 @@ export function BlurText({
   rootMargin = "0px",
   onAnimationComplete,
 }: BlurTextProps) {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: rootMargin, amount: threshold })
-  const [animationCompleted, setAnimationCompleted] = useState(false)
+  const ref = useRef(null);
+  const isInView = useInView(ref, {
+    once: true,
+    margin: rootMargin,
+    amount: threshold,
+  });
+  const [animationCompleted, setAnimationCompleted] = useState(false);
 
-  const units = animateBy === "words" ? text.split(" ") : text.split("")
+  const units = animateBy === "words" ? text.split(" ") : text.split("");
 
   useEffect(() => {
     if (isInView && !animationCompleted) {
-      const timer = setTimeout(() => {
-        setAnimationCompleted(true)
-        onAnimationComplete?.()
-      }, units.length * delay + stepDuration * 1000)
+      const timer = setTimeout(
+        () => {
+          setAnimationCompleted(true);
+          onAnimationComplete?.();
+        },
+        units.length * delay + stepDuration * 1000,
+      );
 
-      return () => clearTimeout(timer)
+      return () => clearTimeout(timer);
     }
-  }, [isInView, animationCompleted, units.length, delay, stepDuration, onAnimationComplete])
+  }, [
+    isInView,
+    animationCompleted,
+    units.length,
+    delay,
+    stepDuration,
+    onAnimationComplete,
+  ]);
 
   return (
-    <motion.div
-      ref={ref}
-      className={className}
-    >
+    <motion.div ref={ref} className={className}>
       {units.map((unit, index) => (
         <motion.span
           key={index}
-          className={animateBy === "words" ? "inline-block mr-2" : "inline-block"}
+          className={
+            animateBy === "words" ? "inline-block mr-2" : "inline-block"
+          }
           initial={{
             filter: "blur(10px)",
             opacity: 0,
@@ -79,5 +92,5 @@ export function BlurText({
         </motion.span>
       ))}
     </motion.div>
-  )
+  );
 }

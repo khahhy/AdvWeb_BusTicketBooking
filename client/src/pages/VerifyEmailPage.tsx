@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, ArrowRight } from 'lucide-react';
 import backgroundImage from '@/assets/images/background.png';
+import { buildApiUrl } from "@/lib/api";
 import logoImage from '@/assets/images/logo.png';
 
 export default function VerifyEmailPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const email = searchParams.get('email') || 'your email';
+  const email = searchParams.get("email") || "your email";
   const [resendDisabled, setResendDisabled] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
@@ -26,31 +27,34 @@ export default function VerifyEmailPage() {
 
   const handleResendEmail = async () => {
     try {
-      const response = await fetch(buildApiUrl('/auth/resend-verification'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch(buildApiUrl("/auth/resend-verification"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        console.log('Resend success:', data);
+        console.log("Resend success:", data);
         setResendDisabled(true);
         setCountdown(60);
       } else {
-        alert(data.message || 'Failed to resend email');
+        alert(data.message || "Failed to resend email");
       }
     } catch (error) {
-      console.error('Resend error:', error);
-      alert('Network error. Please try again.');
+      console.error("Resend error:", error);
+      alert("Network error. Please try again.");
     }
   };
 
   return (
     <div
       className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
-      style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundPosition: "center bottom",
+      }}
     >
       {/* Logo in top-left corner */}
       <div className="absolute top-6 left-6 z-20">
@@ -80,13 +84,11 @@ export default function VerifyEmailPage() {
                 We've sent a verification link to
               </p>
 
-              <p className="text-lg font-semibold text-primary mb-6">
-                {email}
-              </p>
+              <p className="text-lg font-semibold text-primary mb-6">{email}</p>
 
               <p className="text-sm text-gray-500 mb-8">
-                Please check your inbox and click the verification link to complete your registration.
-                The link will expire in 24 hours.
+                Please check your inbox and click the verification link to
+                complete your registration. The link will expire in 24 hours.
               </p>
 
               {/* Resend Email Button */}
@@ -95,16 +97,18 @@ export default function VerifyEmailPage() {
                 disabled={resendDisabled}
                 className={`w-full py-3 rounded-2xl transition-all duration-300 font-semibold text-base mb-4 ${
                   resendDisabled
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg'
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg"
                 }`}
               >
-                {resendDisabled ? `Resend in ${countdown}s` : 'Resend Verification Email'}
+                {resendDisabled
+                  ? `Resend in ${countdown}s`
+                  : "Resend Verification Email"}
               </button>
 
               {/* Back to Login */}
               <button
-                onClick={() => navigate('/login')}
+                onClick={() => navigate("/login")}
                 className="w-full bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-300 py-3 rounded-2xl transition-all duration-300 font-semibold flex items-center justify-center gap-2 text-base"
               >
                 Back to Login
@@ -115,7 +119,7 @@ export default function VerifyEmailPage() {
               <div className="mt-6 text-sm text-gray-500">
                 <p>Didn't receive the email? Check your spam folder or</p>
                 <button
-                  onClick={() => navigate('/signup')}
+                  onClick={() => navigate("/signup")}
                   className="text-primary font-semibold hover:underline"
                 >
                   try signing up again

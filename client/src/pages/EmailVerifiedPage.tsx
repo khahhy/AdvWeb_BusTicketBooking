@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { CheckCircle2, ArrowRight, XCircle, Loader2 } from 'lucide-react';
-import backgroundImage from '@/assets/images/background.png';
-import logoImage from '@/assets/images/logo.png';
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { CheckCircle2, ArrowRight, XCircle, Loader2 } from "lucide-react";
+import backgroundImage from "@/assets/images/background.png";
+import logoImage from "@/assets/images/logo.png";
+import { buildApiUrl } from "@/lib/api";
 
 export default function EmailVerifiedPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
+  const token = searchParams.get("token");
   const [verifying, setVerifying] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
@@ -18,25 +19,27 @@ export default function EmailVerifiedPage() {
     // Verify email with token from URL
     const verifyEmail = async () => {
       if (!token) {
-        setError('Verification token is missing');
+        setError("Verification token is missing");
         setVerifying(false);
         return;
       }
 
       try {
-        const response = await fetch(buildApiUrl(`/auth/verify-email?token=${token}`));
+        const response = await fetch(
+          buildApiUrl(`/auth/verify-email?token=${token}`),
+        );
         const data = await response.json();
 
         if (response.ok) {
           setSuccess(true);
-          setError('');
+          setError("");
         } else {
-          setError(data.message || 'Verification failed');
+          setError(data.message || "Verification failed");
           setSuccess(false);
         }
       } catch (err) {
-        console.error('Verification error:', err);
-        setError('Network error. Please try again.');
+        console.error("Verification error:", err);
+        setError("Network error. Please try again.");
         setSuccess(false);
       } finally {
         setVerifying(false);
@@ -49,7 +52,10 @@ export default function EmailVerifiedPage() {
   return (
     <div
       className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
-      style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundPosition: "center bottom",
+      }}
     >
       {/* Logo in top-left corner */}
       <div className="absolute top-6 left-6 z-20">
@@ -66,7 +72,6 @@ export default function EmailVerifiedPage() {
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
             <div className="flex flex-col items-center text-center">
-
               {/* Loading State */}
               {verifying && (
                 <>
@@ -94,12 +99,13 @@ export default function EmailVerifiedPage() {
                   </h1>
 
                   <p className="text-gray-600 mb-8">
-                    Your email has been successfully verified. You can now access all features of your account.
+                    Your email has been successfully verified. You can now
+                    access all features of your account.
                   </p>
 
                   {/* Continue Button */}
                   <button
-                    onClick={() => navigate('/login')}
+                    onClick={() => navigate("/login")}
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-2xl transition-all duration-300 font-semibold shadow-md hover:shadow-lg text-base flex items-center justify-center gap-2 mb-4"
                   >
                     Continue to Login
@@ -108,7 +114,7 @@ export default function EmailVerifiedPage() {
 
                   {/* Back to Home */}
                   <button
-                    onClick={() => navigate('/dashboard')}
+                    onClick={() => navigate("/dashboard")}
                     className="w-full bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-300 py-3 rounded-2xl transition-all duration-300 font-semibold text-base"
                   >
                     Go to Home
@@ -127,17 +133,16 @@ export default function EmailVerifiedPage() {
                     Verification Failed
                   </h1>
 
-                  <p className="text-error mb-2 font-medium">
-                    {error}
-                  </p>
+                  <p className="text-red-600 mb-2 font-medium">{error}</p>
 
                   <p className="text-gray-600 mb-8 text-sm">
-                    Your verification link may have expired or is invalid. Please request a new verification email.
+                    Your verification link may have expired or is invalid.
+                    Please request a new verification email.
                   </p>
 
                   {/* Try Again Button */}
                   <button
-                    onClick={() => navigate('/signup')}
+                    onClick={() => navigate("/signup")}
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-2xl transition-all duration-300 font-semibold shadow-md hover:shadow-lg text-base flex items-center justify-center gap-2 mb-4"
                   >
                     Sign Up Again
@@ -146,14 +151,13 @@ export default function EmailVerifiedPage() {
 
                   {/* Back to Login */}
                   <button
-                    onClick={() => navigate('/login')}
+                    onClick={() => navigate("/login")}
                     className="w-full bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-300 py-3 rounded-2xl transition-all duration-300 font-semibold text-base"
                   >
                     Back to Login
                   </button>
                 </>
               )}
-
             </div>
           </div>
         </div>

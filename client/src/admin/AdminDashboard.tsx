@@ -100,7 +100,7 @@ const RECENT_BOOKINGS = [
 
 const formatVND = (amount: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
-    amount
+    amount,
   );
 
 const AdminDashboard = () => {
@@ -272,8 +272,8 @@ const AdminDashboard = () => {
                           booking.status === "confirmed"
                             ? "bg-green-50 text-green-700 border-green-200"
                             : booking.status === "pending"
-                            ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-                            : "bg-red-50 text-red-700 border-red-200"
+                              ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                              : "bg-red-50 text-red-700 border-red-200"
                         }`}
                       >
                         {booking.status}
@@ -316,8 +316,8 @@ const AdminDashboard = () => {
                        trip.status === "Boarding"
                          ? "bg-green-100 text-green-700 animate-pulse"
                          : trip.status === "Full"
-                         ? "bg-red-100 text-red-700"
-                         : "bg-gray-100 text-gray-700"
+                           ? "bg-red-100 text-red-700"
+                           : "bg-gray-100 text-gray-700"
                      }`}
                   >
                     {trip.status}

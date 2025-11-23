@@ -122,11 +122,11 @@ export default function TrackTicketPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-green-100 text-green-700">Completed</Badge>;
+        return <Badge className="bg-success-100 text-success">Completed</Badge>;
       case 'upcoming':
-        return <Badge className="bg-blue-100 text-blue-700">Upcoming</Badge>;
+        return <Badge className="bg-primary-50 text-primary">Upcoming</Badge>;
       case 'cancelled':
-        return <Badge className="bg-red-100 text-red-700">Cancelled</Badge>;
+        return <Badge className="bg-error-50 text-error">Cancelled</Badge>;
       default:
         return <Badge className="bg-gray-100 text-gray-700">Unknown</Badge>;
     }
@@ -203,7 +203,7 @@ export default function TrackTicketPage() {
                     <Mail className="absolute left-4 top-4 w-5 h-5 text-gray-400" />
                   </div>
                   {errors.email && (
-                    <p className="text-xs text-red-600 flex items-center gap-1">
+                    <p className="text-xs text-error flex items-center gap-1">
                       <AlertCircle className="w-3 h-3" />
                       {errors.email}
                     </p>
@@ -230,7 +230,7 @@ export default function TrackTicketPage() {
                     <Phone className="absolute left-4 top-4 w-5 h-5 text-gray-400" />
                   </div>
                   {errors.phoneNumber && (
-                    <p className="text-xs text-red-600 flex items-center gap-1">
+                    <p className="text-xs text-error flex items-center gap-1">
                       <AlertCircle className="w-3 h-3" />
                       {errors.phoneNumber}
                     </p>

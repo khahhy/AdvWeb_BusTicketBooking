@@ -220,7 +220,7 @@ export default function FeedbackRatingPage() {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center max-w-md mx-auto">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-              <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              <CheckCircle2 className="w-16 h-16 text-success mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-gray-900 mb-3">Thank You!</h2>
               <p className="text-gray-600 mb-6">
                 Your feedback has been submitted successfully. We appreciate your time and will use your feedback to improve our services.

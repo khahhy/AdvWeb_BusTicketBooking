@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, ArrowRight, XCircle, Loader2 } from 'lucide-react';
 import backgroundImage from '@/assets/images/background.png';
+import logoImage from '@/assets/images/logo.png';
 
 export default function EmailVerifiedPage() {
   const navigate = useNavigate();
@@ -50,6 +51,16 @@ export default function EmailVerifiedPage() {
       className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
       style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
     >
+      {/* Logo in top-left corner */}
+      <div className="absolute top-6 left-6 z-20">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="hover:opacity-80 transition-opacity"
+        >
+          <img src={logoImage} alt="Bus Booking Logo" className="w-32" />
+        </button>
+      </div>
+
       <div className="max-w-xl w-full mx-auto px-6 py-6 relative z-10">
         {/* Email Verified Card */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
@@ -59,8 +70,8 @@ export default function EmailVerifiedPage() {
               {/* Loading State */}
               {verifying && (
                 <>
-                  <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6">
-                    <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+                  <div className="w-20 h-20 bg-primary-50 rounded-full flex items-center justify-center mb-6">
+                    <Loader2 className="w-10 h-10 text-primary animate-spin" />
                   </div>
                   <h1 className="text-2xl font-bold text-foreground/80 mb-3">
                     Verifying Your Email...
@@ -74,8 +85,8 @@ export default function EmailVerifiedPage() {
               {/* Success State */}
               {!verifying && success && (
                 <>
-                  <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
-                    <CheckCircle2 className="w-10 h-10 text-green-600" />
+                  <div className="w-20 h-20 bg-success-100 rounded-full flex items-center justify-center mb-6">
+                    <CheckCircle2 className="w-10 h-10 text-success" />
                   </div>
 
                   <h1 className="text-2xl font-bold text-foreground/80 mb-3">
@@ -108,15 +119,15 @@ export default function EmailVerifiedPage() {
               {/* Error State */}
               {!verifying && error && (
                 <>
-                  <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6">
-                    <XCircle className="w-10 h-10 text-red-600" />
+                  <div className="w-20 h-20 bg-error-50 rounded-full flex items-center justify-center mb-6">
+                    <XCircle className="w-10 h-10 text-error" />
                   </div>
 
                   <h1 className="text-2xl font-bold text-foreground/80 mb-3">
                     Verification Failed
                   </h1>
 
-                  <p className="text-red-600 mb-2 font-medium">
+                  <p className="text-error mb-2 font-medium">
                     {error}
                   </p>
 

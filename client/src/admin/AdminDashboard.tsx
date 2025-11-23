@@ -34,10 +34,10 @@ const REVENUE_DATA = [
 ];
 
 const POPULAR_ROUTES = [
-  { name: "SG - Da Lat", value: 120, color: "#3B82F6" },
-  { name: "SG - Nha Trang", value: 98, color: "#8B5CF6" },
-  { name: "Da Nang - Hue", value: 86, color: "#10B981" },
-  { name: "Ha Noi - Sapa", value: 65, color: "#F59E0B" },
+  { name: "SG - Da Lat", value: 120, color: "var(--color-primary)" },
+  { name: "SG - Nha Trang", value: 98, color: "var(--color-secondary)" },
+  { name: "Da Nang - Hue", value: 86, color: "var(--color-success)" },
+  { name: "Ha Noi - Sapa", value: 65, color: "var(--color-accent)" },
 ];
 
 const UPCOMING_TRIPS = [
@@ -180,7 +180,7 @@ const AdminDashboard = () => {
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#fff",
+                    backgroundColor: "var(--color-surface)",
                     borderRadius: "8px",
                     border: "1px solid #E5E7EB",
                   }}
@@ -189,11 +189,11 @@ const AdminDashboard = () => {
                 <Line
                   type="monotone"
                   dataKey="revenue"
-                  stroke="#2563EB"
+                  stroke="var(--color-primary)"
                   strokeWidth={3}
                   dot={{
                     r: 4,
-                    fill: "#2563EB",
+                    fill: "var(--color-primary)",
                     strokeWidth: 2,
                     stroke: "#fff",
                   }}
@@ -239,7 +239,7 @@ const AdminDashboard = () => {
             <h2 className="text-lg font-bold text-gray-800">
               Recent Transactions
             </h2>
-            <button className="text-sm text-blue-600 font-medium hover:underline flex items-center gap-1">
+            <button className="text-sm text-primary font-medium hover:underline flex items-center gap-1">
               View All <ArrowUpRight className="w-3 h-3" />
             </button>
           </div>
@@ -257,7 +257,7 @@ const AdminDashboard = () => {
               <tbody className="divide-y">
                 {RECENT_BOOKINGS.map((booking) => (
                   <tr key={booking.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-medium text-blue-600">
+                    <td className="px-6 py-4 font-medium text-primary">
                       {booking.id}
                     </td>
                     <td className="px-6 py-4 text-gray-600">{booking.user}</td>
@@ -297,7 +297,7 @@ const AdminDashboard = () => {
                 key={trip.id}
                 className="flex items-center p-3 border rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <div className="bg-blue-50 p-2.5 rounded-lg text-blue-600 mr-3 flex flex-col items-center min-w-[60px]">
+                <div className="bg-primary-50 p-2.5 rounded-lg text-primary mr-3 flex flex-col items-center min-w-[60px]">
                   <span className="text-xs font-bold">{trip.time}</span>
                   <Bus className="w-4 h-4 mt-1" />
                 </div>

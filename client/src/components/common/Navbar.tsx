@@ -55,12 +55,12 @@ export default function Navbar() {
         {
           name: "Ho Chi Minh City - Da Lat",
           link: "/routes/hcm-dalat",
-          icon: <Bus className="h-4 w-4 text-blue-500" />,
+          icon: <Bus className="h-4 w-4 text-primary" />,
         },
         {
           name: "Ho Chi Minh City - Nha Trang",
           link: "/routes/hcm-nhatrang",
-          icon: <MapPin className="h-4 w-4 text-green-500" />,
+          icon: <MapPin className="h-4 w-4 text-success" />,
         },
         {
           name: "Hanoi - Sapa",
@@ -87,7 +87,7 @@ export default function Navbar() {
         {
           name: "Track Ticket",
           link: "/track-ticket",
-          icon: <User className="h-4 w-4 text-green-500" />,
+          icon: <User className="h-4 w-4 text-success" />,
         },
         {
           name: "Customer Support",
@@ -126,17 +126,17 @@ export default function Navbar() {
                   {
                     name: "Profile",
                     link: "/profile",
-                    icon: <User className="h-4 w-4 text-blue-500" />,
+                    icon: <User className="h-4 w-4 text-primary" />,
                   },
                   {
                     name: "Booking History",
                     link: "/booking-history",
-                    icon: <CalendarIcon className="h-4 w-4 text-green-500" />,
+                    icon: <CalendarIcon className="h-4 w-4 text-success" />,
                   },
                   {
                     name: "Log Out",
                     link: "#",
-                    icon: <LogOut className="h-4 w-4 text-red-500" />,
+                    icon: <LogOut className="h-4 w-4 text-error" />,
                   },
                 ],
               }]}

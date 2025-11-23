@@ -52,7 +52,7 @@ export default function SearchPage() {
           <h1 className="text-4xl font-bold text-foreground/80 mb-2 text-center opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
             Find Your Bus Journey
           </h1>
-          <p className="text-blue-100 text-center mb-8 text-foreground/60 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
+          <p className="text-center mb-8 text-foreground/60 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
             Safe, Comfortable, and Affordable Bus Travel
           </p>
 

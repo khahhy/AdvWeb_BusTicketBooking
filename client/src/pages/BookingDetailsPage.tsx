@@ -135,11 +135,11 @@ export default function BookingDetailsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Completed</Badge>;
+        return <Badge className="bg-success-100 text-success hover:bg-success-100">Completed</Badge>;
       case 'upcoming':
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">Upcoming</Badge>;
+        return <Badge className="bg-primary-50 text-primary hover:bg-primary-50">Upcoming</Badge>;
       case 'cancelled':
-        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">Cancelled</Badge>;
+        return <Badge className="bg-error-50 text-error hover:bg-error-50">Cancelled</Badge>;
       default:
         return <Badge>Unknown</Badge>;
     }
@@ -227,7 +227,7 @@ export default function BookingDetailsPage() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <CheckCircle2 className="w-8 h-8 text-green-500" />
+                <CheckCircle2 className="w-8 h-8 text-success" />
                 <div>
                   <h2 className="text-xl font-bold text-gray-900">Booking Confirmed</h2>
                   <p className="text-gray-600">Booked on {formatDateTime(booking.bookingDate)}</p>
@@ -356,7 +356,7 @@ export default function BookingDetailsPage() {
 
                 <div className="space-y-6">
                   <div className="flex items-start gap-3">
-                    <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-1">
+                    <div className="w-5 h-5 bg-success rounded-full flex items-center justify-center mt-1">
                       <div className="w-2 h-2 bg-white rounded-full"></div>
                     </div>
                     <div>
@@ -366,7 +366,7 @@ export default function BookingDetailsPage() {
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center mt-1">
+                    <div className="w-5 h-5 bg-error rounded-full flex items-center justify-center mt-1">
                       <div className="w-2 h-2 bg-white rounded-full"></div>
                     </div>
                     <div>
@@ -404,7 +404,7 @@ export default function BookingDetailsPage() {
 
                   <div className="border-t pt-4 flex justify-between text-xl font-bold text-gray-900">
                     <span>Total Paid</span>
-                    <span className="text-green-600">{formatCurrency(booking.totalAmount)}</span>
+                    <span className="text-success">{formatCurrency(booking.totalAmount)}</span>
                   </div>
 
                   <div className="pt-4 border-t">
@@ -435,7 +435,7 @@ export default function BookingDetailsPage() {
                 {booking.status === 'upcoming' && (
                   <Button
                     onClick={handleModifyBooking}
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-2xl font-semibold flex items-center justify-center gap-2"
+                    className="w-full bg-primary hover:bg-primary text-white py-3 rounded-2xl font-semibold flex items-center justify-center gap-2"
                   >
                     <Edit className="w-5 h-5" />
                     Modify Booking

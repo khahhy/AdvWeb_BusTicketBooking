@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, Eye, EyeOff, Phone } from 'lucide-react';
 import { buildApiUrl, API_ENDPOINTS } from '@/lib/api';
 import backgroundImage from '@/assets/images/background.png';
+import logoImage from '@/assets/images/logo.png';
 
 // Add CSS to hide browser's default password reveal button for all browsers
 const styleSheet = document.createElement("style");
@@ -164,7 +165,17 @@ export default function SignUpPage() {
       className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
       style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
     >
-      <div className="max-w-xl w-full mx-auto px-6 py-6 relative z-10">
+      {/* Logo in top-left corner */}
+      <div className="absolute top-6 left-6 z-20">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="hover:opacity-80 transition-opacity"
+        >
+          <img src={logoImage} alt="Bus Booking Logo" className="w-32" />
+        </button>
+      </div>
+
+      <div className="max-w-2xl w-full mx-auto px-6 py-6 relative z-10">
         {/* Sign Up Form Card */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
@@ -194,7 +205,7 @@ export default function SignUpPage() {
                   />
                 </div>
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                  <p className="mt-1 text-sm text-error">{errors.email}</p>
                 )}
               </div>
 
@@ -218,7 +229,7 @@ export default function SignUpPage() {
                   />
                 </div>
                 {errors.fullName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>
+                  <p className="mt-1 text-sm text-error">{errors.fullName}</p>
                 )}
               </div>
 
@@ -242,7 +253,7 @@ export default function SignUpPage() {
                   />
                 </div>
                 {errors.phoneNumber && (
-                  <p className="mt-1 text-sm text-red-600">{errors.phoneNumber}</p>
+                  <p className="mt-1 text-sm text-error">{errors.phoneNumber}</p>
                 )}
               </div>
 
@@ -273,7 +284,7 @@ export default function SignUpPage() {
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                  <p className="mt-1 text-sm text-error">{errors.password}</p>
                 )}
                 <p className="mt-1 text-xs text-gray-500">
                   Password must be at least 8 characters
@@ -307,7 +318,7 @@ export default function SignUpPage() {
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
+                  <p className="mt-1 text-sm text-error">{errors.confirmPassword}</p>
                 )}
               </div>
 

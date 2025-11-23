@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Mail, ArrowLeft } from 'lucide-react';
 import { buildApiUrl, API_ENDPOINTS } from '@/lib/api';
 import backgroundImage from '@/assets/images/background.png';
+import logoImage from '@/assets/images/logo.png';
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
@@ -64,7 +65,15 @@ export default function ForgotPasswordPage() {
         className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
         style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
       >
-        <div className="max-w-xl w-full mx-auto px-6 py-6 relative z-10">
+        {/* Logo in top-left corner */}
+        <div className="absolute top-6 left-6 z-20">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="hover:opacity-80 transition-opacity"
+          >
+            <img src={logoImage} alt="Bus Booking Logo" className="w-32" />
+          </button>
+        </div>      <div className="max-w-xl w-full mx-auto px-6 py-6 relative z-10">
           {/* Email Sent Card */}
           <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
@@ -123,6 +132,16 @@ export default function ForgotPasswordPage() {
       className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
       style={{ backgroundImage: `url(${backgroundImage})`, backgroundPosition: 'center bottom' }}
     >
+      {/* Logo in top-left corner */}
+      <div className="absolute top-6 left-6 z-20">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="hover:opacity-80 transition-opacity"
+        >
+          <img src={logoImage} alt="Bus Booking Logo" className="h-12 w-12" />
+        </button>
+      </div>
+
       <div className="max-w-xl w-full mx-auto px-6 py-6 relative z-10">
         {/* Forgot Password Form Card */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">

@@ -272,7 +272,7 @@ export default function ModifyBookingPage() {
               </div>
               <div>
                 <span className="text-gray-600">Price:</span>
-                <div className="font-semibold text-green-600">{formatCurrency(booking.price)}</div>
+                <div className="font-semibold text-success">{formatCurrency(booking.price)}</div>
               </div>
             </div>
           </div>
@@ -357,9 +357,9 @@ export default function ModifyBookingPage() {
 
             {/* Changes Summary */}
             {hasChanges() && (
-              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h4 className="font-semibold text-blue-900 mb-2">Changes Summary:</h4>
-                <ul className="text-sm text-blue-700 space-y-1">
+              <div className="mt-6 p-4 bg-primary-50 border border-blue-200 rounded-lg">
+                <h4 className="font-semibold text-primary mb-2">Changes Summary:</h4>
+                <ul className="text-sm text-primary space-y-1">
                   {selectedDate?.format('YYYY-MM-DD') !== booking.date && (
                     <li>• Date changed from {formatDate(dayjs(booking.date))} to {formatDate(selectedDate)}</li>
                   )}
@@ -432,7 +432,7 @@ export default function ModifyBookingPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
-              <AlertTriangle className="w-6 h-6 text-red-500" />
+              <AlertTriangle className="w-6 h-6 text-error" />
               <h3 className="text-xl font-bold text-gray-900">Cancel Booking?</h3>
             </div>
 

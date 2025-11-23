@@ -186,7 +186,7 @@ export default function NotificationsPage() {
       case 'payment': return 'bg-blue-100 text-blue-700';
       case 'reminder': return 'bg-orange-100 text-orange-700';
       case 'system': return 'bg-gray-100 text-gray-700';
-      case 'promotion': return 'bg-purple-100 text-purple-700';
+      case 'promotion': return 'bg-secondary-100 text-secondary';
       default: return 'bg-gray-100 text-gray-700';
     }
   };
@@ -463,7 +463,7 @@ export default function NotificationsPage() {
                   <div className="text-sm text-gray-600">Bookings</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-purple-600">
+                  <div className="text-2xl font-bold text-secondary">
                     {notifications.filter(n => n.type === 'promotion').length}
                   </div>
                   <div className="text-sm text-gray-600">Promotions</div>

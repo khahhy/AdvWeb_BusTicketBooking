@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, Profile } from 'passport-google-oauth20';
+import type { GoogleUserPayload } from 'src/common/type/request-with-google-user.interface';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -15,11 +16,11 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     });
   }
 
-  async validate(
+  validate(
     accessToken: string,
     refreshToken: string,
     profile: Profile,
-  ): Promise<any> {
+  ): GoogleUserPayload {
     const { id, emails, displayName, photos } = profile;
 
     return {

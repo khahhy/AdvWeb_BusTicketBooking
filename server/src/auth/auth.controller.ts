@@ -17,7 +17,15 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiQuery,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
+import type { Response } from 'express';
+import type { RequestWithGoogleUser } from 'src/common/type/request-with-google-user.interface';
+import type { RequestWithUser } from 'src/common/type/request-with-user.interface';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -71,7 +79,10 @@ export class AuthController {
   @ApiOperation({ summary: 'Google OAuth callback' })
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
-  async googleAuthCallback(@Req() req, @Res() res) {
+  async googleAuthCallback(
+    @Req() req: RequestWithGoogleUser,
+    @Res() res: Response,
+  ) {
     // Handle the Google OAuth callback
     const token = await this.authService.googleLogin(req.user);
 
@@ -84,14 +95,16 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user info' })
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  async getCurrentUser(@Req() req) {
+  @ApiBearerAuth('JWT-auth')
+  async getCurrentUser(@Req() req: RequestWithUser) {
     return this.authService.getUserById(req.user.userId);
   }
 
   @ApiOperation({ summary: 'Get user profile' })
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  async getProfile(@Req() req) {
+  @ApiBearerAuth('JWT-auth')
+  async getProfile(@Req() req: RequestWithUser) {
     console.log('Profile endpoint hit by user:', req.user);
     try {
       const result = await this.authService.getUserById(req.user.userId);
@@ -106,7 +119,11 @@ export class AuthController {
   @ApiOperation({ summary: 'Update user profile' })
   @Patch('profile')
   @UseGuards(JwtAuthGuard)
-  async updateProfile(@Req() req, @Body() updateProfileDto: UpdateProfileDto) {
+  @ApiBearerAuth('JWT-auth')
+  async updateProfile(
+    @Req() req: RequestWithUser,
+    @Body() updateProfileDto: UpdateProfileDto,
+  ) {
     return this.authService.updateProfile(req.user.userId, updateProfileDto);
   }
 }

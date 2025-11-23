@@ -236,7 +236,11 @@ describe('AuthService', () => {
     });
 
     it('should throw BadRequestException if user registered with OAuth', async () => {
-      const googleUser = { ...mockUser, authProvider: 'google', password: null };
+      const googleUser = {
+        ...mockUser,
+        authProvider: 'google',
+        password: null,
+      };
       mockPrismaService.users.findUnique.mockResolvedValue(googleUser);
 
       await expect(service.signIn(signInDto)).rejects.toThrow(

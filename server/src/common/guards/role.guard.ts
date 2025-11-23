@@ -8,18 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { UserRole } from '@prisma/client';
 import { ROLES_KEY } from '../decorators/role.decorator';
 import { Request } from 'express';
-
-// according to jwt strategy
-interface UserPayload {
-  userId: string;
-  email: string;
-  role: UserRole;
-  status: string;
-}
-
-interface RequestWithUser extends Request {
-  user: UserPayload;
-}
+import type { RequestWithUser } from 'src/common/type/request-with-user.interface';
 
 @Injectable()
 export class RolesGuard implements CanActivate {

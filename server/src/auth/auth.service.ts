@@ -12,7 +12,7 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { hash, compare } from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { EmailService } from 'src/email/email.service';
-
+import type { GoogleUserPayload } from 'src/common/type/request-with-google-user.interface';
 @Injectable()
 export class AuthService {
   constructor(
@@ -328,8 +328,8 @@ export class AuthService {
     };
   }
 
-  async googleLogin(googleUser: any) {
-    const { email, fullName, providerId, authProvider } = googleUser;
+  async googleLogin(googleUser: GoogleUserPayload) {
+    const { email, fullName, providerId } = googleUser;
 
     // Check if user exists
     let user = await this.prisma.users.findUnique({

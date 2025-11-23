@@ -24,6 +24,7 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { UserRole } from '@prisma/client';
+import type { RequestWithUser } from 'src/common/type/request-with-user.interface';
 
 @ApiTags('bookings')
 @Controller('bookings')
@@ -60,9 +61,8 @@ export class BookingsController {
   @ApiOperation({ summary: 'Get booking history of current user' })
   @ApiResponse({ status: 200, description: 'Fetched user bookings.' })
   @Get('my-bookings')
-  async findMyBookings(@Req() req: any) {
-    const userId = 'b15ac5cb-8a55-48ff-95b9-eb7d6e41be89';
-    return this.bookingsService.findAllByUser(userId);
+  async findMyBookings(@Req() req: RequestWithUser) {
+    return this.bookingsService.findAllByUser(req.user.userId);
   }
 
   @ApiOperation({ summary: 'Get booking details by ID' })
@@ -82,8 +82,7 @@ export class BookingsController {
     description: 'Cannot cancel (permission or already cancelled).',
   })
   @Patch(':id/cancel')
-  async cancel(@Param('id') id: string, @Req() req: any) {
-    const userId = 'b15ac5cb-8a55-48ff-95b9-eb7d6e41be89';
-    return this.bookingsService.cancel(id, userId);
+  async cancel(@Param('id') id: string, @Req() req: RequestWithUser) {
+    return this.bookingsService.cancel(id, req.user.userId);
   }
 }

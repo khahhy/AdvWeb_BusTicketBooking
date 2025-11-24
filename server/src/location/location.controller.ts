@@ -8,6 +8,7 @@ import {
   Body,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { LocationsService } from './location.service';
 import {
@@ -16,7 +17,12 @@ import {
   ApiParam,
   ApiBody,
   ApiResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/common/guards/role.guard';
+import { Roles } from 'src/common/decorators/role.decorator';
+import { UserRole } from '@prisma/client';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
 
@@ -25,6 +31,9 @@ import { UpdateLocationDto } from './dto/update-location.dto';
 export class LocationsController {
   constructor(private readonly locationsService: LocationsService) {}
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Create a new location' })
   @ApiBody({ type: CreateLocationDto })
   @ApiResponse({ status: 201, description: 'Location created successfully.' })
@@ -83,6 +92,9 @@ export class LocationsController {
     return this.locationsService.findOne(id);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update a location' })
   @ApiParam({ name: 'id', description: 'Location ID', type: String })
   @ApiBody({ type: UpdateLocationDto })
@@ -96,6 +108,9 @@ export class LocationsController {
     return this.locationsService.update(id, updateLocationDto);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Delete a location' })
   @ApiParam({ name: 'id', description: 'Location ID', type: String })
   @ApiResponse({ status: 200, description: 'Location deleted successfully.' })

@@ -9,6 +9,7 @@ import {
   HttpStatus,
   Query,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { TripsService } from './trips.service';
 import {
@@ -18,7 +19,12 @@ import {
   ApiBody,
   ApiResponse,
   ApiQuery,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/common/guards/role.guard';
+import { Roles } from 'src/common/decorators/role.decorator';
+import { UserRole } from '@prisma/client';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { TripQueryDto } from './dto/trip-query.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
@@ -29,6 +35,9 @@ import { UpdateTripStatusDto } from './dto/update-trip-status.dto';
 export class TripsController {
   constructor(private readonly tripsService: TripsService) {}
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Admin: Create a new trip with stops' })
   @ApiBody({ type: CreateTripDto })
   @ApiResponse({ status: 201, description: 'Trip created successfully.' })
@@ -74,6 +83,9 @@ export class TripsController {
     return this.tripsService.findOne(id);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Admin: Update a trip (bus, stops, segments)' })
   @ApiBody({ type: UpdateTripDto })
   @ApiParam({ name: 'id', type: String, description: 'Trip ID to update' })
@@ -88,6 +100,9 @@ export class TripsController {
     return this.tripsService.update(id, dto);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @Patch(':id/status')
   @ApiBody({ type: UpdateTripStatusDto })
   @ApiOperation({ summary: 'Update the status of a trip' })
@@ -98,6 +113,9 @@ export class TripsController {
     return this.tripsService.updateStatus(id, dto.status);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Delete a trip (only if no bookings exist)' })
   @ApiParam({ name: 'id', type: String })
   @Delete(':id')

@@ -8,6 +8,7 @@ import {
   Body,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { BusesService } from './buses.service';
 import {
@@ -16,7 +17,12 @@ import {
   ApiParam,
   ApiBody,
   ApiResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/common/guards/role.guard';
+import { Roles } from 'src/common/decorators/role.decorator';
+import { UserRole } from '@prisma/client';
 import { CreateBusDto } from './dto/create-bus.dto';
 import { UpdateBusDto } from './dto/update-bus.dto';
 
@@ -25,6 +31,9 @@ import { UpdateBusDto } from './dto/update-bus.dto';
 export class BusesController {
   constructor(private readonly busesService: BusesService) {}
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Create a new bus and generate its seats' })
   @ApiBody({ type: CreateBusDto })
   @ApiResponse({ status: 201, description: 'Bus created successfully.' })
@@ -63,6 +72,9 @@ export class BusesController {
     return this.busesService.getSeats(id);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update a bus' })
   @ApiParam({ name: 'id', description: 'Bus ID', type: String })
   @ApiBody({ type: UpdateBusDto })
@@ -73,6 +85,9 @@ export class BusesController {
     return this.busesService.update(id, updateBusDto);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Delete a bus and its associated seats' })
   @ApiParam({ name: 'id', description: 'Bus ID', type: String })
   @ApiResponse({ status: 200, description: 'Bus deleted successfully.' })

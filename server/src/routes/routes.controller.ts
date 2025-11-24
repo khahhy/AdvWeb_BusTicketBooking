@@ -9,7 +9,12 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/common/guards/role.guard';
+import { Roles } from 'src/common/decorators/role.decorator';
+import { UserRole } from '@prisma/client';
 import { RoutesService } from './routes.service';
 import { CreateRouteDto } from './dto/create-route.dto';
 import { UpdateRouteDto } from './dto/update-route.dto';
@@ -22,6 +27,7 @@ import {
   ApiBody,
   ApiParam,
   ApiQuery,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 
 @ApiTags('routes')
@@ -29,6 +35,9 @@ import {
 export class RoutesController {
   constructor(private readonly routesService: RoutesService) {}
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create a new route (Auto-generate name from locations)',
   })
@@ -101,6 +110,9 @@ export class RoutesController {
     return this.routesService.update(id, updateRouteDto);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Delete a route',
     description:
@@ -130,6 +142,9 @@ export class RoutesController {
     return this.routesService.findTripsForRoute(id, query);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create a Trip-Route Map (Save pricing configuration)',
     description:
@@ -154,6 +169,9 @@ export class RoutesController {
     return this.routesService.createTripRouteMap(createDto);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Delete a Trip-Route Map configuration',
     description:

@@ -8,6 +8,7 @@ import {
   Body,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import {
@@ -16,7 +17,12 @@ import {
   ApiParam,
   ApiBody,
   ApiResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/common/guards/role.guard';
+import { Roles } from 'src/common/decorators/role.decorator';
+import { UserRole } from '@prisma/client';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
@@ -27,6 +33,9 @@ import { UpdateStatusDto } from './dto/update-status.dto';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Admin: Create a new admin user' })
   @ApiBody({ type: CreateUserDto })
   @ApiResponse({ status: 201, description: 'Admin created successfully.' })
@@ -40,6 +49,9 @@ export class UserController {
     return this.userService.createAdmin(createUserDto);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Admin: Get all users' })
   @ApiResponse({ status: 200, description: 'Fetched all users successfully.' })
   @Get()

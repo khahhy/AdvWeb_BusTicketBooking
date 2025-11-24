@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ArrowRight, XCircle, Loader2 } from "lucide-react";
 import backgroundImage from "@/assets/images/background.png";
-import { AppLogo } from "@/components/AppLogo/AppLogo";
+import logoImage from "@/assets/images/logo.png";
 import { buildApiUrl } from "@/lib/api";
 
 export default function EmailVerifiedPage() {
@@ -63,7 +63,7 @@ export default function EmailVerifiedPage() {
           onClick={() => navigate("/dashboard")}
           className="hover:opacity-80 transition-opacity"
         >
-          <AppLogo className="w-32" />
+          <img src={logoImage} alt="Bus Booking Logo" className="w-32" />
         </button>
       </div>
 

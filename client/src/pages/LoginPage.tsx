@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
 import backgroundImage from "@/assets/images/background.png";
-import { AppLogo } from "@/components/AppLogo/AppLogo";
+import logoImage from "@/assets/images/logo.png";
 
 // Add CSS to hide browser's default password reveal button for all browsers
 const styleSheet = document.createElement("style");
@@ -158,7 +158,7 @@ export default function LoginPage() {
           onClick={() => navigate("/dashboard")}
           className="hover:opacity-80 transition-opacity"
         >
-          <AppLogo className="w-32" />
+          <img src={logoImage} alt="Bus Booking Logo" className="w-32" />
         </button>
       </div>
 

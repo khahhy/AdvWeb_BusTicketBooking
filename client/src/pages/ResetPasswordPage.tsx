@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Lock, Eye, EyeOff, CheckCircle } from "lucide-react";
 import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
 import backgroundImage from "@/assets/images/background.png";
-import { AppLogo } from "@/components/AppLogo/AppLogo";
+import logoImage from "@/assets/images/logo.png";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -147,7 +147,7 @@ export default function ResetPasswordPage() {
           onClick={() => navigate("/dashboard")}
           className="hover:opacity-80 transition-opacity"
         >
-          <AppLogo className="w-32" />
+          <img src={logoImage} alt="Bus Booking Logo" className="w-32" />
         </button>
       </div>
 

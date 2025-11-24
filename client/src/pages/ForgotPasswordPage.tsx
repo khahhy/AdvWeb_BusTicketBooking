@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Mail, ArrowLeft } from "lucide-react";
 import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
 import backgroundImage from "@/assets/images/background.png";
-import { AppLogo } from "@/components/AppLogo/AppLogo";
+import logoImage from "@/assets/images/logo.png";
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
@@ -77,7 +77,7 @@ export default function ForgotPasswordPage() {
             onClick={() => navigate("/dashboard")}
             className="hover:opacity-80 transition-opacity"
           >
-            <AppLogo alt="Bus Booking Logo" className="w-32" />
+            <img src={logoImage} alt="Bus Booking Logo" className="w-32" />
           </button>
         </div>{" "}
         <div className="max-w-xl w-full mx-auto px-6 py-6 relative z-10">
@@ -148,7 +148,7 @@ export default function ForgotPasswordPage() {
           onClick={() => navigate("/dashboard")}
           className="hover:opacity-80 transition-opacity"
         >
-          <AppLogo alt="Bus Booking Logo" className="h-12 w-12" />
+          <img src={logoImage} alt="Bus Booking Logo" className="h-12 w-12" />
         </button>
       </div>
 

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 import backgroundImage from "@/assets/images/background.png";
-import { AppLogo } from "@/components/AppLogo/AppLogo";
+import logoImage from "@/assets/images/logo.png";
 
 export default function AuthSuccessPage() {
   const navigate = useNavigate();
@@ -82,7 +82,7 @@ export default function AuthSuccessPage() {
           onClick={() => navigate("/dashboard")}
           className="hover:opacity-80 transition-opacity"
         >
-          <AppLogo className="w-32" />
+          <img src={logoImage} alt="Bus Booking Logo" className="w-32" />
         </button>
       </div>
 

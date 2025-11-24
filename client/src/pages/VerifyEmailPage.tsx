@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Mail, ArrowRight } from "lucide-react";
 import backgroundImage from "@/assets/images/background.png";
 import { buildApiUrl } from "@/lib/api";
-import { AppLogo } from "@/components/AppLogo/AppLogo";
+import logoImage from "@/assets/images/logo.png";
 
 export default function VerifyEmailPage() {
   const navigate = useNavigate();
@@ -62,7 +62,7 @@ export default function VerifyEmailPage() {
           onClick={() => navigate("/dashboard")}
           className="hover:opacity-80 transition-opacity"
         >
-          <AppLogo className="w-32" />
+          <img src={logoImage} alt="Bus Booking Logo" className="w-32" />
         </button>
       </div>
 

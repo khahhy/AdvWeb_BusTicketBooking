@@ -56,26 +56,29 @@ export default function CustomerFeedback() {
   ];
 
   return (
-    <section
-      className="py-20 relative bg-cover bg-center bg-no-repeat "
-      style={{
-        backgroundImage: `url(${backgroundImage1})`,
-      }}
-    >
-      {/* Light overlay for better text readability */}
-      <div className="absolute inset-0"></div>
+    <section className="py-20 relative">
+      {/* Background Image - only in light mode */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat dark:hidden"
+        style={{
+          backgroundImage: `url(${backgroundImage1})`,
+        }}
+      />
+
+      {/* Dark mode background */}
+      <div className="absolute inset-0 bg-black hidden dark:block" />
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16">
           <BlurText
             text="What Our Customers Say"
-            className="text-4xl font-bold text-black mb-4"
+            className="text-4xl font-bold text-black dark:text-white mb-4"
             animateBy="words"
             direction="top"
             delay={120}
             stepDuration={0.3}
           />
-          <p className="text-lg text-gray-800 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-800 dark:text-gray-200 max-w-2xl mx-auto">
             Real experiences from thousands of satisfied travelers who trust our
             service
           </p>

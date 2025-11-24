@@ -13,6 +13,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import logoImage from "@/assets/images/logo.png";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
 
 const AdminHeader = () => {
   const navigate = useNavigate();
@@ -73,15 +74,18 @@ const AdminHeader = () => {
         </div>
       </form>
 
-      <Button variant="ghost" size="icon" className="rounded-full">
-        <Bell className="h-5 w-5" />
-        <span className="sr-only">Toggle notifications</span>
-      </Button>
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
 
-      <HoverCard openDelay={100}>
-        <HoverCardTrigger asChild>
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <Avatar className="h-9 w-9">
+        <Button variant="ghost" size="icon" className="rounded-full">
+          <Bell className="h-5 w-5" />
+          <span className="sr-only">Toggle notifications</span>
+        </Button>
+
+        <HoverCard openDelay={100}>
+          <HoverCardTrigger asChild>
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <Avatar className="h-9 w-9">
               <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
               <AvatarFallback>YW</AvatarFallback>
             </Avatar>
@@ -115,6 +119,7 @@ const AdminHeader = () => {
           </div>
         </HoverCardContent>
       </HoverCard>
+      </div>
     </header>
   );
 };

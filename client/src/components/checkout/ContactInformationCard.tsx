@@ -37,11 +37,11 @@ export default function ContactInformationCard({
   setErrors,
 }: ContactInformationCardProps) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-2">
+    <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
         Contact information
       </h2>
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
         The system will confirm the booking, refund, or change the schedule
         through this information
       </p>
@@ -59,14 +59,14 @@ export default function ContactInformationCard({
                   setErrors({ ...errors, contactName: "" });
                 }
               }}
-              className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 ${
-                errors.contactName ? "border-red-500" : "border-gray-300"
+              className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
+                errors.contactName ? "border-red-500 dark:border-red-400" : "border-gray-300 dark:border-gray-600"
               }`}
             />
             {contactName && (
               <button
                 onClick={() => setContactName("")}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -79,7 +79,7 @@ export default function ContactInformationCard({
           <div className="relative flex gap-2">
             <div className="w-32">
               <Select value={countryCode} onValueChange={setCountryCode}>
-                <SelectTrigger className="w-full px-4 py-3 border border-gray-300 rounded-2xl">
+                <SelectTrigger className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -101,14 +101,14 @@ export default function ContactInformationCard({
                       setErrors({ ...errors, phoneNumber: "" });
                     }
                   }}
-                  className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 ${
-                    errors.phoneNumber ? "border-red-500" : "border-gray-300"
+                  className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
+                    errors.phoneNumber ? "border-red-500 dark:border-red-400" : "border-gray-300 dark:border-gray-600"
                   }`}
                 />
                 {phoneNumber && (
                   <button
                     onClick={() => setPhoneNumber("")}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -135,14 +135,14 @@ export default function ContactInformationCard({
                   setErrors({ ...errors, email: "" });
                 }
               }}
-              className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 ${
-                errors.email ? "border-red-500" : "border-gray-300"
+              className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
+                errors.email ? "border-red-500 dark:border-red-400" : "border-gray-300 dark:border-gray-600"
               }`}
             />
             {email && (
               <button
                 onClick={() => setEmail("")}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -163,8 +163,8 @@ export default function ContactInformationCard({
                   setErrors({ ...errors, contactPersonalId: "" });
                 }
               }}
-              className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 ${
-                errors.contactPersonalId ? "border-red-500" : "border-gray-300"
+              className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
+                errors.contactPersonalId ? "border-red-500 dark:border-red-400" : "border-gray-300 dark:border-gray-600"
               }`}
             />
             {errors.contactPersonalId && (

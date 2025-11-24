@@ -93,7 +93,7 @@ export const InfiniteMovingCards = ({
       >
         {items.map((item) => (
           <motion.li
-            className="w-[350px] max-w-full relative rounded-2xl border border-gray-300 flex-shrink-0 px-8 py-6 md:w-[450px] bg-white shadow-lg"
+            className="w-[350px] max-w-full relative rounded-2xl border border-gray-300 dark:border-gray-600 flex-shrink-0 px-8 py-6 md:w-[450px] bg-white dark:bg-black shadow-lg"
             key={item.name}
             whileHover={{ y: -5 }}
             transition={{ duration: 0.2 }}
@@ -109,7 +109,7 @@ export const InfiniteMovingCards = ({
                 {[...Array(item.rating || 5)].map((_, i) => (
                   <svg
                     key={i}
-                    className="w-4 h-4 text-yellow-400"
+                    className="w-4 h-4 text-yellow-400 dark:text-yellow-500"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -118,16 +118,16 @@ export const InfiniteMovingCards = ({
                 ))}
               </div>
 
-              <span className="relative z-20 text-sm leading-[1.6] text-gray-800 font-normal">
+              <span className="relative z-20 text-sm leading-[1.6] text-gray-800 dark:text-gray-200 font-normal">
                 "{item.quote}"
               </span>
 
               <div className="relative z-20 mt-6 flex flex-row items-center">
                 <span className="flex flex-col gap-1">
-                  <span className="text-sm leading-[1.6] text-gray-900 font-bold">
+                  <span className="text-sm leading-[1.6] text-gray-900 dark:text-gray-100 font-bold">
                     {item.name}
                   </span>
-                  <span className="text-sm leading-[1.6] text-gray-600 font-normal">
+                  <span className="text-sm leading-[1.6] text-gray-600 dark:text-gray-400 font-normal">
                     {item.title}
                   </span>
                 </span>

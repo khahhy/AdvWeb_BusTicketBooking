@@ -138,7 +138,7 @@ export default function Chatbot() {
           </div>
 
           {/* Tooltip */}
-          <div className="absolute bottom-full right-0 mb-2 px-3 py-1 bg-gray-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+          <div className="absolute bottom-full right-0 mb-2 px-3 py-1 bg-gray-800 dark:bg-gray-900 text-white dark:text-gray-200 text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
             Bus Booking AI ⌘J
           </div>
         </button>
@@ -147,21 +147,21 @@ export default function Chatbot() {
       {/* Chat Window */}
       {isOpen && (
         <div
-          className={`fixed bottom-6 right-6 w-96 bg-gradient-to-b from-rose-50 to-pink-50 border border-rose-200 rounded-2xl shadow-2xl z-50 transition-all duration-300 ${
+          className={`fixed bottom-6 right-6 w-96 bg-gradient-to-b from-rose-50 to-pink-50 dark:bg-black dark:bg-none border border-rose-200 dark:border-gray-800/95 rounded-2xl shadow-2xl z-50 transition-all duration-300 ${
             isMinimized ? "h-16" : "h-[600px]"
           }`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-rose-200 bg-white/80 backdrop-blur rounded-t-2xl">
+          <div className="flex items-center justify-between p-4 border-b border-rose-200 dark:border-gray-700 bg-white/80 dark:bg-black/95 backdrop-blur rounded-t-2xl">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-gradient-to-r from-pink-400 to-rose-400 rounded-full flex items-center justify-center">
                 <Bot className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-gray-800 font-medium text-sm">
+                <h3 className="text-gray-800 dark:text-white font-medium text-sm">
                   Bus Booking AI
                 </h3>
-                <p className="text-gray-500 text-xs">
+                <p className="text-gray-500 dark:text-gray-400 text-xs">
                   Ask, search, or make anything...
                 </p>
               </div>
@@ -172,7 +172,7 @@ export default function Chatbot() {
                 onClick={() => setIsMinimized(!isMinimized)}
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0 hover:bg-rose-100 text-gray-500"
+                className="h-8 w-8 p-0 hover:bg-rose-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
               >
                 <Minimize2 className="w-4 h-4" />
               </Button>
@@ -180,7 +180,7 @@ export default function Chatbot() {
                 onClick={() => setIsOpen(false)}
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0 hover:bg-rose-100 text-gray-500"
+                className="h-8 w-8 p-0 hover:bg-rose-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -207,7 +207,7 @@ export default function Chatbot() {
                     <div
                       className={`max-w-[280px] rounded-2xl p-3 ${
                         message.isBot
-                          ? "bg-white/90 backdrop-blur text-gray-800 shadow-sm border border-rose-100"
+                          ? "bg-white/90 dark:bg-gray-800/95 backdrop-blur text-gray-800 dark:text-gray-200 shadow-sm border border-rose-100 dark:border-gray-700"
                           : "bg-gradient-to-r from-pink-500 to-rose-500 text-white ml-8 shadow-sm"
                       }`}
                     >
@@ -222,7 +222,7 @@ export default function Chatbot() {
                             <button
                               key={index}
                               onClick={() => handleSuggestionClick(suggestion)}
-                              className="flex items-center gap-2 w-full p-2 text-xs text-left bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors border border-rose-100"
+                              className="flex items-center gap-2 w-full p-2 text-xs text-left bg-rose-50 dark:bg-gray-700/80 hover:bg-rose-100 dark:hover:bg-gray-600/80 rounded-lg transition-colors border border-rose-100 dark:border-gray-600"
                             >
                               {index === 0 && (
                                 <Sparkles className="w-3 h-3 text-yellow-500" />
@@ -236,7 +236,7 @@ export default function Chatbot() {
                               {index === 3 && (
                                 <CheckCircle className="w-3 h-3 text-purple-500" />
                               )}
-                              <span className="text-gray-700">
+                              <span className="text-gray-700 dark:text-gray-300">
                                 {suggestion}
                               </span>
                               {index === 0 && (
@@ -274,7 +274,7 @@ export default function Chatbot() {
                     <div className="w-8 h-8 bg-gradient-to-r from-pink-400 to-rose-400 rounded-full flex items-center justify-center flex-shrink-0">
                       <Bot className="w-5 h-5 text-white" />
                     </div>
-                    <div className="bg-white/90 backdrop-blur rounded-2xl p-3 shadow-sm border border-rose-100">
+                    <div className="bg-white/90 dark:bg-gray-800/95 backdrop-blur rounded-2xl p-3 shadow-sm border border-rose-100 dark:border-gray-700">
                       <div className="flex space-x-1">
                         <div className="w-2 h-2 bg-rose-400 rounded-full animate-bounce"></div>
                         <div
@@ -294,7 +294,7 @@ export default function Chatbot() {
               </div>
 
               {/* Input */}
-              <div className="p-4 border-t border-rose-200 bg-white/80 backdrop-blur rounded-b-2xl">
+              <div className="p-4 border-t border-rose-200 dark:border-gray-700 bg-white/80 dark:bg-black/95 backdrop-blur rounded-b-2xl">
                 <div className="flex items-center gap-2">
                   <div className="flex-1 relative">
                     <input
@@ -304,11 +304,11 @@ export default function Chatbot() {
                       onChange={(e) => setInputValue(e.target.value)}
                       onKeyPress={handleKeyPress}
                       placeholder="Ask about booking, schedules, or anything..."
-                      className="w-full bg-white/90 text-gray-800 rounded-xl px-4 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400 placeholder-gray-500 border border-rose-200"
+                      className="w-full bg-white/90 dark:bg-gray-800/95 text-gray-800 dark:text-gray-200 rounded-xl px-4 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400 placeholder-gray-500 dark:placeholder-gray-400 border border-rose-200 dark:border-gray-700"
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                      <span className="text-gray-500 text-xs">Auto</span>
-                      <Globe className="w-3 h-3 text-gray-500" />
+                      <span className="text-gray-500 dark:text-gray-400 text-xs">Auto</span>
+                      <Globe className="w-3 h-3 text-gray-500 dark:text-gray-400" />
                     </div>
                   </div>
 
@@ -321,7 +321,7 @@ export default function Chatbot() {
                   </Button>
                 </div>
 
-                <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                <div className="flex items-center gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
                   <div className="flex items-center gap-1">
                     <div className="w-2 h-2 rounded-full bg-green-500"></div>
                     <span>All sources</span>

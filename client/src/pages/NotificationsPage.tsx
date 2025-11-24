@@ -283,12 +283,12 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
       <Navbar />
 
       {/* Header Section */}
       <div
-        className="pt-40 pb-32 bg-cover bg-center bg-no-repeat relative"
+        className="pt-40 pb-32 bg-cover bg-center bg-no-repeat relative dark:hidden"
         style={{ backgroundImage: `url(${backgroundImage})` }}
       >
         <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 via-pink-50/40 to-transparent pointer-events-none"></div>
@@ -310,15 +310,34 @@ export default function NotificationsPage() {
         </div>
       </div>
 
+      {/* Dark theme header */}
+      <div className="hidden dark:block pt-40 pb-32 relative">
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="flex items-center gap-3 mb-6 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.1s_forwards]">
+            <Bell className="w-8 h-8 text-foreground/80" />
+            {unreadCount > 0 && (
+              <Badge className="bg-red-500 text-white">{unreadCount} new</Badge>
+            )}
+          </div>
+
+          <h1 className="text-5xl font-bold text-foreground/80 mb-3 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
+            Notifications
+          </h1>
+          <p className="text-xl text-foreground/60 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
+            Stay updated with your bookings and latest offers
+          </p>
+        </div>
+      </div>
+
       <div className="max-w-4xl mx-auto px-6 py-8 pb-8 -mt-16 relative z-10">
         {/* Filter and Actions */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+          <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800/95 p-6 mb-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4 flex-wrap">
                 <div className="flex items-center gap-2">
                   <Filter className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Filter:
                   </span>
                 </div>
@@ -362,9 +381,9 @@ export default function NotificationsPage() {
           {filteredNotifications.map((notification) => (
             <div key={notification.id}>
               <div
-                className={`bg-white rounded-2xl shadow-sm border border-gray-200 p-6 cursor-pointer transition-all duration-200 hover:shadow-md ${
+                className={`bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800/95 p-6 cursor-pointer transition-all duration-200 hover:shadow-md ${
                   !notification.isRead
-                    ? "ring-2 ring-blue-100 bg-blue-50/50"
+                    ? "ring-2 ring-blue-100 bg-blue-50/50 dark:ring-blue-900/50 dark:bg-blue-950/30"
                     : ""
                 }`}
                 onClick={() => handleNotificationClick(notification)}
@@ -386,8 +405,8 @@ export default function NotificationsPage() {
                           <h3
                             className={`text-lg font-semibold ${
                               !notification.isRead
-                                ? "text-gray-900"
-                                : "text-gray-700"
+                                ? "text-gray-900 dark:text-white"
+                                : "text-gray-700 dark:text-gray-300"
                             }`}
                           >
                             {notification.title}
@@ -405,14 +424,14 @@ export default function NotificationsPage() {
                         </div>
 
                         {notification.bookingCode && (
-                          <p className="text-sm text-gray-500 mb-2">
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                             Booking: {notification.bookingCode}
                           </p>
                         )}
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500 whitespace-nowrap">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
                           {formatRelativeTime(notification.timestamp)}
                         </span>
 
@@ -424,7 +443,7 @@ export default function NotificationsPage() {
                               }
                               size="sm"
                               variant="ghost"
-                              className="h-8 w-8 p-0 hover:bg-blue-100"
+                              className="h-8 w-8 p-0 hover:bg-blue-100 dark:hover:bg-blue-950/50"
                               title="Mark as read"
                             >
                               <CheckCircle className="w-4 h-4 text-blue-500" />
@@ -435,7 +454,7 @@ export default function NotificationsPage() {
                             onClick={(e) => handleDelete(notification.id, e)}
                             size="sm"
                             variant="ghost"
-                            className="h-8 w-8 p-0 hover:bg-red-100"
+                            className="h-8 w-8 p-0 hover:bg-red-100 dark:hover:bg-red-950/50"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4 text-red-500" />
@@ -446,7 +465,7 @@ export default function NotificationsPage() {
 
                     <p
                       className={`text-sm leading-relaxed ${
-                        !notification.isRead ? "text-gray-800" : "text-gray-600"
+                        !notification.isRead ? "text-gray-800 dark:text-gray-200" : "text-gray-600 dark:text-gray-400"
                       }`}
                     >
                       {notification.message}
@@ -454,7 +473,7 @@ export default function NotificationsPage() {
 
                     {notification.actionUrl && (
                       <div className="mt-3">
-                        <span className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700">
+                        <span className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
                           Click to view details →
                         </span>
                       </div>
@@ -469,12 +488,12 @@ export default function NotificationsPage() {
         {/* Empty State */}
         {filteredNotifications.length === 0 && (
           <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
-              <Bell className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800/95 p-12 text-center">
+              <Bell className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 No notifications found
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
                 {filter === "all"
                   ? "You don't have any notifications yet."
                   : `No ${filter} notifications found.`}
@@ -489,8 +508,8 @@ export default function NotificationsPage() {
         {/* Stats Summary */}
         {notifications.length > 0 && (
           <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mt-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800/95 p-6 mt-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Summary
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
@@ -498,25 +517,25 @@ export default function NotificationsPage() {
                   <div className="text-2xl font-bold text-blue-600">
                     {notifications.length}
                   </div>
-                  <div className="text-sm text-gray-600">Total</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Total</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-red-600">
                     {unreadCount}
                   </div>
-                  <div className="text-sm text-gray-600">Unread</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Unread</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-green-600">
                     {notifications.filter((n) => n.type === "booking").length}
                   </div>
-                  <div className="text-sm text-gray-600">Bookings</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Bookings</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-secondary">
                     {notifications.filter((n) => n.type === "promotion").length}
                   </div>
-                  <div className="text-sm text-gray-600">Promotions</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Promotions</div>
                 </div>
               </div>
             </div>

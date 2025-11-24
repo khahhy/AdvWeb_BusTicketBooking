@@ -116,24 +116,24 @@ export default function BookingHistoryPage() {
     switch (status) {
       case "completed":
         return (
-          <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900 dark:text-green-300">
             Completed
           </Badge>
         );
       case "upcoming":
         return (
-          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
+          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900 dark:text-blue-300">
             Upcoming
           </Badge>
         );
       case "cancelled":
         return (
-          <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
+          <Badge className="bg-red-100 text-red-700 hover:bg-red-100 dark:bg-red-900 dark:text-red-300">
             Cancelled
           </Badge>
         );
       default:
-        return <Badge>Unknown</Badge>;
+        return <Badge className="dark:text-white">Unknown</Badge>;
     }
   };
 
@@ -158,32 +158,38 @@ export default function BookingHistoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
       {/* Navbar */}
       <Navbar />
 
       {/* Header Section */}
-      <div
-        className="pt-40 pb-32 bg-cover bg-center bg-no-repeat relative"
-        style={{ backgroundImage: `url(${backgroundImage})` }}
-      >
+      <div className="pt-40 pb-32 relative">
+        {/* Background Image - only in light mode */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat dark:hidden"
+          style={{ backgroundImage: `url(${backgroundImage})` }}
+        />
+
+        {/* Dark mode background */}
+        <div className="absolute inset-0 bg-black hidden dark:block" />
+
         {/* Gradient fade overlay */}
-        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 via-pink-50/60 via-pink-50/30 to-transparent pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 to-transparent dark:from-black dark:to-transparent pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <h1 className="text-5xl font-bold text-foreground/80 mb-3 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
+          <h1 className="text-5xl font-bold text-black dark:text-white mb-3 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
             Booking History
           </h1>
-          <p className="text-xl text-foreground/60 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
+          <p className="text-xl text-black/80 dark:text-white/80 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
             View and manage your past and upcoming trips
           </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 pb-8 -mt-16 relative z-10">
+      <div className="max-w-7xl mx-auto px-6 py-8 pb-8 -mt-16 relative z-10 dark:bg-black">
         {/* Filter Tabs */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+          <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
             <div className="flex flex-wrap gap-4">
               <Button
                 variant={filter === "all" ? "default" : "outline"}
@@ -224,14 +230,14 @@ export default function BookingHistoryPage() {
               key={booking.id}
               className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]"
             >
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+              <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                       Booking Code: {booking.bookingCode}
                     </h3>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
                       Passenger: {booking.passengerName}
                     </p>
                   </div>
@@ -241,10 +247,10 @@ export default function BookingHistoryPage() {
                 {/* Trip Info */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="w-48 flex-shrink-0">
-                    <div className="text-xl font-bold text-gray-900">
+                    <div className="text-xl font-bold text-gray-900 dark:text-white">
                       {booking.from}
                     </div>
-                    <div className="text-lg font-semibold text-gray-900 mt-1">
+                    <div className="text-lg font-semibold text-gray-900 dark:text-gray-300 mt-1">
                       {booking.departureTime}
                     </div>
                   </div>
@@ -262,33 +268,33 @@ export default function BookingHistoryPage() {
                   </div>
 
                   <div className="text-right w-48 flex-shrink-0">
-                    <div className="text-xl font-bold text-gray-900">
+                    <div className="text-xl font-bold text-gray-900 dark:text-white">
                       {booking.to}
                     </div>
-                    <div className="text-lg font-semibold text-gray-900 mt-1">
+                    <div className="text-lg font-semibold text-gray-900 dark:text-gray-300 mt-1">
                       {booking.arrivalTime}
                     </div>
                   </div>
                 </div>
 
                 {/* Details */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700 mb-6">
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">Travel Date</p>
-                    <p className="text-base font-semibold text-gray-900 flex items-center gap-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Travel Date</p>
+                    <p className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
                       {formatDate(booking.date)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">Seat</p>
-                    <p className="text-base font-semibold text-gray-900 flex items-center gap-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Seat</p>
+                    <p className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-1">
                       <Ticket className="w-4 h-4" />
                       {booking.seat}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">Price</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Price</p>
                     <p className="text-base font-semibold text-green-600">
                       {formatCurrency(booking.price)}
                     </p>
@@ -347,12 +353,12 @@ export default function BookingHistoryPage() {
         {/* Empty State */}
         {filteredBookings.length === 0 && (
           <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
+            <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
               <Ticket className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 No bookings found
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
                 {filter === "all"
                   ? "You haven't made any bookings yet."
                   : `No ${filter} bookings found.`}

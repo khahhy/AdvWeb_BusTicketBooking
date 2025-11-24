@@ -171,12 +171,12 @@ export default function ModifyBookingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading booking details...</p>
+            <p className="text-gray-600 dark:text-gray-400">Loading booking details...</p>
           </div>
         </div>
       </div>
@@ -185,14 +185,14 @@ export default function ModifyBookingPage() {
 
   if (!booking) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
               Booking Not Found
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               The booking you're trying to modify doesn't exist.
             </p>
             <Button onClick={() => navigate("/booking-history")}>
@@ -206,15 +206,15 @@ export default function ModifyBookingPage() {
 
   if (booking.status !== "upcoming") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <AlertTriangle className="w-16 h-16 text-orange-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
               Cannot Modify Booking
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               Only upcoming bookings can be modified. This booking is{" "}
               {booking.status}.
             </p>
@@ -228,12 +228,12 @@ export default function ModifyBookingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
       <Navbar />
 
       {/* Header Section */}
       <div
-        className="pt-40 pb-32 bg-cover bg-center bg-no-repeat relative"
+        className="pt-40 pb-32 bg-cover bg-center bg-no-repeat relative dark:hidden"
         style={{ backgroundImage: `url(${backgroundImage})` }}
       >
         <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 via-pink-50/60 via-pink-50/30 to-transparent pointer-events-none"></div>
@@ -260,64 +260,64 @@ export default function ModifyBookingPage() {
       <div className="max-w-4xl mx-auto px-6 py-8 pb-8 -mt-16 relative z-10">
         {/* Current Booking Info */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
+          <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800/95 p-6 mb-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
               Current Booking
             </h3>
 
             <div className="flex items-center justify-between mb-4">
               <div className="w-40 flex-shrink-0">
-                <div className="text-xl font-bold text-gray-900">
+                <div className="text-xl font-bold text-gray-900 dark:text-white">
                   {booking.from}
                 </div>
-                <div className="text-base font-semibold text-gray-900 mt-1">
+                <div className="text-base font-semibold text-gray-900 dark:text-gray-200 mt-1">
                   {booking.departureTime}
                 </div>
               </div>
 
               <div className="flex-1 px-8 text-center">
                 <div className="flex items-center justify-center gap-3 mb-1">
-                  <MapPin className="w-4 h-4 text-gray-400" />
-                  <div className="h-0.5 w-full border-t-2 border-dashed border-gray-300"></div>
-                  <MapPin className="w-4 h-4 text-gray-400" />
+                  <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                  <div className="h-0.5 w-full border-t-2 border-dashed border-gray-300 dark:border-gray-600"></div>
+                  <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                 </div>
-                <div className="text-sm text-gray-500 flex items-center justify-center gap-1">
+                <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-1">
                   <Clock className="w-3 h-3" />
                   {booking.duration}
                 </div>
               </div>
 
               <div className="text-right w-40 flex-shrink-0">
-                <div className="text-xl font-bold text-gray-900">
+                <div className="text-xl font-bold text-gray-900 dark:text-white">
                   {booking.to}
                 </div>
-                <div className="text-base font-semibold text-gray-900 mt-1">
+                <div className="text-base font-semibold text-gray-900 dark:text-gray-200 mt-1">
                   {booking.arrivalTime}
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-sm">
               <div>
-                <span className="text-gray-600">Travel Date:</span>
-                <div className="font-semibold text-gray-900">
+                <span className="text-gray-600 dark:text-gray-400">Travel Date:</span>
+                <div className="font-semibold text-gray-900 dark:text-white">
                   {formatDate(dayjs(booking.date))}
                 </div>
               </div>
               <div>
-                <span className="text-gray-600">Seat:</span>
-                <div className="font-semibold text-gray-900">
+                <span className="text-gray-600 dark:text-gray-400">Seat:</span>
+                <div className="font-semibold text-gray-900 dark:text-white">
                   {booking.seat}
                 </div>
               </div>
               <div>
-                <span className="text-gray-600">Passenger:</span>
-                <div className="font-semibold text-gray-900">
+                <span className="text-gray-600 dark:text-gray-400">Passenger:</span>
+                <div className="font-semibold text-gray-900 dark:text-white">
                   {booking.passengerName}
                 </div>
               </div>
               <div>
-                <span className="text-gray-600">Price:</span>
+                <span className="text-gray-600 dark:text-gray-400">Price:</span>
                 <div className="font-semibold text-success">
                   {formatCurrency(booking.price)}
                 </div>
@@ -328,15 +328,15 @@ export default function ModifyBookingPage() {
 
         {/* Modify Options */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.4s_forwards]">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">
+          <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800/95 p-6 mb-6">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
               Modify Details
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Change Date */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                   Travel Date
                 </label>
                 <Popover>
@@ -361,7 +361,7 @@ export default function ModifyBookingPage() {
 
               {/* Change Time */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                   Departure Time
                 </label>
                 <Select value={selectedTime} onValueChange={setSelectedTime}>
@@ -380,7 +380,7 @@ export default function ModifyBookingPage() {
 
               {/* Change Seat */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                   Seat Number
                 </label>
                 <Select value={selectedSeat} onValueChange={setSelectedSeat}>
@@ -399,12 +399,12 @@ export default function ModifyBookingPage() {
 
               {/* Show Updated Arrival */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                   New Arrival Time
                 </label>
-                <div className="flex items-center h-10 px-3 py-2 border border-input bg-gray-50 rounded-md">
-                  <Clock className="mr-2 h-4 w-4 text-gray-400" />
-                  <span className="text-gray-700">
+                <div className="flex items-center h-10 px-3 py-2 border border-input bg-gray-50 dark:bg-gray-900/50 dark:border-gray-700 rounded-md">
+                  <Clock className="mr-2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                  <span className="text-gray-700 dark:text-gray-300">
                     {getSelectedTimeDetails()?.arrival || booking.arrivalTime}
                   </span>
                 </div>
@@ -413,11 +413,11 @@ export default function ModifyBookingPage() {
 
             {/* Changes Summary */}
             {hasChanges() && (
-              <div className="mt-6 p-4 bg-primary-50 border border-blue-200 rounded-lg">
-                <h4 className="font-semibold text-primary mb-2">
+              <div className="mt-6 p-4 bg-primary-50 dark:bg-primary-950/20 border border-blue-200 dark:border-blue-800/50 rounded-lg">
+                <h4 className="font-semibold text-primary dark:text-primary-400 mb-2">
                   Changes Summary:
                 </h4>
-                <ul className="text-sm text-primary space-y-1">
+                <ul className="text-sm text-primary dark:text-primary-300 space-y-1">
                   {selectedDate?.format("YYYY-MM-DD") !== booking.date && (
                     <li>
                       • Date changed from {formatDate(dayjs(booking.date))} to{" "}
@@ -475,14 +475,14 @@ export default function ModifyBookingPage() {
 
         {/* Important Notes */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-6 mt-6">
+          <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800/50 rounded-2xl p-6 mt-6">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-500 flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-semibold text-yellow-900 mb-2">
+                <h4 className="font-semibold text-yellow-900 dark:text-yellow-200 mb-2">
                   Important Notes:
                 </h4>
-                <ul className="text-sm text-yellow-700 space-y-1">
+                <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
                   <li>• Changes can be made up to 2 hours before departure</li>
                   <li>• Seat changes are subject to availability</li>
                   <li>• Date/time changes may incur additional fees</li>
@@ -498,15 +498,15 @@ export default function ModifyBookingPage() {
       {/* Cancel Confirmation Modal */}
       {showCancelModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+          <div className="bg-white dark:bg-black rounded-2xl shadow-xl border-0 dark:border dark:border-gray-800/95 max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
               <AlertTriangle className="w-6 h-6 text-error" />
-              <h3 className="text-xl font-bold text-gray-900">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                 Cancel Booking?
               </h3>
             </div>
 
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               Are you sure you want to cancel this booking? This action cannot
               be undone. You will receive an 80% refund (
               {formatCurrency(booking.price * 0.8)}) within 3-5 business days.

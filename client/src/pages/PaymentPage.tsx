@@ -87,29 +87,35 @@ export default function PaymentPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
       {/* Navbar */}
       <Navbar />
 
       {/* Header Section with Background */}
-      <div
-        className="pt-40 pb-32 bg-cover bg-center bg-no-repeat relative"
-        style={{ backgroundImage: `url(${backgroundImage})` }}
-      >
+      <div className="pt-40 pb-32 relative">
+        {/* Background Image - only in light mode */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat dark:hidden"
+          style={{ backgroundImage: `url(${backgroundImage})` }}
+        />
+
+        {/* Dark mode background */}
+        <div className="absolute inset-0 bg-black hidden dark:block" />
+
         {/* Gradient fade overlay at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 via-pink-50/60 via-pink-50/30 to-transparent pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 to-transparent dark:from-black dark:to-transparent pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <h1 className="text-5xl font-bold text-foreground/80 mb-3 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
+          <h1 className="text-5xl font-bold text-black dark:text-white mb-3 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
             Complete Payment
           </h1>
-          <p className="text-xl text-foreground/60 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
+          <p className="text-xl text-black/80 dark:text-white/80 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
             Choose your preferred payment method
           </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 pb-20 -mt-16 relative z-10">
+      <div className="max-w-7xl mx-auto px-6 py-8 pb-20 -mt-16 relative z-10 dark:bg-black">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Trip and Payment Details */}
           <div className="lg:col-span-2 space-y-6">

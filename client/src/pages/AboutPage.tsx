@@ -13,29 +13,35 @@ import {
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black">
       <Navbar />
 
       {/* Hero Section */}
-      <div
-        className="pt-56 pb-48 bg-cover bg-center bg-no-repeat relative"
-        style={{ backgroundImage: `url(${backgroundImage})` }}
-      >
+      <div className="pt-56 pb-48 relative">
+        {/* Background Image - only in light mode */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat dark:hidden"
+          style={{ backgroundImage: `url(${backgroundImage})` }}
+        />
+
+        {/* Dark mode background */}
+        <div className="absolute inset-0 bg-black hidden dark:block" />
+
         {/* Gradient fade overlay at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 via-pink-50/60 to-transparent pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 to-transparent dark:from-black dark:to-transparent pointer-events-none"></div>
 
         <div className="max-w-6xl mx-auto px-6 relative z-10">
-          <h1 className="text-4xl font-bold text-foreground/80 mb-2 text-center opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
+          <h1 className="text-4xl font-bold text-black dark:text-white mb-2 text-center opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
             About Us
           </h1>
-          <p className="text-center mb-8 text-foreground/60 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
+          <p className="text-center mb-8 text-black/80 dark:text-white/80 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
             Your trusted partner for safe and comfortable bus travel across Vietnam
           </p>
         </div>
       </div>
 
       {/* Company Story - Dashboard Style */}
-      <section className="py-16 bg-muted/30">
+      <section className="py-16 bg-muted/30 dark:bg-black">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="lg:pr-8">
@@ -94,7 +100,7 @@ export default function AboutPage() {
       </section>
 
       {/* Mission & Vision - Dashboard Style */}
-      <section className="py-16 bg-muted/30">
+      <section className="py-16 bg-muted/30 dark:bg-black">
         <div className="container mx-auto px-4">
           <h3 className="text-3xl font-bold text-center mb-12">Our Purpose</h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">

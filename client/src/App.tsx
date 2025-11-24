@@ -45,6 +45,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ProfilePage from "./pages/ProfilePage";
 import AboutPage from "./pages/AboutPage";
 import SupportPage from "./pages/SupportPage";
+import { ThemeProvider } from "./contexts/ThemeContext";
 
 function AppContent() {
   const location = useLocation();
@@ -58,71 +59,94 @@ function AppContent() {
     "/auth-success",
   ].includes(location.pathname);
 
-  return (
-    <>
-      <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        // admin pages
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <AdminLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<AdminDashboard />} />
-          <Route path="users-management">
-            <Route path="passengers" element={<PassengerManagement />} />
-            <Route path="admins" element={<AdminManagement />} />
-          </Route>
-          <Route path="bus-operations">
-            <Route path="locations" element={<LocationManagement />} />
-            <Route path="buses" element={<BusManagement />} />
-            <Route path="routes" element={<RouteManagement />} />
-            <Route path="trips">
-              <Route index element={<TripManagement />} />
-              <Route path="new" element={<TripForm />} />
-              <Route path="edit/:tripId" element={<TripForm />} />
-            </Route>
-          </Route>
-          <Route path="sales">
-            <Route path="bookings" element={<BookingManagement />} />
-            <Route path="transactions" element={<PaymentManagement />} />
-          </Route>
-          <Route path="customer-care">
-            <Route path="reviews" element={<ReviewManagement />} />
-            <Route path="notifications" element={<NotificationManagement />} />
-          </Route>
-          <Route path="system">
-            <Route path="settings" element={<SystemSettings />} />
+  // Check if current page is authentication page
+  const isAuthPage = [
+    "/signup",
+    "/login",
+    "/forgot-password",
+    "/reset-password",
+    "/verify-email",
+    "/email-verified",
+    "/auth-success",
+  ].includes(location.pathname);
+
+  const routeContent = (
+    <Routes>
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      {/* admin pages */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<AdminDashboard />} />
+        <Route path="users-management">
+          <Route path="passengers" element={<PassengerManagement />} />
+          <Route path="admins" element={<AdminManagement />} />
+        </Route>
+        <Route path="bus-operations">
+          <Route path="locations" element={<LocationManagement />} />
+          <Route path="buses" element={<BusManagement />} />
+          <Route path="routes" element={<RouteManagement />} />
+          <Route path="trips">
+            <Route index element={<TripManagement />} />
+            <Route path="new" element={<TripForm />} />
+            <Route path="edit/:tripId" element={<TripForm />} />
           </Route>
         </Route>
-        <Route path="/dashboard" element={<UserDashboard />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/support" element={<SupportPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/search" element={<SearchPage />} />
-        <Route path="/track-ticket" element={<TrackTicketPage />} />
-        <Route path="/booking-history" element={<BookingHistoryPage />} />
-        <Route path="/booking-details/:id" element={<BookingDetailsPage />} />
-        <Route path="/feedback/:id" element={<FeedbackRatingPage />} />
-        <Route path="/modify-booking/:id" element={<ModifyBookingPage />} />
-        <Route path="/notifications" element={<NotificationsPage />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/payment" element={<PaymentPage />} />
-        <Route path="/confirmation" element={<ConfirmationPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/verify-email" element={<VerifyEmailPage />} />
-        <Route path="/email-verified" element={<EmailVerifiedPage />} />
-        <Route path="/auth-success" element={<AuthSuccessPage />} />
-      </Routes>
+        <Route path="sales">
+          <Route path="bookings" element={<BookingManagement />} />
+          <Route path="transactions" element={<PaymentManagement />} />
+        </Route>
+        <Route path="customer-care">
+          <Route path="reviews" element={<ReviewManagement />} />
+          <Route path="notifications" element={<NotificationManagement />} />
+        </Route>
+        <Route path="system">
+          <Route path="settings" element={<SystemSettings />} />
+        </Route>
+      </Route>
+      <Route path="/dashboard" element={<UserDashboard />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/support" element={<SupportPage />} />
+      <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/search" element={<SearchPage />} />
+      <Route path="/track-ticket" element={<TrackTicketPage />} />
+      <Route path="/booking-history" element={<BookingHistoryPage />} />
+      <Route path="/booking-details/:id" element={<BookingDetailsPage />} />
+      <Route path="/feedback/:id" element={<FeedbackRatingPage />} />
+      <Route path="/modify-booking/:id" element={<ModifyBookingPage />} />
+      <Route path="/notifications" element={<NotificationsPage />} />
+      <Route path="/checkout" element={<CheckoutPage />} />
+      <Route path="/payment" element={<PaymentPage />} />
+      <Route path="/confirmation" element={<ConfirmationPage />} />
+      <Route path="/signup" element={<SignUpPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/email-verified" element={<EmailVerifiedPage />} />
+      <Route path="/auth-success" element={<AuthSuccessPage />} />
+    </Routes>
+  );
 
-      {/* Global Chatbot - hidden on signup page */}
-      {!hideChatbot && <Chatbot />}
+  return (
+    <>
+      {/* Apply theme only to non-auth pages */}
+      {isAuthPage ? (
+        <div className="light">
+          {routeContent}
+          {!hideChatbot && <Chatbot />}
+        </div>
+      ) : (
+        <ThemeProvider>
+          {routeContent}
+          {!hideChatbot && <Chatbot />}
+        </ThemeProvider>
+      )}
     </>
   );
 }

@@ -57,7 +57,7 @@ export const ResizableNavbar: React.FC<ResizableNavbarProps> = ({
       className={cn(
         "fixed top-0 left-1/2 transform -translate-x-1/2 z-50 backdrop-blur-md border transition-all duration-300",
         isScrolled
-          ? "bg-white/80 border-gray-200/20 shadow-lg"
+          ? "bg-white/80 dark:bg-gray-900/80 border-gray-200/20 dark:border-gray-800/20 shadow-lg"
           : "bg-transparent border-transparent shadow-none",
         className,
       )}
@@ -93,9 +93,9 @@ export const ResizableNavbar: React.FC<ResizableNavbarProps> = ({
                 <motion.a
                   href={item.link}
                   className={cn(
-                    "flex items-center px-4 py-2 text-base font-medium text-gray-600 hover:text-gray-900 transition-colors duration-200 rounded-lg",
+                    "flex items-center px-4 py-2 text-base font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 rounded-lg",
                     activeDropdown === item.name &&
-                      "text-gray-900 bg-gray-50/50",
+                      "text-gray-900 dark:text-gray-100 bg-gray-50/50 dark:bg-gray-800/50",
                   )}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -145,7 +145,7 @@ export const ResizableNavbar: React.FC<ResizableNavbarProps> = ({
                           stiffness: 400,
                           damping: 30,
                         }}
-                        className="absolute top-full right-0 mt-2 w-72 bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-gray-200/50 overflow-hidden z-50"
+                        className="absolute top-full right-0 mt-2 w-72 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden z-50"
                       >
                         <div className="p-4">
                           <div className="grid grid-cols-1 gap-2">
@@ -155,7 +155,7 @@ export const ResizableNavbar: React.FC<ResizableNavbarProps> = ({
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: childIndex * 0.05 }}
-                                className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group cursor-pointer"
+                                className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 group cursor-pointer"
                                 whileHover={{ scale: 1.02 }}
                                 onClick={() => {
                                   if (onItemClick) {
@@ -167,12 +167,12 @@ export const ResizableNavbar: React.FC<ResizableNavbarProps> = ({
                                 }}
                               >
                                 {child.icon && (
-                                  <div className="mr-3 p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
+                                  <div className="mr-3 p-2 bg-blue-50 dark:bg-blue-900/50 rounded-lg group-hover:bg-blue-100 dark:group-hover:bg-blue-900/70 transition-colors">
                                     {child.icon}
                                   </div>
                                 )}
                                 <div>
-                                  <div className="font-medium text-gray-900 group-hover:text-blue-600 text-sm">
+                                  <div className="font-medium text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 text-sm">
                                     {child.name}
                                   </div>
                                 </div>

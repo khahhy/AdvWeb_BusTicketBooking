@@ -136,24 +136,24 @@ export default function BookingDetailsPage() {
     switch (status) {
       case "completed":
         return (
-          <Badge className="bg-success-100 text-success hover:bg-success-100">
+          <Badge className="bg-success-100 text-success hover:bg-success-100 dark:bg-green-900 dark:text-green-300">
             Completed
           </Badge>
         );
       case "upcoming":
         return (
-          <Badge className="bg-primary-50 text-primary hover:bg-primary-50">
+          <Badge className="bg-primary-50 text-primary hover:bg-primary-50 dark:bg-blue-900 dark:text-blue-300">
             Upcoming
           </Badge>
         );
       case "cancelled":
         return (
-          <Badge className="bg-error-50 text-error hover:bg-error-50">
+          <Badge className="bg-error-50 text-error hover:bg-error-50 dark:bg-red-900 dark:text-red-300">
             Cancelled
           </Badge>
         );
       default:
-        return <Badge>Unknown</Badge>;
+        return <Badge className="dark:text-white">Unknown</Badge>;
     }
   };
 
@@ -176,12 +176,12 @@ export default function BookingDetailsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading booking details...</p>
+            <p className="text-gray-600 dark:text-gray-400">Loading booking details...</p>
           </div>
         </div>
       </div>
@@ -190,14 +190,14 @@ export default function BookingDetailsPage() {
 
   if (!booking) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black">
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
               Booking Not Found
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               The booking you're looking for doesn't exist.
             </p>
             <Button onClick={handleGoBack}>Go Back to History</Button>
@@ -208,15 +208,21 @@ export default function BookingDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
       <Navbar />
 
       {/* Header Section */}
-      <div
-        className="pt-40 pb-32 bg-cover bg-center bg-no-repeat relative"
-        style={{ backgroundImage: `url(${backgroundImage})` }}
-      >
-        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 via-pink-50/60 via-pink-50/30 to-transparent pointer-events-none"></div>
+      <div className="pt-40 pb-32 relative">
+        {/* Background Image - only in light mode */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat dark:hidden"
+          style={{ backgroundImage: `url(${backgroundImage})` }}
+        />
+
+        {/* Dark mode background */}
+        <div className="absolute inset-0 bg-black hidden dark:block" />
+
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 to-transparent dark:from-black dark:to-transparent pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <Button
@@ -228,10 +234,10 @@ export default function BookingDetailsPage() {
             Back to History
           </Button>
 
-          <h1 className="text-5xl font-bold text-foreground/80 mb-3 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
+          <h1 className="text-5xl font-bold text-foreground/80 dark:text-white mb-3 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
             Booking Details
           </h1>
-          <p className="text-xl text-foreground/60 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
+          <p className="text-xl text-foreground/60 dark:text-gray-300 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
             Booking Code: {booking.bookingCode}
           </p>
         </div>
@@ -240,15 +246,15 @@ export default function BookingDetailsPage() {
       <div className="max-w-7xl mx-auto px-6 py-8 pb-8 -mt-16 relative z-10">
         {/* Booking Status Card */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+          <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <CheckCircle2 className="w-8 h-8 text-success" />
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                     Booking Confirmed
                   </h2>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-400">
                     Booked on {formatDateTime(booking.bookingDate)}
                   </p>
                 </div>
@@ -263,18 +269,18 @@ export default function BookingDetailsPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Trip Information */}
             <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.4s_forwards]">
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">
+              <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
                   Trip Information
                 </h3>
 
                 {/* Route */}
                 <div className="flex items-center justify-between mb-8">
                   <div className="w-50 flex-shrink-0">
-                    <div className="text-2xl font-bold text-gray-900">
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
                       {booking.from}
                     </div>
-                    <div className="text-lg font-semibold text-gray-900 mt-1">
+                    <div className="text-lg font-semibold text-gray-900 dark:text-gray-300 mt-1">
                       {booking.departureTime}
                     </div>
                   </div>
@@ -292,10 +298,10 @@ export default function BookingDetailsPage() {
                   </div>
 
                   <div className="text-right w-40 flex-shrink-0">
-                    <div className="text-2xl font-bold text-gray-900">
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
                       {booking.to}
                     </div>
-                    <div className="text-lg font-semibold text-gray-900 mt-1">
+                    <div className="text-lg font-semibold text-gray-900 dark:text-gray-300 mt-1">
                       {booking.arrivalTime}
                     </div>
                   </div>
@@ -307,8 +313,8 @@ export default function BookingDetailsPage() {
                     <div className="flex items-center gap-3">
                       <Calendar className="w-5 h-5 text-gray-400" />
                       <div>
-                        <p className="text-sm text-gray-600">Travel Date</p>
-                        <p className="text-base font-semibold text-gray-900">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Travel Date</p>
+                        <p className="text-base font-semibold text-gray-900 dark:text-white">
                           {formatDate(booking.date)}
                         </p>
                       </div>
@@ -317,8 +323,8 @@ export default function BookingDetailsPage() {
                     <div className="flex items-center gap-3">
                       <Ticket className="w-5 h-5 text-gray-400" />
                       <div>
-                        <p className="text-sm text-gray-600">Seat Number</p>
-                        <p className="text-base font-semibold text-gray-900">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Seat Number</p>
+                        <p className="text-base font-semibold text-gray-900 dark:text-white">
                           {booking.seat}
                         </p>
                       </div>
@@ -331,8 +337,8 @@ export default function BookingDetailsPage() {
                         <span className="text-white text-xs font-bold">B</span>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Bus Number</p>
-                        <p className="text-base font-semibold text-gray-900">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Bus Number</p>
+                        <p className="text-base font-semibold text-gray-900 dark:text-white">
                           {booking.busNumber}
                         </p>
                       </div>
@@ -343,8 +349,8 @@ export default function BookingDetailsPage() {
                         <span className="text-white text-xs font-bold">T</span>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Bus Type</p>
-                        <p className="text-base font-semibold text-gray-900">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Bus Type</p>
+                        <p className="text-base font-semibold text-gray-900 dark:text-white">
                           {booking.busType}
                         </p>
                       </div>
@@ -356,8 +362,8 @@ export default function BookingDetailsPage() {
 
             {/* Passenger Information */}
             <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]">
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">
+              <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
                   Passenger Information
                 </h3>
 
@@ -365,8 +371,8 @@ export default function BookingDetailsPage() {
                   <div className="flex items-center gap-3">
                     <User className="w-5 h-5 text-gray-400" />
                     <div>
-                      <p className="text-sm text-gray-600">Full Name</p>
-                      <p className="text-base font-semibold text-gray-900">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Full Name</p>
+                      <p className="text-base font-semibold text-gray-900 dark:text-white">
                         {booking.passengerName}
                       </p>
                     </div>
@@ -375,8 +381,8 @@ export default function BookingDetailsPage() {
                   <div className="flex items-center gap-3">
                     <Phone className="w-5 h-5 text-gray-400" />
                     <div>
-                      <p className="text-sm text-gray-600">Phone Number</p>
-                      <p className="text-base font-semibold text-gray-900">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Phone Number</p>
+                      <p className="text-base font-semibold text-gray-900 dark:text-white">
                         {booking.contactPhone}
                       </p>
                     </div>
@@ -385,8 +391,8 @@ export default function BookingDetailsPage() {
                   <div className="flex items-center gap-3 md:col-span-2">
                     <Mail className="w-5 h-5 text-gray-400" />
                     <div>
-                      <p className="text-sm text-gray-600">Email</p>
-                      <p className="text-base font-semibold text-gray-900">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Email</p>
+                      <p className="text-base font-semibold text-gray-900 dark:text-white">
                         {booking.contactEmail}
                       </p>
                     </div>
@@ -397,8 +403,8 @@ export default function BookingDetailsPage() {
 
             {/* Pickup & Dropoff Locations */}
             <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]">
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">
+              <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
                   Pickup & Dropoff
                 </h3>
 
@@ -408,8 +414,8 @@ export default function BookingDetailsPage() {
                       <div className="w-2 h-2 bg-white rounded-full"></div>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Pickup Location</p>
-                      <p className="text-base font-semibold text-gray-900">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Pickup Location</p>
+                      <p className="text-base font-semibold text-gray-900 dark:text-white">
                         {booking.pickupLocation}
                       </p>
                     </div>
@@ -420,8 +426,8 @@ export default function BookingDetailsPage() {
                       <div className="w-2 h-2 bg-white rounded-full"></div>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Dropoff Location</p>
-                      <p className="text-base font-semibold text-gray-900">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Dropoff Location</p>
+                      <p className="text-base font-semibold text-gray-900 dark:text-white">
                         {booking.dropoffLocation}
                       </p>
                     </div>
@@ -435,28 +441,28 @@ export default function BookingDetailsPage() {
           <div className="lg:col-span-1 space-y-6">
             {/* Payment Summary */}
             <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.7s_forwards]">
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">
+              <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
                   Payment Summary
                 </h3>
 
                 <div className="space-y-4">
-                  <div className="flex justify-between text-gray-700">
+                  <div className="flex justify-between text-gray-700 dark:text-gray-300">
                     <span>Ticket Price</span>
                     <span>{formatCurrency(booking.price)}</span>
                   </div>
 
-                  <div className="flex justify-between text-gray-700">
+                  <div className="flex justify-between text-gray-700 dark:text-gray-300">
                     <span>Insurance Fee</span>
                     <span>{formatCurrency(booking.insuranceFee)}</span>
                   </div>
 
-                  <div className="flex justify-between text-gray-700">
+                  <div className="flex justify-between text-gray-700 dark:text-gray-300">
                     <span>Service Fee</span>
                     <span>{formatCurrency(booking.serviceFee)}</span>
                   </div>
 
-                  <div className="border-t pt-4 flex justify-between text-xl font-bold text-gray-900">
+                  <div className="border-t pt-4 flex justify-between text-xl font-bold text-gray-900 dark:text-white">
                     <span>Total Paid</span>
                     <span className="text-success">
                       {formatCurrency(booking.totalAmount)}
@@ -467,8 +473,8 @@ export default function BookingDetailsPage() {
                     <div className="flex items-center gap-3">
                       <CreditCard className="w-5 h-5 text-gray-400" />
                       <div>
-                        <p className="text-sm text-gray-600">Payment Method</p>
-                        <p className="text-base font-semibold text-gray-900">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Payment Method</p>
+                        <p className="text-base font-semibold text-gray-900 dark:text-white">
                           {booking.paymentMethod}
                         </p>
                       </div>

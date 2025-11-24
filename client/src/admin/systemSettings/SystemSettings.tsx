@@ -58,7 +58,7 @@ const INITIAL_CONFIG: SystemConfig = {
   aiBot: {
     enabled: true,
     modelName: "gpt-4o-mini",
-    systemPrompt: `Bạn là trợ lý ảo bán vé xe buýt. 
+    systemPrompt: `Bạn là trợ lý ảo bán vé xe buýt.
 Nhiệm vụ của bạn là giúp khách hàng tìm chuyến xe, kiểm tra ghế trống và hỗ trợ đặt vé.
 - Luôn trả lời lịch sự, ngắn gọn.
 - Nếu khách hỏi về hoàn tiền, hãy trích dẫn chính sách: "Hoàn 85% nếu hủy trước 24h".
@@ -98,10 +98,10 @@ const SystemSettings = () => {
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto min-h-screen font-sans text-gray-900 space-y-6">
+    <div className="p-6 max-w-5xl mx-auto min-h-screen font-sans text-gray-900 dark:text-white space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">System Settings</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">System Settings</h1>
         </div>
         <button
           onClick={handleSave}
@@ -123,8 +123,8 @@ const SystemSettings = () => {
             onClick={() => setActiveTab("general")}
             className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
               activeTab === "general"
-                ? "bg-blue-50 text-blue-700"
-                : "text-gray-600 hover:bg-gray-50"
+                ? "bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
             }`}
           >
             <Globe className="w-4 h-4" /> General Info
@@ -133,8 +133,8 @@ const SystemSettings = () => {
             onClick={() => setActiveTab("booking")}
             className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
               activeTab === "booking"
-                ? "bg-blue-50 text-blue-700"
-                : "text-gray-600 hover:bg-gray-50"
+                ? "bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
             }`}
           >
             <Clock className="w-4 h-4" /> Booking Rules
@@ -143,8 +143,8 @@ const SystemSettings = () => {
             onClick={() => setActiveTab("payment")}
             className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
               activeTab === "payment"
-                ? "bg-blue-50 text-blue-700"
-                : "text-gray-600 hover:bg-gray-50"
+                ? "bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
             }`}
           >
             <CreditCard className="w-4 h-4" /> Payment Gateways
@@ -153,29 +153,29 @@ const SystemSettings = () => {
             onClick={() => setActiveTab("ai")}
             className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
               activeTab === "ai"
-                ? "bg-purple-50 text-purple-700"
-                : "text-gray-600 hover:bg-gray-50"
+                ? "bg-purple-50 dark:bg-purple-900 text-purple-700 dark:text-purple-300"
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
             }`}
           >
             <Bot className="w-4 h-4" /> Chatbot & AI
           </button>
         </div>
 
-        <div className="lg:col-span-3 bg-white rounded-xl border shadow-sm p-6">
+        <div className="lg:col-span-3 bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 shadow-sm p-6">
           {activeTab === "general" && (
             <div className="space-y-6 animate-in fade-in duration-200">
               <div>
-                <h2 className="text-lg font-bold text-gray-800 mb-4">
+                <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4">
                   General Information
                 </h2>
                 <div className="grid gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Website Name
                     </label>
                     <input
                       type="text"
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 dark:text-white"
                       value={config.general.siteName}
                       onChange={(e) =>
                         updateConfig("general", "siteName", e.target.value)
@@ -184,12 +184,12 @@ const SystemSettings = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Hotline
                       </label>
                       <input
                         type="text"
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 dark:text-white"
                         value={config.general.hotline}
                         onChange={(e) =>
                           updateConfig("general", "hotline", e.target.value)
@@ -197,12 +197,12 @@ const SystemSettings = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Support Email
                       </label>
                       <input
                         type="email"
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 dark:text-white"
                         value={config.general.supportEmail}
                         onChange={(e) =>
                           updateConfig(
@@ -217,17 +217,17 @@ const SystemSettings = () => {
                 </div>
               </div>
 
-              <div className="border-t pt-6">
-                <h2 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+              <div className="border-t dark:border-gray-600 pt-6">
+                <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2 flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5 text-orange-500" />
                   Danger Zone
                 </h2>
-                <div className="flex items-center justify-between bg-orange-50 p-4 rounded-lg border border-orange-200">
+                <div className="flex items-center justify-between bg-orange-50 dark:bg-orange-900/30 p-4 rounded-lg border border-orange-200 dark:border-orange-700">
                   <div>
-                    <p className="font-medium text-orange-800">
+                    <p className="font-medium text-orange-800 dark:text-orange-300">
                       Maintenance Mode
                     </p>
-                    <p className="text-xs text-orange-600">
+                    <p className="text-xs text-orange-600 dark:text-orange-400">
                       When active, only admins can access the system. Customers
                       will see a maintenance page.
                     </p>

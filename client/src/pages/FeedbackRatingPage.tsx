@@ -172,7 +172,7 @@ export default function FeedbackRatingPage() {
               className={`${size} transition-all duration-200 ${
                 star <= (localHover || rating)
                   ? "text-yellow-400 fill-yellow-400"
-                  : "text-gray-300 hover:text-yellow-300"
+                  : "text-gray-300 hover:text-yellow-300 dark:text-gray-600 dark:hover:text-yellow-300"
               }`}
             />
           </button>
@@ -183,12 +183,12 @@ export default function FeedbackRatingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading trip details...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary dark:border-white mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Loading trip details...</p>
           </div>
         </div>
       </div>
@@ -197,14 +197,14 @@ export default function FeedbackRatingPage() {
 
   if (!booking) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
               Trip Not Found
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               The trip you're trying to rate doesn't exist.
             </p>
             <Button onClick={() => navigate("/booking-history")}>
@@ -218,16 +218,16 @@ export default function FeedbackRatingPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center max-w-md mx-auto">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+            <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
               <CheckCircle2 className="w-16 h-16 text-success mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                 Thank You!
               </h2>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
                 Your feedback has been submitted successfully. We appreciate
                 your time and will use your feedback to improve our services.
               </p>
@@ -254,15 +254,21 @@ export default function FeedbackRatingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
       <Navbar />
 
       {/* Header Section */}
-      <div
-        className="pt-40 pb-32 bg-cover bg-center bg-no-repeat relative"
-        style={{ backgroundImage: `url(${backgroundImage})` }}
-      >
-        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 via-pink-50/60 via-pink-50/30 to-transparent pointer-events-none"></div>
+      <div className="pt-40 pb-32 relative">
+        {/* Background Image - only in light mode */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat dark:hidden"
+          style={{ backgroundImage: `url(${backgroundImage})` }}
+        />
+
+        {/* Dark mode background */}
+        <div className="absolute inset-0 bg-black hidden dark:block" />
+
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 to-transparent dark:from-black dark:to-transparent pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <Button
@@ -274,10 +280,10 @@ export default function FeedbackRatingPage() {
             Back to History
           </Button>
 
-          <h1 className="text-5xl font-bold text-foreground/80 mb-3 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
+          <h1 className="text-5xl font-bold text-foreground/80 dark:text-white mb-3 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
             Rate Your Trip
           </h1>
-          <p className="text-xl text-foreground/60 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
+          <p className="text-xl text-foreground/60 dark:text-gray-300 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
             Help us improve our service with your feedback
           </p>
         </div>
@@ -286,17 +292,17 @@ export default function FeedbackRatingPage() {
       <div className="max-w-4xl mx-auto px-6 py-8 pb-8 -mt-16 relative z-10">
         {/* Trip Summary */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
+          <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
               Trip Summary
             </h3>
 
             <div className="flex items-center justify-between mb-4">
               <div className="w-40 flex-shrink-0">
-                <div className="text-xl font-bold text-gray-900">
+                <div className="text-xl font-bold text-gray-900 dark:text-white">
                   {booking.from}
                 </div>
-                <div className="text-base font-semibold text-gray-900 mt-1">
+                <div className="text-base font-semibold text-gray-900 dark:text-gray-300 mt-1">
                   {booking.departureTime}
                 </div>
               </div>
@@ -314,32 +320,32 @@ export default function FeedbackRatingPage() {
               </div>
 
               <div className="text-right w-40 flex-shrink-0">
-                <div className="text-xl font-bold text-gray-900">
+                <div className="text-xl font-bold text-gray-900 dark:text-white">
                   {booking.to}
                 </div>
-                <div className="text-base font-semibold text-gray-900 mt-1">
+                <div className="text-base font-semibold text-gray-900 dark:text-gray-300 mt-1">
                   {booking.arrivalTime}
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-sm">
               <div>
-                <span className="text-gray-600">Booking Code:</span>
-                <div className="font-semibold text-gray-900">
+                <span className="text-gray-600 dark:text-gray-400">Booking Code:</span>
+                <div className="font-semibold text-gray-900 dark:text-white">
                   {booking.bookingCode}
                 </div>
               </div>
               <div>
-                <span className="text-gray-600">Travel Date:</span>
-                <div className="font-semibold text-gray-900 flex items-center gap-1">
+                <span className="text-gray-600 dark:text-gray-400">Travel Date:</span>
+                <div className="font-semibold text-gray-900 dark:text-white flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
                   {formatDate(booking.date)}
                 </div>
               </div>
               <div>
-                <span className="text-gray-600">Bus Type:</span>
-                <div className="font-semibold text-gray-900">
+                <span className="text-gray-600 dark:text-gray-400">Bus Type:</span>
+                <div className="font-semibold text-gray-900 dark:text-white">
                   {booking.busType}
                 </div>
               </div>
@@ -349,11 +355,11 @@ export default function FeedbackRatingPage() {
 
         {/* Overall Rating */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.4s_forwards]">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
               Overall Experience
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               How would you rate your overall experience with this trip?
             </p>
 
@@ -364,7 +370,7 @@ export default function FeedbackRatingPage() {
                 onStarHover={(rating) => handleStarHover(rating, true)}
                 size="w-10 h-10"
               />
-              <p className="text-sm text-gray-500 mt-3">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
                 {overallRating === 0 && "Click to rate"}
                 {overallRating === 1 && "Poor"}
                 {overallRating === 2 && "Fair"}
@@ -378,8 +384,8 @@ export default function FeedbackRatingPage() {
 
         {/* Category Ratings */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">
+          <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
               Rate Specific Aspects
             </h3>
 
@@ -389,7 +395,7 @@ export default function FeedbackRatingPage() {
                   key={category.id}
                   className="flex items-center justify-between"
                 >
-                  <span className="text-gray-700 font-medium min-w-0 flex-1 mr-6">
+                  <span className="text-gray-700 dark:text-gray-300 font-medium min-w-0 flex-1 mr-6">
                     {category.label}
                   </span>
                   <StarRating
@@ -405,11 +411,11 @@ export default function FeedbackRatingPage() {
 
         {/* Written Feedback */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
               Additional Feedback
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
               Tell us more about your experience. What did we do well? What
               could we improve?
             </p>
@@ -422,7 +428,7 @@ export default function FeedbackRatingPage() {
               disabled={submitting}
             />
 
-            <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
+            <div className="flex items-center justify-between mt-4 text-sm text-gray-500 dark:text-gray-400">
               <span>Optional but appreciated</span>
               <span>{feedback.length}/500</span>
             </div>

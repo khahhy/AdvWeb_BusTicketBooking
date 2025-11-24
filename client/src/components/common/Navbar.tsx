@@ -4,6 +4,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import ResizableNavbar, { NavItem } from "@/components/ui/resizable-navbar";
 import { Bus, Map, Ticket, User, MapPin, Phone, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
 import logoImage from "@/assets/images/logo.png";
 
 export default function Navbar() {
@@ -115,46 +116,52 @@ export default function Navbar() {
         />
       }
       button={
-        isLoggedIn ? (
-          <div className="relative">
-            <ResizableNavbar
-              items={[
-                {
-                  name: userName,
-                  link: "#",
-                  icon: <User className="h-5 w-5" />,
-                  children: [
-                    {
-                      name: "Profile",
-                      link: "/profile",
-                      icon: <User className="h-4 w-4 text-primary" />,
-                    },
-                    {
-                      name: "Booking History",
-                      link: "/booking-history",
-                      icon: <CalendarIcon className="h-4 w-4 text-success" />,
-                    },
-                    {
-                      name: "Log Out",
-                      link: "#",
-                      icon: <LogOut className="h-4 w-4 text-error" />,
-                    },
-                  ],
-                },
-              ]}
-              logo={<></>}
-              onItemClick={handleNavClick}
-              className="!relative !left-0 !transform-none !w-auto !mt-0 !bg-transparent !border-0 !shadow-none"
-            />
-          </div>
-        ) : (
-          <Button
-            onClick={() => navigate("/login")}
-            className="bg-white hover:bg-gray-50 text-black px-6 py-2 rounded-full border border-gray-200 shadow-sm text-base font-medium"
-          >
-            Login
-          </Button>
-        )
+        <div className="flex items-center space-x-3">
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
+          {/* Login/Profile Button */}
+          {isLoggedIn ? (
+            <div className="relative">
+              <ResizableNavbar
+                items={[
+                  {
+                    name: userName,
+                    link: "#",
+                    icon: <User className="h-5 w-5" />,
+                    children: [
+                      {
+                        name: "Profile",
+                        link: "/profile",
+                        icon: <User className="h-4 w-4 text-primary" />,
+                      },
+                      {
+                        name: "Booking History",
+                        link: "/booking-history",
+                        icon: <CalendarIcon className="h-4 w-4 text-success" />,
+                      },
+                      {
+                        name: "Log Out",
+                        link: "#",
+                        icon: <LogOut className="h-4 w-4 text-error" />,
+                      },
+                    ],
+                  },
+                ]}
+                logo={<></>}
+                onItemClick={handleNavClick}
+                className="!relative !left-0 !transform-none !w-auto !mt-0 !bg-transparent !border-0 !shadow-none"
+              />
+            </div>
+          ) : (
+            <Button
+              onClick={() => navigate("/login")}
+              className="bg-white hover:bg-gray-50 text-black px-6 py-2 rounded-full border border-gray-200 shadow-sm text-base font-medium"
+            >
+              Login
+            </Button>
+          )}
+        </div>
       }
       onItemClick={handleNavClick}
     />

@@ -108,7 +108,7 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
   return (
     <div
       ref={cardRef}
-      className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-100"
+      className="bg-white dark:bg-black rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-100 dark:border-gray-700"
     >
       {/* Trip Header */}
       <div className="p-6">
@@ -117,10 +117,10 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
           <div className="flex items-center gap-8 flex-1">
             {/* Departure */}
             <div className="text-center w-32 flex-shrink-0">
-              <div className="text-3xl font-bold text-gray-900 mb-1">
+              <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">
                 {trip.departureTime}
               </div>
-              <div className="text-sm font-medium text-gray-700">
+              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 {trip.from}
               </div>
             </div>
@@ -128,28 +128,28 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
             {/* Duration */}
             <div className="flex flex-col items-center px-6 flex-shrink-0">
               <div className="flex items-center gap-2 mb-2">
-                <MapPin className="w-4 h-4 text-gray-400" />
-                <div className="h-0.5 w-20 border-t-2 border-dashed border-gray-300"></div>
-                <MapPin className="w-4 h-4 text-gray-400" />
+                <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                <div className="h-0.5 w-20 border-t-2 border-dashed border-gray-300 dark:border-gray-600"></div>
+                <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500" />
               </div>
-              <div className="text-xs text-gray-500 font-medium">
+              <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                 {trip.duration}
               </div>
-              <div className="text-xs text-gray-400">(Asian/Ho Chi Minh)</div>
+              <div className="text-xs text-gray-400 dark:text-gray-500">(Asian/Ho Chi Minh)</div>
             </div>
 
             {/* Arrival */}
             <div className="text-center w-32 flex-shrink-0">
-              <div className="text-3xl font-bold text-gray-900 mb-1">
+              <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">
                 {trip.arrivalTime}
               </div>
-              <div className="text-sm font-medium text-gray-700">{trip.to}</div>
+              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">{trip.to}</div>
             </div>
           </div>
 
           {/* Seats Info */}
-          <div className="flex flex-col items-center gap-2 px-8 border-l border-gray-200">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex flex-col items-center gap-2 px-8 border-l border-gray-200 dark:border-gray-600">
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <Clock className="w-4 h-4" />
               <span className="font-medium">
                 {trip.availableSeats} blank seats
@@ -158,12 +158,12 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
           </div>
 
           {/* Price */}
-          <div className="text-right pl-8 border-l border-gray-200">
+          <div className="text-right pl-8 border-l border-gray-200 dark:border-gray-600">
             <div className="text-3xl font-bold text-foreground mb-1">
               {trip.price.toLocaleString("vi-VN")}đ
             </div>
             {selectedSeats.length > 0 && (
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-500 dark:text-gray-400">
                 {selectedSeats.length} seats:{" "}
                 {totalPrice.toLocaleString("vi-VN")}đ
               </div>
@@ -182,7 +182,7 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
       </div>
 
       {/* Tabs */}
-      <div className="border-t border-gray-200">
+      <div className="border-t border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-1">
             {tabs.map((tab) => (

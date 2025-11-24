@@ -152,37 +152,43 @@ export default function TrackTicketPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
       <Navbar />
 
       {/* Header Section */}
-      <div
-        className="pt-56 pb-48 bg-cover bg-center bg-no-repeat relative"
-        style={{ backgroundImage: `url(${backgroundImage})` }}
-      >
+      <div className="pt-56 pb-48 relative dark:bg-black">
+        {/* Background Image - only in light mode */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat dark:hidden"
+          style={{ backgroundImage: `url(${backgroundImage})` }}
+        />
+
+        {/* Dark mode background */}
+        <div className="absolute inset-0 bg-black hidden dark:block" />
+
         {/* Gradient fade overlay at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 via-pink-50/60 to-transparent pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 to-transparent dark:from-black dark:to-transparent pointer-events-none"></div>
 
         <div className="max-w-6xl mx-auto px-6 relative z-10">
-          <h1 className="text-4xl font-bold text-foreground/80 mb-2 text-center opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
+          <h1 className="text-4xl font-bold text-black dark:text-white mb-2 text-center opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
             Track Your Ticket
           </h1>
-          <p className="text-center mb-8 text-foreground/60 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
+          <p className="text-center mb-8 text-black/80 dark:text-white/80 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
             Enter your contact information to find your booking
           </p>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-6 py-12 pb-20">
+      <div className="max-w-4xl mx-auto px-6 py-12 pb-20 dark:bg-black">
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]">
           {/* Track Form */}
-          <Card className="bg-white/95 backdrop-blur-sm shadow-xl border-0 mb-8">
+          <Card className="bg-white/95 dark:bg-black backdrop-blur-sm shadow-xl border-0 mb-8 dark:border-gray-800">
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-3">
+              <CardTitle className="text-2xl font-bold text-gray-800 dark:text-white flex items-center justify-center gap-3">
                 Find Your Booking
               </CardTitle>
-              <CardDescription className="text-gray-600">
+              <CardDescription className="text-gray-600 dark:text-gray-300">
                 Enter the email and phone number used when booking your ticket
               </CardDescription>
             </CardHeader>
@@ -191,7 +197,7 @@ export default function TrackTicketPage() {
               <div className="grid md:grid-cols-2 gap-6 mb-6">
                 {/* Email Field */}
                 <div className="space-y-2">
-                  <label className="flex items-center text-sm font-semibold text-gray-700">
+                  <label className="flex items-center text-sm font-semibold text-gray-700 dark:text-gray-300">
                     Email Address
                   </label>
                   <div className="relative">
@@ -204,11 +210,11 @@ export default function TrackTicketPage() {
                       placeholder="Enter your email"
                       className={`w-full pl-12 pr-4 py-4 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
                         errors.email
-                          ? "border-red-300 focus:ring-red-200 focus:border-red-400"
-                          : "border-gray-300 focus:ring-pink-200 focus:border-pink-400"
-                      } bg-white`}
+                          ? "border-red-300 focus:ring-red-200 focus:border-red-400 dark:border-red-600 dark:focus:ring-red-800"
+                          : "border-gray-300 focus:ring-pink-200 focus:border-pink-400 dark:border-gray-600 dark:focus:ring-pink-800"
+                      } bg-white dark:bg-gray-900 dark:text-white`}
                     />
-                    <Mail className="absolute left-4 top-4 w-5 h-5 text-gray-400" />
+                    <Mail className="absolute left-4 top-4 w-5 h-5 text-gray-400 dark:text-gray-500" />
                   </div>
                   {errors.email && (
                     <p className="text-xs text-error flex items-center gap-1">
@@ -220,7 +226,7 @@ export default function TrackTicketPage() {
 
                 {/* Phone Number Field */}
                 <div className="space-y-2">
-                  <label className="flex items-center text-sm font-semibold text-gray-700">
+                  <label className="flex items-center text-sm font-semibold text-gray-700 dark:text-gray-300">
                     Phone Number
                   </label>
                   <div className="relative">
@@ -236,11 +242,11 @@ export default function TrackTicketPage() {
                       placeholder="Enter your phone number"
                       className={`w-full pl-12 pr-4 py-4 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
                         errors.phoneNumber
-                          ? "border-red-300 focus:ring-red-200 focus:border-red-400"
-                          : "border-gray-300 focus:ring-blue-200 focus:border-blue-400"
-                      } bg-white`}
+                          ? "border-red-300 focus:ring-red-200 focus:border-red-400 dark:border-red-600 dark:focus:ring-red-800"
+                          : "border-gray-300 focus:ring-blue-200 focus:border-blue-400 dark:border-gray-600 dark:focus:ring-blue-800"
+                      } bg-white dark:bg-gray-900 dark:text-white`}
                     />
-                    <Phone className="absolute left-4 top-4 w-5 h-5 text-gray-400" />
+                    <Phone className="absolute left-4 top-4 w-5 h-5 text-gray-400 dark:text-gray-500" />
                   </div>
                   {errors.phoneNumber && (
                     <p className="text-xs text-error flex items-center gap-1">
@@ -279,13 +285,13 @@ export default function TrackTicketPage() {
             <div className="space-y-6">
               {bookingResults.length > 0 ? (
                 <>
-                  <h2 className="text-2xl font-bold text-gray-800">
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
                     Your Bookings
                   </h2>
                   {bookingResults.map((booking) => (
                     <Card
                       key={booking.id}
-                      className="bg-white shadow-lg border-0"
+                      className="bg-white dark:bg-black shadow-lg border-0 dark:border-gray-800"
                     >
                       <CardContent className="p-6">
                         <div className="grid md:grid-cols-3 gap-6 items-center">
@@ -298,13 +304,13 @@ export default function TrackTicketPage() {
                               </span>
                               {getStatusBadge(booking.status)}
                             </div>
-                            <div className="flex items-center gap-2 text-gray-600">
+                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                               <MapPin className="w-4 h-4" />
                               <span>
                                 {booking.from} → {booking.to}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2 text-gray-600">
+                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                               <User className="w-4 h-4" />
                               <span>{booking.passengerName}</span>
                             </div>
@@ -312,29 +318,29 @@ export default function TrackTicketPage() {
 
                           {/* Date & Time Info */}
                           <div className="space-y-3">
-                            <div className="flex items-center gap-2 text-gray-600">
+                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                               <Calendar className="w-4 h-4" />
                               <span>
                                 {new Date(booking.date).toLocaleDateString()}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2 text-gray-600">
+                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                               <Clock className="w-4 h-4" />
                               <span>
                                 {booking.departureTime} - {booking.arrivalTime}
                               </span>
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
                               Duration: {booking.duration}
                             </div>
                           </div>
 
                           {/* Price & Seat */}
                           <div className="text-right space-y-3">
-                            <div className="text-2xl font-bold text-gray-800">
+                            <div className="text-2xl font-bold text-gray-800 dark:text-white">
                               {formatPrice(booking.price)}
                             </div>
-                            <div className="text-gray-600">
+                            <div className="text-gray-600 dark:text-gray-300">
                               Seat:{" "}
                               <span className="font-semibold">
                                 {booking.seat}
@@ -357,19 +363,19 @@ export default function TrackTicketPage() {
                   ))}
                 </>
               ) : (
-                <Card className="bg-white shadow-lg border-0">
+                <Card className="bg-white dark:bg-black shadow-lg border-0 dark:border-gray-800">
                   <CardContent className="p-8 text-center">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Search className="w-8 h-8 text-gray-400" />
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                    <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
                       No Bookings Found
                     </h3>
-                    <p className="text-gray-600 mb-6">
+                    <p className="text-gray-600 dark:text-gray-300 mb-6">
                       We couldn't find any bookings with the provided email and
                       phone number.
                     </p>
-                    <div className="space-y-2 text-sm text-gray-500">
+                    <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
                       <p>
                         • Make sure you entered the correct email and phone
                         number
@@ -389,17 +395,17 @@ export default function TrackTicketPage() {
           )}
 
           {/* Login Suggestion */}
-          <Card className="bg-blue-50 border-blue-200 border mt-8">
+          <Card className="bg-blue-50 dark:bg-gray-900 border-blue-200 dark:border-gray-700 border mt-8">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <User className="w-6 h-6 text-blue-600" />
+                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-blue-800 mb-2">
+                  <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">
                     Have an account?
                   </h3>
-                  <p className="text-blue-700 mb-4">
+                  <p className="text-blue-700 dark:text-blue-200 mb-4">
                     Log in to view all your bookings, manage your trips, and
                     enjoy a personalized experience.
                   </p>

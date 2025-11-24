@@ -43,39 +43,45 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
       {/* Navbar */}
       <Navbar />
 
       {/* Search Section */}
-      <div
-        className="pt-56 pb-48 bg-cover bg-center bg-no-repeat relative"
-        style={{ backgroundImage: `url(${backgroundImage})` }}
-      >
+      <div className="pt-56 pb-48 relative">
+        {/* Background Image - only in light mode */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat dark:hidden"
+          style={{ backgroundImage: `url(${backgroundImage})` }}
+        />
+
+        {/* Dark mode background */}
+        <div className="absolute inset-0 bg-black hidden dark:block" />
+
         {/* Gradient fade overlay at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 via-pink-50/60 via-pink-50/30 to-transparent pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 to-transparent dark:from-black dark:to-transparent pointer-events-none"></div>
 
         {/* Optional overlay for better text readability */}
         {/* <div className="absolute inset-0 bg-black/20"></div> */}
 
         <div className="max-w-6xl mx-auto px-6 relative z-10">
-          <h1 className="text-4xl font-bold text-foreground/80 mb-2 text-center opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
+          <h1 className="text-4xl font-bold text-black dark:text-white mb-2 text-center opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
             Find Your Bus Journey
           </h1>
-          <p className="text-center mb-8 text-foreground/60 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
+          <p className="text-center mb-8 text-black/80 dark:text-white/80 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
             Safe, Comfortable, and Affordable Bus Travel
           </p>
 
           {/* Search Bar */}
           <div className="max-w-4xl mx-auto opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]">
-            <div className="flex items-center gap-4 bg-white rounded-full shadow-2xl p-2 border border-gray-200">
+            <div className="flex items-center gap-4 bg-white dark:bg-black rounded-full shadow-2xl p-2 border border-gray-200 dark:border-gray-700">
               {/* From Field */}
               <div className="flex-1 px-6 py-4">
-                <div className="text-xs font-medium text-gray-500 mb-1">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                   From
                 </div>
                 <Select value={fromLocation} onValueChange={setFromLocation}>
-                  <SelectTrigger className="w-full text-lg font-medium border-0 focus:ring-0 bg-transparent h-auto p-0">
+                  <SelectTrigger className="w-full text-lg font-medium border-0 focus:ring-0 bg-transparent h-auto p-0 dark:text-white">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -95,17 +101,17 @@ export default function SearchPage() {
               {/* Swap Button */}
               <button
                 onClick={handleSwap}
-                className="flex-shrink-0 p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors duration-200"
+                className="flex-shrink-0 p-3 bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full transition-colors duration-200"
                 type="button"
               >
-                <ArrowLeftRight className="w-4 h-4 text-gray-600" />
+                <ArrowLeftRight className="w-4 h-4 text-gray-600 dark:text-gray-300" />
               </button>
 
               {/* To Field */}
               <div className="flex-1 px-6 py-4">
-                <div className="text-xs font-medium text-gray-500 mb-1">To</div>
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">To</div>
                 <Select value={toLocation} onValueChange={setToLocation}>
-                  <SelectTrigger className="w-full text-lg font-medium border-0 focus:ring-0 bg-transparent h-auto p-0">
+                  <SelectTrigger className="w-full text-lg font-medium border-0 focus:ring-0 bg-transparent h-auto p-0 dark:text-white">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -126,10 +132,10 @@ export default function SearchPage() {
               <Popover>
                 <PopoverTrigger asChild>
                   <div className="flex-1 px-6 py-4 cursor-pointer">
-                    <div className="text-xs font-medium text-gray-500 mb-1">
+                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                       Date
                     </div>
-                    <div className="text-lg font-medium text-gray-900">
+                    <div className="text-lg font-medium text-gray-900 dark:text-white">
                       {formatDate()}
                     </div>
                   </div>
@@ -146,7 +152,7 @@ export default function SearchPage() {
               {/* Search Button */}
               <button
                 onClick={handleSearch}
-                className="flex-shrink-0 bg-black text-white p-4 rounded-full hover:bg-gray-800 transition-all duration-200 transform hover:scale-105"
+                className="flex-shrink-0 bg-black dark:bg-white text-white dark:text-black p-4 rounded-full hover:bg-gray-800 dark:hover:bg-gray-200 transition-all duration-200 transform hover:scale-105"
               >
                 <Search className="w-6 h-6" />
               </button>
@@ -156,21 +162,21 @@ export default function SearchPage() {
       </div>
 
       {/* Results Section */}
-      <div className="max-w-7xl mx-auto px-6 py-12 pb-20">
+      <div className="max-w-7xl mx-auto px-6 py-12 pb-20 dark:bg-black dark:bg-none">
         {/* Header Section */}
         <div className="mb-8 flex gap-6">
           <div className="w-80 flex-shrink-0"></div>
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                   Available Trips
                 </h2>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-300">
                   {fromLocation} → {toLocation} • {formatDate()}
                 </p>
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500 dark:text-gray-300">
                 {mockTrips.length} trips found
               </div>
             </div>
@@ -201,10 +207,10 @@ export default function SearchPage() {
             {mockTrips.length === 0 && (
               <div className="text-center py-16">
                 <div className="text-6xl mb-4">🚌</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                   No trips found
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-300">
                   Try adjusting your search criteria
                 </p>
               </div>

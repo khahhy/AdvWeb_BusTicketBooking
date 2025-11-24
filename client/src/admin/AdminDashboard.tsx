@@ -105,16 +105,16 @@ const formatVND = (amount: number) =>
 
 const AdminDashboard = () => {
   return (
-    <div className="space-y-6 min-h-screen font-sans text-gray-900">
+    <div className="space-y-6 min-h-screen font-sans text-gray-900 dark:text-white">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Dashboard Overview
           </h1>
         </div>
-        <div className="flex items-center gap-2 bg-white p-2 rounded-lg border shadow-sm">
-          <Calendar className="w-4 h-4 text-gray-500" />
-          <span className="text-sm font-medium text-gray-700">
+        <div className="flex items-center gap-2 bg-white dark:bg-gray-800 p-2 rounded-lg border dark:border-gray-700 shadow-sm">
+          <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {new Date().toLocaleDateString("en-GB")}
           </span>
         </div>
@@ -148,12 +148,12 @@ const AdminDashboard = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl border shadow-sm">
+        <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700 shadow-sm">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-bold text-gray-800">
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white">
               Revenue Analytics
             </h2>
-            <select className="text-sm border rounded-md px-2 py-1 outline-none bg-gray-50">
+            <select className="text-sm border dark:border-gray-600 rounded-md px-2 py-1 outline-none bg-gray-50 dark:bg-gray-700 dark:text-white">
               <option>Last 7 Days</option>
               <option>Last Month</option>
             </select>
@@ -204,8 +204,8 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl border shadow-sm">
-          <h2 className="text-lg font-bold text-gray-800 mb-6">Top Routes</h2>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700 shadow-sm">
+          <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-6">Top Routes</h2>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
@@ -234,9 +234,9 @@ const AdminDashboard = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 bg-white rounded-xl border shadow-sm overflow-hidden">
-          <div className="p-6 border-b flex justify-between items-center">
-            <h2 className="text-lg font-bold text-gray-800">
+        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 shadow-sm overflow-hidden">
+          <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center">
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white">
               Recent Transactions
             </h2>
             <button className="text-sm text-primary font-medium hover:underline flex items-center gap-1">
@@ -245,7 +245,7 @@ const AdminDashboard = () => {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
-              <thead className="bg-gray-50 text-gray-500">
+              <thead className="bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
                 <tr>
                   <th className="px-6 py-3">ID</th>
                   <th className="px-6 py-3">Customer</th>
@@ -254,15 +254,15 @@ const AdminDashboard = () => {
                   <th className="px-6 py-3">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y dark:divide-gray-700">
                 {RECENT_BOOKINGS.map((booking) => (
-                  <tr key={booking.id} className="hover:bg-gray-50">
+                  <tr key={booking.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4 font-medium text-primary">
                       {booking.id}
                     </td>
-                    <td className="px-6 py-4 text-gray-600">{booking.user}</td>
-                    <td className="px-6 py-4 text-gray-600">{booking.route}</td>
-                    <td className="px-6 py-4 font-medium">
+                    <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{booking.user}</td>
+                    <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{booking.route}</td>
+                    <td className="px-6 py-4 font-medium dark:text-white">
                       {formatVND(booking.amount)}
                     </td>
                     <td className="px-6 py-4">
@@ -286,26 +286,26 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border shadow-sm p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 shadow-sm p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold text-gray-800">Upcoming Trips</h2>
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white">Upcoming Trips</h2>
             <Clock className="w-4 h-4 text-gray-400" />
           </div>
           <div className="space-y-4">
             {UPCOMING_TRIPS.map((trip) => (
               <div
                 key={trip.id}
-                className="flex items-center p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center p-3 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 <div className="bg-primary-50 p-2.5 rounded-lg text-primary mr-3 flex flex-col items-center min-w-[60px]">
                   <span className="text-xs font-bold">{trip.time}</span>
                   <Bus className="w-4 h-4 mt-1" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold text-gray-900 truncate">
+                  <div className="text-sm font-bold text-gray-900 dark:text-white truncate">
                     {trip.route}
                   </div>
-                  <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
                     <MapPin className="w-3 h-3" /> {trip.bus}
                   </div>
                 </div>
@@ -322,14 +322,14 @@ const AdminDashboard = () => {
                   >
                     {trip.status}
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
                     {trip.seats} seats
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          <button className="w-full mt-5 py-2 text-sm text-gray-600 bg-gray-50 border rounded-lg hover:bg-gray-100 font-medium transition-colors">
+          <button className="w-full mt-5 py-2 text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 font-medium transition-colors">
             View Full Schedule
           </button>
         </div>

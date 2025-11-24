@@ -111,9 +111,9 @@ const PaymentManagement = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 min-h-screen font-sans text-gray-900">
+    <div className="p-6 space-y-6 min-h-screen font-sans text-gray-900 dark:text-white">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Payment Transactions
         </h1>
       </div>
@@ -144,13 +144,13 @@ const PaymentManagement = () => {
         />
       </div>
 
-      <div className="bg-white p-4 rounded-lg border shadow-sm flex flex-col lg:flex-row gap-4 items-center justify-between">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border dark:border-gray-700 shadow-sm flex flex-col lg:flex-row gap-4 items-center justify-between">
         <div className="relative w-full lg:w-80">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             type="text"
             placeholder="Search Txn ID..."
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            className="w-full pl-10 pr-4 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -158,12 +158,12 @@ const PaymentManagement = () => {
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
           <input
             type="date"
-            className="border rounded-lg px-3 py-2 text-sm"
+            className="border dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white"
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
           />
           <select
-            className="border rounded-lg px-3 py-2 text-sm"
+            className="border dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white"
             value={gatewayFilter}
             onChange={(e) => setGatewayFilter(e.target.value)}
           >
@@ -173,7 +173,7 @@ const PaymentManagement = () => {
             <option value="Zalopay">Zalopay</option>
           </select>
           <select
-            className="border rounded-lg px-3 py-2 text-sm"
+            className="border dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >

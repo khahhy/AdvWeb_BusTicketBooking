@@ -77,33 +77,33 @@ const SeatMap = () => {
   const rows = Array.from({ length: 8 }, (_, i) => i + 1);
 
   return (
-    <div className="bg-gray-100 p-3 rounded-xl border-2 border-gray-300 w-full max-w-[300px] mx-auto relative">
-      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gray-300 w-24 h-4 rounded-b-lg text-[10px] text-center text-gray-600 font-bold uppercase tracking-wider">
+    <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 w-full max-w-[300px] mx-auto relative">
+      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gray-300 dark:bg-gray-600 w-24 h-4 rounded-b-lg text-[10px] text-center text-gray-600 dark:text-gray-300 font-bold uppercase tracking-wider">
         FRONT
       </div>
 
-      <div className="flex justify-between items-end mb-2 mt-2 border-b-2 border-dashed border-gray-300 pb-2">
+      <div className="flex justify-between items-end mb-2 mt-2 border-b-2 border-dashed border-gray-300 dark:border-gray-600 pb-2">
         <div className="flex flex-col items-center gap-1">
-          <div className="p-2 bg-slate-800 rounded-lg text-white shadow-sm">
+          <div className="p-2 bg-slate-800 dark:bg-slate-700 rounded-lg text-white shadow-sm">
             <User size={24} />
           </div>
-          <span className="text-xs font-bold text-slate-700">Driver</span>
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Driver</span>
         </div>
-        <div className="text-xs text-gray-400 italic pr-2">Entry Door</div>
+        <div className="text-xs text-gray-400 dark:text-gray-500 italic pr-2">Entry Door</div>
       </div>
 
       <div className="grid grid-cols-5 gap-y-2 gap-x-1">
-        <div className="text-center text-xs font-medium text-gray-400 mb-1">
+        <div className="text-center text-xs font-medium text-gray-400 dark:text-gray-500 mb-1">
           A
         </div>
-        <div className="text-center text-xs font-medium text-gray-400 mb-1">
+        <div className="text-center text-xs font-medium text-gray-400 dark:text-gray-500 mb-1">
           B
         </div>
         <div className="w-4"></div>
-        <div className="text-center text-xs font-medium text-gray-400 mb-1">
+        <div className="text-center text-xs font-medium text-gray-400 dark:text-gray-500 mb-1">
           C
         </div>
-        <div className="text-center text-xs font-medium text-gray-400 mb-1">
+        <div className="text-center text-xs font-medium text-gray-400 dark:text-gray-500 mb-1">
           D
         </div>
         {rows.map((row) => (
@@ -127,7 +127,7 @@ const SeatMap = () => {
         ))}
       </div>
       <div className="mt-6 flex justify-center">
-        <div className="h-2 w-32 bg-gray-300 rounded-full"></div>
+        <div className="h-2 w-32 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
       </div>
     </div>
   );
@@ -138,10 +138,10 @@ const SeatIcon = ({ label }: { label: string }) => (
     className="group flex flex-col items-center gap-0.5 cursor-pointer hover:scale-105 transition-transform"
     title={`Ghế ${label}`}
   >
-    <div className="p-1.5 bg-white border border-blue-200 rounded-md shadow-sm text-blue-500 group-hover:bg-blue-50 group-hover:border-blue-400 transition-colors">
+    <div className="p-1.5 bg-white dark:bg-gray-700 border border-blue-200 dark:border-blue-600 rounded-md shadow-sm text-blue-500 dark:text-blue-400 group-hover:bg-blue-50 dark:group-hover:bg-blue-900 group-hover:border-blue-400 dark:group-hover:border-blue-500 transition-colors">
       <Armchair size={18} strokeWidth={2.5} />
     </div>
-    <span className="text-[10px] font-medium text-gray-500 group-hover:text-blue-600">
+    <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">
       {label}
     </span>
   </div>

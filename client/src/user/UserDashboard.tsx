@@ -7,7 +7,7 @@ import Footer from "@/components/dashboard/Footer";
 
 export default function UserDashboard() {
   return (
-    <div className="min-h-screen bg-background body">
+    <div className="min-h-screen bg-background dark:bg-black text-foreground">
       {/* Resizable Navbar */}
       <Navbar />
 

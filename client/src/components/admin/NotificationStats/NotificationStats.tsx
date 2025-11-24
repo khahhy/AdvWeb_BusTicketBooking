@@ -42,67 +42,67 @@ const NotificationStats = ({ logs }: NotificationStatsProps) => {
 
   return (
     <div className="grid gap-4 md:grid-cols-4">
-      <div className="bg-white p-6 rounded-xl border shadow-sm flex items-center justify-between">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700 shadow-sm flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-500">Delivery Rate</p>
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Delivery Rate</p>
           <h3
             className={`text-2xl font-bold mt-1 ${
-              successRate >= 95 ? "text-green-600" : "text-yellow-600"
+              successRate >= 95 ? "text-green-600 dark:text-green-400" : "text-yellow-600 dark:text-yellow-400"
             }`}
           >
             {successRate}%
           </h3>
-          <span className="text-xs text-gray-400">Success / Attempts</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">Success / Attempts</span>
         </div>
         <div
           className={`h-10 w-10 rounded-full flex items-center justify-center ${
-            successRate >= 95 ? "bg-green-50" : "bg-yellow-50"
+            successRate >= 95 ? "bg-green-50 dark:bg-green-900/30" : "bg-yellow-50 dark:bg-yellow-900/30"
           }`}
         >
           <Activity
             className={`w-5 h-5 ${
-              successRate >= 95 ? "text-green-600" : "text-yellow-600"
+              successRate >= 95 ? "text-green-600 dark:text-green-400" : "text-yellow-600 dark:text-yellow-400"
             }`}
           />
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-xl border shadow-sm flex items-center justify-between">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700 shadow-sm flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-500">Emails Sent</p>
-          <h3 className="text-2xl font-bold text-gray-900 mt-1">
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Emails Sent</p>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
             {stats.email}
           </h3>
         </div>
-        <div className="h-10 w-10 bg-blue-50 rounded-full flex items-center justify-center">
-          <Mail className="w-5 h-5 text-blue-600" />
+        <div className="h-10 w-10 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+          <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400" />
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-xl border shadow-sm flex items-center justify-between">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700 shadow-sm flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-500">SMS Sent</p>
-          <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats.sms}</h3>
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">SMS Sent</p>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.sms}</h3>
         </div>
-        <div className="h-10 w-10 bg-purple-50 rounded-full flex items-center justify-center">
-          <MessageSquare className="w-5 h-5 text-purple-600" />
+        <div className="h-10 w-10 bg-purple-50 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+          <MessageSquare className="w-5 h-5 text-purple-600 dark:text-purple-400" />
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-xl border shadow-sm flex items-center justify-between">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700 shadow-sm flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-500">Failed</p>
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Failed</p>
           <h3
             className={`text-2xl font-bold mt-1 ${
-              stats.failed > 0 ? "text-red-600" : "text-gray-900"
+              stats.failed > 0 ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white"
             }`}
           >
             {stats.failed}
           </h3>
-          <span className="text-xs text-gray-400">Need attention</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">Need attention</span>
         </div>
-        <div className="h-10 w-10 bg-red-50 rounded-full flex items-center justify-center">
-          <XCircle className="w-5 h-5 text-red-600" />
+        <div className="h-10 w-10 bg-red-50 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+          <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
         </div>
       </div>
     </div>

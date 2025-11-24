@@ -11,15 +11,15 @@ interface PaymentTableProps {
 const getStatusStyles = (status: string) => {
   switch (status) {
     case "successful":
-      return "bg-green-100 text-green-800 border-green-200";
+      return "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 border-green-200 dark:border-green-700";
     case "pending":
-      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      return "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700";
     case "failed":
-      return "bg-red-100 text-red-800 border-red-200";
+      return "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300 border-red-200 dark:border-red-700";
     case "refunded":
-      return "bg-gray-100 text-gray-800 border-gray-200";
+      return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-600";
     default:
-      return "bg-gray-50 text-gray-600";
+      return "bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300";
   }
 };
 
@@ -38,10 +38,10 @@ const getGatewayColor = (gateway: string) => {
 
 const PaymentTable = ({ payments, onViewDetail }: PaymentTableProps) => {
   return (
-    <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left">
-          <thead className="bg-gray-50 text-gray-600 font-medium border-b">
+          <thead className="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium border-b dark:border-gray-600">
             <tr>
               <th className="px-6 py-3 whitespace-nowrap">Transaction ID</th>
               <th className="px-6 py-3">Booking Ref</th>
@@ -52,22 +52,22 @@ const PaymentTable = ({ payments, onViewDetail }: PaymentTableProps) => {
               <th className="px-6 py-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y dark:divide-gray-700">
             {payments.map((payment) => (
               <tr
                 key={payment.id}
-                className="hover:bg-gray-50 transition-colors"
+                className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 <td className="px-6 py-4">
-                  <div className="font-mono text-xs font-medium text-gray-700">
+                  <div className="font-mono text-xs font-medium text-gray-700 dark:text-gray-300">
                     {payment.gatewayTransactionId}
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="font-medium text-blue-600">
+                  <div className="font-medium text-blue-600 dark:text-blue-400">
                     {payment.bookingTicketCode}
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
                     {payment.customerName}
                   </div>
                 </td>
@@ -80,7 +80,7 @@ const PaymentTable = ({ payments, onViewDetail }: PaymentTableProps) => {
                     {payment.gateway}
                   </span>
                 </td>
-                <td className="px-6 py-4 font-semibold text-gray-900">
+                <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">
                   {formatCurrency(payment.amount)}
                 </td>
                 <td className="px-6 py-4">
@@ -99,13 +99,13 @@ const PaymentTable = ({ payments, onViewDetail }: PaymentTableProps) => {
                       payment.status.slice(1)}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-gray-500 text-xs whitespace-nowrap">
+                <td className="px-6 py-4 text-gray-500 dark:text-gray-400 text-xs whitespace-nowrap">
                   {formatDate(payment.createdAt)}
                 </td>
                 <td className="px-6 py-4 text-right">
                   <button
                     onClick={() => onViewDetail(payment)}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-gray-500 bg-gray-100 hover:bg-blue-50 hover:text-blue-600 rounded-md transition-colors text-xs font-medium"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/50 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors text-xs font-medium"
                   >
                     <Eye className="w-3 h-3" /> View Log
                   </button>
@@ -117,7 +117,7 @@ const PaymentTable = ({ payments, onViewDetail }: PaymentTableProps) => {
               <tr>
                 <td
                   colSpan={7}
-                  className="px-6 py-12 text-center text-gray-500"
+                  className="px-6 py-12 text-center text-gray-500 dark:text-gray-400"
                 >
                   No transactions found.
                 </td>

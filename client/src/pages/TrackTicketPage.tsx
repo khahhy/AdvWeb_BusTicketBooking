@@ -157,25 +157,25 @@ export default function TrackTicketPage() {
 
       {/* Header Section */}
       <div
-        className="pt-40 pb-32 bg-cover bg-center bg-no-repeat relative"
+        className="pt-56 pb-48 bg-cover bg-center bg-no-repeat relative"
         style={{ backgroundImage: `url(${backgroundImage})` }}
       >
-        {/* Gradient fade overlay */}
-        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 via-pink-50/80 to-transparent pointer-events-none"></div>
+        {/* Gradient fade overlay at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 via-pink-50/60 to-transparent pointer-events-none"></div>
 
-        <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
-          <h1 className="text-5xl font-bold text-foreground/80 mb-3 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
+        <div className="max-w-6xl mx-auto px-6 relative z-10">
+          <h1 className="text-4xl font-bold text-foreground/80 mb-2 text-center opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
             Track Your Ticket
           </h1>
-          <p className="text-xl text-foreground/60 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
+          <p className="text-center mb-8 text-foreground/60 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
             Enter your contact information to find your booking
           </p>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-6 py-8 pb-8 -mt-16 relative z-10">
-        <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
+      <div className="max-w-4xl mx-auto px-6 py-12 pb-20">
+        <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]">
           {/* Track Form */}
           <Card className="bg-white/95 backdrop-blur-sm shadow-xl border-0 mb-8">
             <CardHeader className="text-center">

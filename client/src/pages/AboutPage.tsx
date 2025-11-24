@@ -16,23 +16,23 @@ export default function AboutPage() {
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
       <Navbar />
 
-      {/* Hero Section - Matching Dashboard Style */}
-      <section
-        className="relative text-black min-h-screen flex items-center bg-cover bg-center bg-no-repeat"
+      {/* Hero Section */}
+      <div
+        className="pt-56 pb-48 bg-cover bg-center bg-no-repeat relative"
         style={{ backgroundImage: `url(${backgroundImage})` }}
       >
-        <div className="container mx-auto px-4 py-20">
-          <div className="text-center mb-16">
-            <h1 className="text-6xl md:text-7xl font-bold mb-6 leading-tight">
-              <span className="font-black">About Us</span>
-            </h1>
-            <p className="text-xl md:text-2xl opacity-90 max-w-2xl mx-auto">
-              Your trusted partner for safe and comfortable bus travel across
-              Vietnam
-            </p>
-          </div>
+        {/* Gradient fade overlay at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 via-pink-50/60 to-transparent pointer-events-none"></div>
+
+        <div className="max-w-6xl mx-auto px-6 relative z-10">
+          <h1 className="text-4xl font-bold text-foreground/80 mb-2 text-center opacity-0 animate-[fadeInDown_0.7s_ease-out_0.2s_forwards]">
+            About Us
+          </h1>
+          <p className="text-center mb-8 text-foreground/60 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
+            Your trusted partner for safe and comfortable bus travel across Vietnam
+          </p>
         </div>
-      </section>
+      </div>
 
       {/* Company Story - Dashboard Style */}
       <section className="py-16 bg-muted/30">

@@ -138,8 +138,10 @@ function AppContent() {
       {/* Apply theme only to non-auth pages */}
       {isAuthPage ? (
         <div className="light">
-          {routeContent}
-          {!hideChatbot && <Chatbot />}
+          <ThemeProvider>
+            {routeContent}
+            {!hideChatbot && <Chatbot />}
+          </ThemeProvider>
         </div>
       ) : (
         <ThemeProvider>

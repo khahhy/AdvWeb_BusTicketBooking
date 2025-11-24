@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/hover-card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import logoImage from "@/assets/images/logo.png";
+import { AppLogo } from "@/components/AppLogo/AppLogo";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
 
 const AdminHeader = () => {
@@ -41,11 +41,7 @@ const AdminHeader = () => {
         <SheetContent side="left" className="flex flex-col p-0">
           <div className="flex h-16 items-center border-b px-4">
             <Link to="/admin" className="flex items-center gap-2 font-semibold">
-              <img
-                src={logoImage}
-                alt="Logo"
-                className="h-8 w-auto object-contain"
-              />
+              <AppLogo className="h-8 w-auto object-contain" />
             </Link>
           </div>
           <div className="flex-1 overflow-y-auto p-4">
@@ -58,7 +54,7 @@ const AdminHeader = () => {
         to="/admin"
         className="hidden md:flex items-center gap-2 font-semibold ml-2"
       >
-        <img src={logoImage} alt="Logo" className="h-8 w-auto object-contain" />
+        <AppLogo className="h-8 w-auto object-contain" />
       </Link>
 
       <div className="flex-1" />
@@ -86,39 +82,42 @@ const AdminHeader = () => {
           <HoverCardTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
               <Avatar className="h-9 w-9">
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-              <AvatarFallback>YW</AvatarFallback>
-            </Avatar>
-            <span className="sr-only">Toggle user menu</span>
-          </Button>
-        </HoverCardTrigger>
-        <HoverCardContent align="end" className="w-56 p-2">
-          <div className="px-2 py-1.5 text-sm font-semibold">My Account</div>
-          <Separator className="my-1" />
-          <div className="space-y-1">
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-sm font-normal"
-            >
-              Settings
+                <AvatarImage
+                  src="https://github.com/shadcn.png"
+                  alt="@shadcn"
+                />
+                <AvatarFallback>YW</AvatarFallback>
+              </Avatar>
+              <span className="sr-only">Toggle user menu</span>
             </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-sm font-normal"
-            >
-              Support
-            </Button>
+          </HoverCardTrigger>
+          <HoverCardContent align="end" className="w-56 p-2">
+            <div className="px-2 py-1.5 text-sm font-semibold">My Account</div>
             <Separator className="my-1" />
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-sm font-normal"
-              onClick={handleLogout}
-            >
-              Logout
-            </Button>
-          </div>
-        </HoverCardContent>
-      </HoverCard>
+            <div className="space-y-1">
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-sm font-normal"
+              >
+                Settings
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-sm font-normal"
+              >
+                Support
+              </Button>
+              <Separator className="my-1" />
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-sm font-normal"
+                onClick={handleLogout}
+              >
+                Logout
+              </Button>
+            </div>
+          </HoverCardContent>
+        </HoverCard>
       </div>
     </header>
   );

@@ -5,7 +5,7 @@ import ResizableNavbar, { NavItem } from "@/components/ui/resizable-navbar";
 import { Bus, Map, Ticket, User, MapPin, Phone, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
-import logoImage from "@/assets/images/logo.png";
+import { AppLogo } from "@/components/AppLogo/AppLogo";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -108,9 +108,7 @@ export default function Navbar() {
     <ResizableNavbar
       items={navItems}
       logo={
-        <img
-          src={logoImage}
-          alt="Bus logo"
+        <AppLogo
           className="w-32 object-contain cursor-pointer"
           onClick={() => navigate("/dashboard")}
         />

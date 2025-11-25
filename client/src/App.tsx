@@ -109,20 +109,104 @@ function AppContent() {
           <Route path="settings" element={<SystemSettings />} />
         </Route>
       </Route>
-      <Route path="/dashboard" element={<UserDashboard />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute requiredRole="passenger">
+            <UserDashboard />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/support" element={<SupportPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
-      <Route path="/search" element={<SearchPage />} />
-      <Route path="/track-ticket" element={<TrackTicketPage />} />
-      <Route path="/booking-history" element={<BookingHistoryPage />} />
-      <Route path="/booking-details/:id" element={<BookingDetailsPage />} />
-      <Route path="/feedback/:id" element={<FeedbackRatingPage />} />
-      <Route path="/modify-booking/:id" element={<ModifyBookingPage />} />
-      <Route path="/notifications" element={<NotificationsPage />} />
-      <Route path="/checkout" element={<CheckoutPage />} />
-      <Route path="/payment" element={<PaymentPage />} />
-      <Route path="/confirmation" element={<ConfirmationPage />} />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute requiredRole="passenger">
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/search"
+        element={
+          <ProtectedRoute requiredRole="passenger">
+            <SearchPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/track-ticket"
+        element={
+          <ProtectedRoute requiredRole="passenger">
+            <TrackTicketPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/booking-history"
+        element={
+          <ProtectedRoute requiredRole="passenger">
+            <BookingHistoryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/booking-details/:id"
+        element={
+          <ProtectedRoute requiredRole="passenger">
+            <BookingDetailsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/feedback/:id"
+        element={
+          <ProtectedRoute requiredRole="passenger">
+            <FeedbackRatingPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/modify-booking/:id"
+        element={
+          <ProtectedRoute requiredRole="passenger">
+            <ModifyBookingPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute requiredRole="passenger">
+            <NotificationsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/checkout"
+        element={
+          <ProtectedRoute requiredRole="passenger">
+            <CheckoutPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payment"
+        element={
+          <ProtectedRoute requiredRole="passenger">
+            <PaymentPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/confirmation"
+        element={
+          <ProtectedRoute requiredRole="passenger">
+            <ConfirmationPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />

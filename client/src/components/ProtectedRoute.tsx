@@ -27,7 +27,7 @@ export default function ProtectedRoute({
         if (requiredRole === "admin") {
           return <Navigate to="/dashboard" replace />;
         } else {
-          return <Navigate to="/admin/bus-operations/locations" replace />;
+          return <Navigate to="/admin" replace />;
         }
       }
     } catch (error) {

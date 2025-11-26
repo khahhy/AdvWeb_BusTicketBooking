@@ -4,6 +4,7 @@ import { Mail, ArrowRight } from "lucide-react";
 import backgroundImage from "@/assets/images/background.png";
 import { buildApiUrl } from "@/lib/api";
 import logoImage from "@/assets/images/logo.png";
+import logoWhiteImage from "@/assets/images/logo-white.svg";
 
 export default function VerifyEmailPage() {
   const navigate = useNavigate();
@@ -50,43 +51,48 @@ export default function VerifyEmailPage() {
 
   return (
     <div
-      className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
+      className="min-h-screen relative flex items-center justify-center dark:bg-black"
       style={{
         backgroundImage: `url(${backgroundImage})`,
         backgroundPosition: "center bottom",
+        backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
       }}
     >
+      {/* Dark theme overlay to hide background */}
+      <div className="hidden dark:block absolute inset-0 bg-black z-0"></div>
       {/* Logo in top-left corner */}
       <div className="absolute top-6 left-6 z-20">
         <button
           onClick={() => navigate("/dashboard")}
           className="hover:opacity-80 transition-opacity"
         >
-          <img src={logoImage} alt="Bus Booking Logo" className="w-32" />
+          <img src={logoImage} alt="Bus Booking Logo" className="w-32 dark:hidden" />
+          <img src={logoWhiteImage} alt="Bus Booking Logo White" className="w-32 hidden dark:block" />
         </button>
       </div>
 
       <div className="max-w-xl w-full mx-auto px-6 py-6 relative z-10">
         {/* Verify Email Card */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+          <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800/95 p-8">
             <div className="flex flex-col items-center text-center">
               {/* Mail Icon */}
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+              <div className="w-20 h-20 bg-primary/10 dark:bg-primary/20 rounded-full flex items-center justify-center mb-6">
                 <Mail className="w-10 h-10 text-primary" />
               </div>
 
-              <h1 className="text-2xl font-bold text-foreground/80 mb-3">
+              <h1 className="text-2xl font-bold text-foreground/80 dark:text-white mb-3">
                 Verify Your Email
               </h1>
 
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
                 We've sent a verification link to
               </p>
 
-              <p className="text-lg font-semibold text-primary mb-6">{email}</p>
+              <p className="text-lg font-semibold text-primary dark:text-blue-400 mb-6">{email}</p>
 
-              <p className="text-sm text-gray-500 mb-8">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
                 Please check your inbox and click the verification link to
                 complete your registration. The link will expire in 24 hours.
               </p>
@@ -109,18 +115,18 @@ export default function VerifyEmailPage() {
               {/* Back to Login */}
               <button
                 onClick={() => navigate("/login")}
-                className="w-full bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-300 py-3 rounded-2xl transition-all duration-300 font-semibold flex items-center justify-center gap-2 text-base"
+                className="w-full bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white border-2 border-gray-300 dark:border-gray-600 py-3 rounded-2xl transition-all duration-300 font-semibold flex items-center justify-center gap-2 text-base"
               >
                 Back to Login
                 <ArrowRight className="w-4 h-4" />
               </button>
 
               {/* Help Text */}
-              <div className="mt-6 text-sm text-gray-500">
+              <div className="mt-6 text-sm text-gray-500 dark:text-gray-400">
                 <p>Didn't receive the email? Check your spam folder or</p>
                 <button
                   onClick={() => navigate("/signup")}
-                  className="text-primary font-semibold hover:underline"
+                  className="text-primary dark:text-blue-400 font-semibold hover:underline"
                 >
                   try signing up again
                 </button>

@@ -4,6 +4,7 @@ import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
 import backgroundImage from "@/assets/images/background.png";
 import logoImage from "@/assets/images/logo.png";
+import logoWhiteImage from "@/assets/images/logo-white.svg";
 
 // Add CSS to hide browser's default password reveal button for all browsers
 const styleSheet = document.createElement("style");
@@ -146,48 +147,54 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
+      className="min-h-screen relative flex items-center justify-center dark:bg-black"
       style={{
         backgroundImage: `url(${backgroundImage})`,
         backgroundPosition: "center bottom",
+        backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
       }}
     >
+      {/* Dark theme overlay to hide background */}
+      <div className="hidden dark:block absolute inset-0 bg-black z-0"></div>
       {/* Logo in top-left corner */}
       <div className="absolute top-6 left-6 z-20">
         <button
           onClick={() => navigate("/dashboard")}
           className="hover:opacity-80 transition-opacity"
         >
-          <img src={logoImage} alt="Bus Booking Logo" className="w-32" />
+          <img src={logoImage} alt="Bus Booking Logo" className="w-32 dark:hidden" />
+          <img src={logoWhiteImage} alt="Bus Booking Logo White" className="w-32 hidden dark:block"
+    />
         </button>
       </div>
 
       <div className="max-w-xl w-full mx-auto px-6 py-6 relative z-10">
         {/* Login Form Card */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+          <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800/95 p-8">
             <div className="flex flex-col items-center text-center">
-              <h1 className="text-2xl font-bold text-foreground/80 mb-6">
+              <h1 className="text-2xl font-bold text-foreground/80 dark:text-white mb-6">
                 Welcome Back
               </h1>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Email Input */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Email Address *
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleInputChange("email", e.target.value)}
                     placeholder="Enter your email"
-                    className={`w-full pl-12 pr-4 py-2.5 border rounded-2xl focus:outline-none focus:ring-2 transition-all ${
+                    className={`w-full pl-12 pr-4 py-2.5 border rounded-2xl focus:outline-none focus:ring-2 transition-all dark:bg-gray-800/50 dark:text-white dark:placeholder-gray-400 ${
                       errors.email
-                        ? "border-red-300 focus:ring-red-200"
-                        : "border-gray-300 focus:ring-blue-200"
+                        ? "border-red-300 focus:ring-red-200 dark:border-red-600 dark:focus:ring-red-500/50"
+                        : "border-gray-300 focus:ring-blue-200 dark:border-gray-600 dark:focus:ring-blue-500/50"
                     }`}
                   />
                 </div>
@@ -198,11 +205,11 @@ export default function LoginPage() {
 
               {/* Password Input */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Password *
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                   <input
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
@@ -210,16 +217,16 @@ export default function LoginPage() {
                       handleInputChange("password", e.target.value)
                     }
                     placeholder="Enter your password"
-                    className={`w-full pl-12 pr-12 py-2.5 border rounded-2xl focus:outline-none focus:ring-2 transition-all ${
+                    className={`w-full pl-12 pr-12 py-2.5 border rounded-2xl focus:outline-none focus:ring-2 transition-all dark:bg-gray-800/50 dark:text-white dark:placeholder-gray-400 ${
                       errors.password
-                        ? "border-red-300 focus:ring-red-200"
-                        : "border-gray-300 focus:ring-blue-200"
+                        ? "border-red-300 focus:ring-red-200 dark:border-red-600 dark:focus:ring-red-500/50"
+                        : "border-gray-300 focus:ring-blue-200 dark:border-gray-600 dark:focus:ring-blue-500/50"
                     }`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                   >
                     {showPassword ? (
                       <EyeOff className="w-5 h-5" />
@@ -235,8 +242,8 @@ export default function LoginPage() {
 
               {/* Server Error Message */}
               {serverError && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <p className="text-sm text-red-600 text-center">
+                <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/50 rounded-lg p-3">
+                  <p className="text-sm text-red-600 dark:text-red-400 text-center">
                     {serverError}
                   </p>
                 </div>
@@ -247,7 +254,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => navigate("/forgot-password")}
-                  className="text-sm text-primary font-semibold hover:underline"
+                  className="text-sm text-primary dark:text-blue-400 font-semibold hover:underline"
                 >
                   Forgot password?
                 </button>
@@ -269,10 +276,10 @@ export default function LoginPage() {
               {/* Divider */}
               <div className="relative my-4">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
+                  <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-gray-500">
+                  <span className="px-4 bg-white dark:bg-black text-gray-500 dark:text-gray-400">
                     Or continue with
                   </span>
                 </div>
@@ -282,7 +289,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={handleGoogleLogin}
-                className="w-full bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-300 py-3 rounded-2xl transition-all duration-300 font-semibold flex items-center justify-center gap-3 text-base"
+                className="w-full bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white border-2 border-gray-300 dark:border-gray-600 py-3 rounded-2xl transition-all duration-300 font-semibold flex items-center justify-center gap-3 text-base"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -306,12 +313,12 @@ export default function LoginPage() {
               </button>
 
               {/* Sign Up Link */}
-              <div className="text-center text-sm text-gray-600 mt-4">
+              <div className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
                 Don't have an account?{" "}
                 <button
                   type="button"
                   onClick={() => navigate("/signup")}
-                  className="text-primary font-semibold hover:underline"
+                  className="text-primary dark:text-blue-400 font-semibold hover:underline"
                 >
                   Sign up
                 </button>

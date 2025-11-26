@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ArrowRight, XCircle, Loader2 } from "lucide-react";
 import backgroundImage from "@/assets/images/background.png";
 import logoImage from "@/assets/images/logo.png";
+import logoWhiteImage from "@/assets/images/logo-white.svg";
 import { buildApiUrl } from "@/lib/api";
 
 export default function EmailVerifiedPage() {
@@ -51,37 +52,42 @@ export default function EmailVerifiedPage() {
 
   return (
     <div
-      className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center"
+      className="min-h-screen relative flex items-center justify-center dark:bg-black"
       style={{
         backgroundImage: `url(${backgroundImage})`,
         backgroundPosition: "center bottom",
+        backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
       }}
     >
+      {/* Dark theme overlay to hide background */}
+      <div className="hidden dark:block absolute inset-0 bg-black z-0"></div>
       {/* Logo in top-left corner */}
       <div className="absolute top-6 left-6 z-20">
         <button
           onClick={() => navigate("/dashboard")}
           className="hover:opacity-80 transition-opacity"
         >
-          <img src={logoImage} alt="Bus Booking Logo" className="w-32" />
+          <img src={logoImage} alt="Bus Booking Logo" className="w-32 dark:hidden" />
+          <img src={logoWhiteImage} alt="Bus Booking Logo White" className="w-32 hidden dark:block" />
         </button>
       </div>
 
       <div className="max-w-xl w-full mx-auto px-6 py-6 relative z-10">
         {/* Email Verified Card */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+          <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800/95 p-8">
             <div className="flex flex-col items-center text-center">
               {/* Loading State */}
               {verifying && (
                 <>
-                  <div className="w-20 h-20 bg-primary-50 rounded-full flex items-center justify-center mb-6">
+                  <div className="w-20 h-20 bg-primary-50 dark:bg-primary-900/30 rounded-full flex items-center justify-center mb-6">
                     <Loader2 className="w-10 h-10 text-primary animate-spin" />
                   </div>
-                  <h1 className="text-2xl font-bold text-foreground/80 mb-3">
+                  <h1 className="text-2xl font-bold text-foreground/80 dark:text-white mb-3">
                     Verifying Your Email...
                   </h1>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-400">
                     Please wait while we verify your email address.
                   </p>
                 </>
@@ -90,15 +96,15 @@ export default function EmailVerifiedPage() {
               {/* Success State */}
               {!verifying && success && (
                 <>
-                  <div className="w-20 h-20 bg-success-100 rounded-full flex items-center justify-center mb-6">
+                  <div className="w-20 h-20 bg-success-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-6">
                     <CheckCircle2 className="w-10 h-10 text-success" />
                   </div>
 
-                  <h1 className="text-2xl font-bold text-foreground/80 mb-3">
+                  <h1 className="text-2xl font-bold text-foreground/80 dark:text-white mb-3">
                     Email Verified!
                   </h1>
 
-                  <p className="text-gray-600 mb-8">
+                  <p className="text-gray-600 dark:text-gray-400 mb-8">
                     Your email has been successfully verified. You can now
                     access all features of your account.
                   </p>
@@ -115,7 +121,7 @@ export default function EmailVerifiedPage() {
                   {/* Back to Home */}
                   <button
                     onClick={() => navigate("/dashboard")}
-                    className="w-full bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-300 py-3 rounded-2xl transition-all duration-300 font-semibold text-base"
+                    className="w-full bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white border-2 border-gray-300 dark:border-gray-600 py-3 rounded-2xl transition-all duration-300 font-semibold text-base"
                   >
                     Go to Home
                   </button>
@@ -125,17 +131,17 @@ export default function EmailVerifiedPage() {
               {/* Error State */}
               {!verifying && error && (
                 <>
-                  <div className="w-20 h-20 bg-error-50 rounded-full flex items-center justify-center mb-6">
+                  <div className="w-20 h-20 bg-error-50 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-6">
                     <XCircle className="w-10 h-10 text-error" />
                   </div>
 
-                  <h1 className="text-2xl font-bold text-foreground/80 mb-3">
+                  <h1 className="text-2xl font-bold text-foreground/80 dark:text-white mb-3">
                     Verification Failed
                   </h1>
 
-                  <p className="text-red-600 mb-2 font-medium">{error}</p>
+                  <p className="text-red-600 dark:text-red-400 mb-2 font-medium">{error}</p>
 
-                  <p className="text-gray-600 mb-8 text-sm">
+                  <p className="text-gray-600 dark:text-gray-400 mb-8 text-sm">
                     Your verification link may have expired or is invalid.
                     Please request a new verification email.
                   </p>
@@ -152,7 +158,7 @@ export default function EmailVerifiedPage() {
                   {/* Back to Login */}
                   <button
                     onClick={() => navigate("/login")}
-                    className="w-full bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-300 py-3 rounded-2xl transition-all duration-300 font-semibold text-base"
+                    className="w-full bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white border-2 border-gray-300 dark:border-gray-600 py-3 rounded-2xl transition-all duration-300 font-semibold text-base"
                   >
                     Back to Login
                   </button>

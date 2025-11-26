@@ -45,6 +45,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ProfilePage from "./pages/ProfilePage";
 import AboutPage from "./pages/AboutPage";
 import SupportPage from "./pages/SupportPage";
+import NotFoundPage from "./pages/NotFoundPage";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
 function AppContent() {
@@ -57,6 +58,7 @@ function AppContent() {
     "/verify-email",
     "/email-verified",
     "/auth-success",
+    "/404",
   ].includes(location.pathname);
 
   // Check if current page is authentication page
@@ -214,6 +216,8 @@ function AppContent() {
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/email-verified" element={<EmailVerifiedPage />} />
       <Route path="/auth-success" element={<AuthSuccessPage />} />
+      <Route path="*" element={<Navigate to="/404" replace />} />
+      <Route path="/404" element={<NotFoundPage />} />
     </Routes>
   );
 

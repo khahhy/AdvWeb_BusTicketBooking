@@ -25,51 +25,60 @@ import { AddBusDialog, BusDetailsDrawer } from "@/components/admin";
 type Bus = {
   id: string;
   name: string;
-  licensePlate: string;
+  plate: string;
   status: "Active" | "Maintenance";
   amenities: string[];
 };
 
-type RelatedTrip = {
+type Trip = {
   id: string;
   routeName: string;
-  departureTime: Date;
+  origin: string;
+  destination: string;
+  departureTime: string;
+  arrivalTime: string;
 };
 
 const mockBuses: Bus[] = [
   {
     id: "BUS-001",
     name: "Xe 01",
-    licensePlate: "51B-123.45",
+    plate: "51B-123.45",
     status: "Active",
     amenities: ["wifi", "charging", "water", "cold_towel"],
   },
   {
     id: "BUS-002",
     name: "Xe 02",
-    licensePlate: "29A-678.90",
+    plate: "29A-678.90",
     status: "Active",
     amenities: ["wifi", "charging", "wc", "blanket", "water", "cold_towel"],
   },
   {
     id: "BUS-003",
     name: "Xe 03",
-    licensePlate: "30E-555.55",
+    plate: "30E-555.55",
     status: "Maintenance",
     amenities: ["wifi", "water"],
   },
 ];
 
-const mockRelatedTrips: RelatedTrip[] = [
+const mockTrips: Trip[] = [
   {
     id: "TRIP-001",
     routeName: "Sài Gòn - Đà Lạt",
-    departureTime: new Date(Date.now() + 2 * 60 * 60 * 1000),
+    departureTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toString(),
+    origin: "Sài Gòn",
+    destination: "Đà Lạt",
+    arrivalTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toString(),
   },
   {
     id: "TRIP-002",
     routeName: "Sài Gòn - Đà Lạt",
-    departureTime: new Date(Date.now() + 26 * 60 * 60 * 1000),
+    departureTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toString(),
+    origin: "Sài Gòn",
+    destination: "Đà Lạt",
+    arrivalTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toString(),
   },
 ];
 
@@ -87,9 +96,13 @@ const SeatMap = () => {
           <div className="p-2 bg-slate-800 dark:bg-slate-700 rounded-lg text-white shadow-sm">
             <User size={24} />
           </div>
-          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Driver</span>
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+            Driver
+          </span>
         </div>
-        <div className="text-xs text-gray-400 dark:text-gray-500 italic pr-2">Entry Door</div>
+        <div className="text-xs text-gray-400 dark:text-gray-500 italic pr-2">
+          Entry Door
+        </div>
       </div>
 
       <div className="grid grid-cols-5 gap-y-2 gap-x-1">
@@ -159,7 +172,7 @@ const BusManagement = () => {
   useEffect(() => {
     if (selectedBus) {
       setName(selectedBus.name);
-      setPlate(selectedBus.licensePlate);
+      setPlate(selectedBus.plate);
       setCurrentAmenities(selectedBus.amenities);
     }
   }, [selectedBus]);
@@ -215,7 +228,7 @@ const BusManagement = () => {
                       <TableCell className="font-medium pl-4">
                         {bus.name}
                       </TableCell>
-                      <TableCell>{bus.licensePlate}</TableCell>
+                      <TableCell>{bus.plate}</TableCell>
                       <TableCell>
                         <Badge
                           variant={
@@ -284,7 +297,7 @@ const BusManagement = () => {
           setName={setName}
           setPlate={setPlate}
           onAmenityChange={handleAmenityChange}
-          relatedTrips={mockRelatedTrips}
+          relatedTrips={mockTrips}
           onSave={() => setIsSheetOpen(false)}
         />
       </div>

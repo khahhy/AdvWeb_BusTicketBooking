@@ -19,7 +19,7 @@ export interface AddBusDialogProps {
   amenities: string[];
   setName: Dispatch<SetStateAction<string>>;
   setPlate: Dispatch<SetStateAction<string>>;
-  onAmenityChange: (amenities: string[]) => void;
+  onAmenityChange: (id: string, checked: boolean) => void;
   onCreate: () => void;
 }
 
@@ -85,11 +85,7 @@ const AddBusDialog = ({
                     checked={amenities.includes(amenity.id)}
                     onCheckedChange={(checked) => {
                       if (checked) {
-                        onAmenityChange([...amenities, amenity.id]);
-                      } else {
-                        onAmenityChange(
-                          amenities.filter((id) => id !== amenity.id),
-                        );
+                        onAmenityChange(amenity.id, checked as boolean);
                       }
                     }}
                   />

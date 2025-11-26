@@ -2,6 +2,7 @@ import SearchBar from "./SearchBar";
 import LogoLoop from "@/components/ui/logo-loop";
 import backgroundImage from "@/assets/images/background.png";
 import busLogoImage from "@/assets/images/bus.png";
+import busLogoWhite from "@/assets/images/bus-white.svg";
 
 export default function HeroSection() {
   return (
@@ -25,7 +26,12 @@ export default function HeroSection() {
               <img
                 src={busLogoImage}
                 alt="Bus logo"
-                className="w-20 h-20 object-contain"
+                className="w-20 h-20 object-contain dark:hidden"
+              />
+              <img
+                src={busLogoWhite}
+                alt="Bus logo"
+                className="w-20 h-20 object-contain hidden dark:block"
               />
               <span className="italic font-light"> Booking</span>
             </span>
@@ -45,15 +51,21 @@ export default function HeroSection() {
             Trusted by leading transport companies
           </p>
           <LogoLoop className="opacity-60" speed="slow">
-            <div className="text-black/60 dark:text-white/60 font-bold text-lg px-8">Emirates</div>
-            <div className="text-black/60 dark:text-white/60 font-bold text-lg px-8">KLM</div>
+            <div className="text-black/60 dark:text-white/60 font-bold text-lg px-8">
+              Emirates
+            </div>
+            <div className="text-black/60 dark:text-white/60 font-bold text-lg px-8">
+              KLM
+            </div>
             <div className="text-black/60 dark:text-white/60 font-bold text-lg italic px-8">
               AirAsia
             </div>
             <div className="text-black/60 dark:text-white/60 font-bold text-lg px-8">
               AIR INDIA
             </div>
-            <div className="text-black/60 dark:text-white/60 font-bold text-lg px-8">ETIHAD</div>
+            <div className="text-black/60 dark:text-white/60 font-bold text-lg px-8">
+              ETIHAD
+            </div>
             <div className="text-black/60 dark:text-white/60 font-bold text-lg px-8">
               Singapore Airlines
             </div>

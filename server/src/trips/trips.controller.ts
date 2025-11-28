@@ -53,19 +53,19 @@ export class TripsController {
 
   @ApiOperation({
     summary:
-      'Get all trips with filters (startTime, endTime, origin, destination, busId, status)',
+      'Get all trips with filters (startTime, endTime, origin stop of route, destination stop of route, busId, status). Note: trip contain route, that route maybe not set sold yet',
   })
   @ApiQuery({ name: 'startTime', required: false })
   @ApiQuery({ name: 'endTime', required: false })
   @ApiQuery({
     name: 'origin',
     required: false,
-    description: 'Location ID to match as origin stop',
+    description: 'Location ID to MATCH as origin stop',
   })
   @ApiQuery({
     name: 'destination',
     required: false,
-    description: 'Location ID to match as destination stop',
+    description: 'Location ID to MACTH as destination stop',
   })
   @ApiQuery({ name: 'busId', required: false })
   @ApiQuery({ name: 'status', required: false })

@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -27,11 +28,22 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
+import { QueryUserDto } from './dto/query-user.dto';
 
 @ApiTags('users')
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Admin: Get user statistics (Total, New, Active)' })
+  @ApiResponse({ status: 200, description: 'Fetched stats successfully.' })
+  @Get('stats')
+  async getStats() {
+    return this.userService.getStats();
+  }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.admin)
@@ -52,11 +64,11 @@ export class UserController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.admin)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Admin: Get all users' })
+  @ApiOperation({ summary: 'Admin: Get all users with pagination & search' })
   @ApiResponse({ status: 200, description: 'Fetched all users successfully.' })
   @Get()
-  async findAll() {
-    return this.userService.findAll();
+  async findAll(@Query() query: QueryUserDto) {
+    return this.userService.findAll(query);
   }
 
   @ApiOperation({ summary: 'Get a user by ID' })

@@ -9,6 +9,7 @@ import {
   HttpStatus,
   Req,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { BookingsService } from './bookings.service';
 import {
@@ -20,6 +21,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { QueryBookingDto } from './dto/query-booking.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { Roles } from 'src/common/decorators/role.decorator';
@@ -30,6 +32,16 @@ import type { RequestWithUser } from 'src/common/type/request-with-user.interfac
 @Controller('bookings')
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Admin: Get booking statistics' })
+  @ApiResponse({ status: 200, description: 'Fetched stats successfully.' })
+  @Get('stats')
+  async getStats() {
+    return this.bookingsService.getStats();
+  }
 
   @ApiOperation({ summary: 'Create a new booking (Lock seat & Init payment)' })
   @ApiBody({ type: CreateBookingDto })
@@ -51,11 +63,11 @@ export class BookingsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.admin)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Get all bookings (Admin)' })
+  @ApiOperation({ summary: 'Get all bookings with filters (Admin)' })
   @ApiResponse({ status: 200, description: 'Fetched all bookings.' })
   @Get()
-  async findAll() {
-    return this.bookingsService.findAll();
+  async findAll(@Query() query: QueryBookingDto) {
+    return this.bookingsService.findAll(query);
   }
 
   @ApiOperation({ summary: 'Get booking history of current user' })

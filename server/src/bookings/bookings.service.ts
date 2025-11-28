@@ -8,6 +8,7 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { Prisma, BookingStatus } from '@prisma/client';
+import { QueryBookingDto } from './dto/query-booking.dto';
 
 @Injectable()
 export class BookingsService {
@@ -170,18 +171,66 @@ export class BookingsService {
     }
   }
 
-  async findAll() {
+  async findAll(query: QueryBookingDto) {
     try {
-      const bookings = await this.prisma.bookings.findMany({
-        orderBy: { createdAt: 'desc' },
-        include: {
-          user: { select: { fullName: true, email: true } },
-          trip: { select: { tripName: true, startTime: true } },
-          route: { select: { name: true } },
-          seat: { select: { seatNumber: true } },
+      const {
+        page = 1,
+        limit = 10,
+        status,
+        userId,
+        tripId,
+        dateFrom,
+        dateTo,
+      } = query;
+      const skip = (Number(page) - 1) * Number(limit);
+      const take = Number(limit);
+
+      const where: Prisma.BookingsWhereInput = {
+        AND: [
+          status ? { status } : {},
+          userId ? { userId } : {},
+          tripId ? { tripId } : {},
+          dateFrom || dateTo
+            ? {
+                createdAt: {
+                  gte: dateFrom ? new Date(dateFrom) : undefined,
+                  lte: dateTo
+                    ? new Date(new Date(dateTo).setHours(23, 59, 59, 999))
+                    : undefined,
+                },
+              }
+            : {},
+        ],
+      };
+
+      const [bookings, total] = await Promise.all([
+        this.prisma.bookings.findMany({
+          where,
+          skip,
+          take,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            user: {
+              select: { fullName: true, email: true, phoneNumber: true },
+            },
+            trip: { select: { tripName: true, startTime: true } },
+            route: { select: { name: true } },
+            seat: { select: { seatNumber: true } },
+          },
+        }),
+        this.prisma.bookings.count({ where }),
+      ]);
+
+      return {
+        message: 'Fetched bookings successfully',
+        data: bookings,
+        meta: {
+          total,
+          page: Number(page),
+          limit: Number(limit),
+          totalPages: Math.ceil(total / Number(limit)),
         },
-      });
-      return { message: 'Fetched all bookings successfully', data: bookings };
+      };
     } catch (err) {
       throw new InternalServerErrorException('Failed to fetch bookings', {
         cause: err,
@@ -256,6 +305,57 @@ export class BookingsService {
         throw err;
       }
       throw new InternalServerErrorException('Failed to cancel booking', {
+        cause: err,
+      });
+    }
+  }
+
+  async getStats() {
+    try {
+      const now = new Date();
+      const startOfToday = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+      );
+
+      const [totalBookings, bookingsToday, statusBreakdown] = await Promise.all(
+        [
+          this.prisma.bookings.count(),
+
+          this.prisma.bookings.count({
+            where: { createdAt: { gte: startOfToday } },
+          }),
+
+          this.prisma.bookings.groupBy({
+            by: ['status'],
+            _count: { id: true },
+          }),
+        ],
+      );
+
+      const breakdown = statusBreakdown.reduce(
+        (acc, curr) => {
+          acc[curr.status] = curr._count.id;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
+
+      return {
+        message: 'Fetched booking stats successfully',
+        data: {
+          totalBookings,
+          bookingsToday,
+          breakdown: {
+            pendingPayment: breakdown[BookingStatus.pendingPayment] || 0,
+            confirmed: breakdown[BookingStatus.confirmed] || 0,
+            cancelled: breakdown[BookingStatus.cancelled] || 0,
+          },
+        },
+      };
+    } catch (err) {
+      throw new InternalServerErrorException('Failed to fetch booking stats', {
         cause: err,
       });
     }

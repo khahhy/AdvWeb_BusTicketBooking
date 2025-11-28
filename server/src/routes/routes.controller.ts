@@ -38,6 +38,25 @@ export class RoutesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.admin)
   @ApiBearerAuth('JWT-auth')
+  @Get('top-performing')
+  @ApiOperation({
+    summary: 'Dashboard: Get top performing routes by booking count',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Default: 5',
+  })
+  @ApiResponse({ status: 200, description: 'Fetched top routes successfully.' })
+  async getTopPerforming(@Query('limit') limit?: number) {
+    const limitNumber = limit ? Number(limit) : 5;
+    return this.routesService.getTopPerforming(limitNumber);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create a new route (Auto-generate name from locations)',
   })

@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { LocationsService } from './location.service';
 import {
@@ -25,6 +26,7 @@ import { Roles } from 'src/common/decorators/role.decorator';
 import { UserRole } from '@prisma/client';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
+import { QueryLocationDto } from './dto/query-location.dto';
 
 @ApiTags('locations')
 @Controller('locations')
@@ -43,14 +45,14 @@ export class LocationsController {
     return this.locationsService.create(createLocationDto);
   }
 
+  @Get()
   @ApiOperation({ summary: 'Get all locations' })
   @ApiResponse({
     status: 200,
     description: 'Fetched all locations successfully.',
   })
-  @Get()
-  async findAll() {
-    return this.locationsService.findAll();
+  async findAll(@Query() query: QueryLocationDto) {
+    return this.locationsService.findAll(query);
   }
 
   @ApiOperation({
@@ -63,24 +65,6 @@ export class LocationsController {
   @Get('cities')
   getCities() {
     return this.locationsService.getCities();
-  }
-
-  @ApiOperation({
-    summary:
-      'Get locations (or bus stop) filtered by city, for example: Bến xe miền tây',
-  })
-  @ApiParam({
-    name: 'city',
-    description: 'City name to filter locations',
-    type: String,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Fetched locations by city successfully.',
-  })
-  @Get('city/:city')
-  getLocationsByCity(@Param('city') city: string) {
-    return this.locationsService.getLocationsByCity(city);
   }
 
   @ApiOperation({ summary: 'Get a location by ID' })

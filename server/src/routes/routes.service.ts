@@ -16,6 +16,7 @@ import {
   Trips,
   TripStops,
   Locations,
+  BookingStatus,
 } from '@prisma/client';
 
 @Injectable()
@@ -624,5 +625,69 @@ export class RoutesService {
       surchargeReason: reason,
       finalPrice: Math.round(finalPrice),
     };
+  }
+
+  async getTopPerforming(limit: number = 5) {
+    try {
+      const topRoutesRaw = await this.prisma.bookings.groupBy({
+        by: ['routeId'],
+        where: {
+          status: BookingStatus.confirmed,
+        },
+        _count: {
+          id: true, // Đếm số lượng booking ID
+        },
+        _sum: {
+          price: true,
+        },
+        orderBy: {
+          _count: {
+            id: 'desc',
+          },
+        },
+        take: limit,
+      });
+
+      if (topRoutesRaw.length === 0) {
+        return { message: 'No booking data available', data: [] };
+      }
+
+      const routeIds = topRoutesRaw.map((item) => item.routeId);
+
+      const routesDetails = await this.prisma.routes.findMany({
+        where: {
+          id: { in: routeIds },
+        },
+        select: {
+          id: true,
+          name: true,
+          origin: { select: { city: true, name: true } },
+          destination: { select: { city: true, name: true } },
+        },
+      });
+
+      const formattedResult = topRoutesRaw.map((stat) => {
+        const routeInfo = routesDetails.find((r) => r.id === stat.routeId);
+
+        return {
+          routeId: stat.routeId,
+          routeName: routeInfo?.name || 'Unknown Route',
+          origin: routeInfo?.origin.city,
+          destination: routeInfo?.destination.city,
+          totalBookings: stat._count.id,
+          totalRevenue: stat._sum.price || 0,
+        };
+      });
+
+      return {
+        message: 'Fetched top performing routes successfully',
+        data: formattedResult,
+      };
+    } catch (err) {
+      throw new InternalServerErrorException(
+        'Failed to fetch top performing routes',
+        { cause: err },
+      );
+    }
   }
 }

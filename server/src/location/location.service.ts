@@ -3,21 +3,66 @@ import {
   NotFoundException,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
+import { QueryLocationDto } from './dto/query-location.dto';
 import { normalizeCity } from 'src/common/utils/normalizeCity';
 
 @Injectable()
 export class LocationsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(query: QueryLocationDto) {
     try {
+      const { city, search } = query;
+      let cityCondition = {};
+      if (city) {
+        const normalizedInput = normalizeCity(city);
+
+        const existingCities = await this.prisma.locations.findMany({
+          distinct: ['city'],
+          select: { city: true },
+        });
+
+        const matchedCity = existingCities.find(
+          (item) => normalizeCity(item.city) === normalizedInput,
+        );
+
+        if (matchedCity) {
+          cityCondition = { city: matchedCity.city };
+        } else {
+          cityCondition = {
+            city: { contains: city.trim(), mode: 'insensitive' },
+          };
+        }
+      }
+
+      const where: Prisma.LocationsWhereInput = {
+        AND: [
+          cityCondition,
+          search
+            ? {
+                name: {
+                  contains: search.trim(),
+                  mode: 'insensitive',
+                },
+              }
+            : {},
+        ],
+      };
+
       const locations = await this.prisma.locations.findMany({
+        where,
         orderBy: { createdAt: 'desc' },
       });
-      return { message: 'Fetched all locations successfully', data: locations };
+
+      return {
+        message: 'Fetched locations successfully',
+        data: locations,
+        count: locations.length,
+      };
     } catch (err) {
       throw new InternalServerErrorException('Failed to fetch locations', {
         cause: err,
@@ -56,40 +101,6 @@ export class LocationsService {
       throw new InternalServerErrorException('Failed to fetch cities', {
         cause: err,
       });
-    }
-  }
-
-  async getLocationsByCity(cityInput: string) {
-    try {
-      const normalizedInput = normalizeCity(cityInput);
-
-      const cities = await this.prisma.locations.findMany({
-        select: { city: true },
-        distinct: ['city'],
-      });
-
-      const matchedCity = cities.find(
-        (c) => normalizeCity(c.city) === normalizedInput,
-      )?.city;
-
-      if (!matchedCity) {
-        return { message: 'City not found', data: [] };
-      }
-
-      const locations = await this.prisma.locations.findMany({
-        where: { city: matchedCity },
-        orderBy: { name: 'asc' },
-      });
-
-      return {
-        message: 'Fetched locations by city successfully',
-        data: locations,
-      };
-    } catch (err) {
-      throw new InternalServerErrorException(
-        'Failed to fetch locations by city',
-        { cause: err },
-      );
     }
   }
 

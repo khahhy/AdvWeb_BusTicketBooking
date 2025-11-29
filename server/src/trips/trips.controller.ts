@@ -10,6 +10,7 @@ import {
   Query,
   Delete,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { TripsService } from './trips.service';
 import {
@@ -25,6 +26,7 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { UserRole } from '@prisma/client';
+import type { RequestWithUser } from 'src/common/type/request-with-user.interface';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { TripQueryDto } from './dto/trip-query.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
@@ -47,8 +49,14 @@ export class TripsController {
   })
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createTripDto: CreateTripDto) {
-    return this.tripsService.create(createTripDto);
+  async create(
+    @Body() createTripDto: CreateTripDto,
+    @Req() req: RequestWithUser,
+  ) {
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.tripsService.create(createTripDto, userId, ip, userAgent);
   }
 
   @ApiOperation({
@@ -96,8 +104,15 @@ export class TripsController {
   })
   @ApiResponse({ status: 404, description: 'Trip not found.' })
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() dto: UpdateTripDto) {
-    return this.tripsService.update(id, dto);
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateTripDto,
+    @Req() req: RequestWithUser,
+  ) {
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.tripsService.update(id, dto, userId, ip, userAgent);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -109,8 +124,18 @@ export class TripsController {
   async updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateTripStatusDto,
+    @Req() req: RequestWithUser,
   ) {
-    return this.tripsService.updateStatus(id, dto.status);
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.tripsService.updateStatus(
+      id,
+      dto.status,
+      userId,
+      ip,
+      userAgent,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -119,8 +144,11 @@ export class TripsController {
   @ApiOperation({ summary: 'Delete a trip (only if no bookings exist)' })
   @ApiParam({ name: 'id', type: String })
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.tripsService.remove(id);
+  async remove(@Param('id') id: string, @Req() req: RequestWithUser) {
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.tripsService.remove(id, userId, ip, userAgent);
   }
 
   @ApiOperation({

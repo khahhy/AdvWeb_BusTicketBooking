@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ActivityLogsService } from 'src/activity-logs/activity-logs.service';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
 import { QueryLocationDto } from './dto/query-location.dto';
@@ -12,7 +13,10 @@ import { normalizeCity } from 'src/common/utils/normalizeCity';
 
 @Injectable()
 export class LocationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityLogService: ActivityLogsService,
+  ) {}
 
   async findAll(query: QueryLocationDto) {
     try {
@@ -104,11 +108,27 @@ export class LocationsService {
     }
   }
 
-  async create(createLocationDto: CreateLocationDto) {
+  async create(
+    createLocationDto: CreateLocationDto,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     try {
       const newLocation = await this.prisma.locations.create({
         data: createLocationDto,
       });
+
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'CREATE_LOCATION',
+        entityId: newLocation.id,
+        entityType: 'Locations',
+        metadata: { locationId: newLocation.id },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return { message: 'Location created successfully', data: newLocation };
     } catch (err) {
       throw new InternalServerErrorException('Failed to create location', {
@@ -117,7 +137,13 @@ export class LocationsService {
     }
   }
 
-  async update(id: string, updateLocationDto: UpdateLocationDto) {
+  async update(
+    id: string,
+    updateLocationDto: UpdateLocationDto,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     try {
       const location = await this.prisma.locations.findUnique({
         where: { id },
@@ -128,6 +154,17 @@ export class LocationsService {
         where: { id },
         data: updateLocationDto,
       });
+
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'UPDATE_LOCATION',
+        entityId: updatedLocation.id,
+        entityType: 'Locations',
+        metadata: { locationId: updatedLocation.id },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return {
         message: 'Location updated successfully',
         data: updatedLocation,
@@ -140,7 +177,7 @@ export class LocationsService {
     }
   }
 
-  async remove(id: string) {
+  async remove(id: string, userId: string, ip: string, userAgent: string) {
     try {
       const location = await this.prisma.locations.findUnique({
         where: { id },
@@ -150,6 +187,17 @@ export class LocationsService {
       const deletedLocation = await this.prisma.locations.delete({
         where: { id },
       });
+
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'DELETE_LOCATION',
+        entityId: deletedLocation.id,
+        entityType: 'Locations',
+        metadata: { locationId: deletedLocation.id },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return {
         message: 'Location deleted successfully',
         data: deletedLocation,

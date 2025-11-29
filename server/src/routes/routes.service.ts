@@ -5,11 +5,13 @@ import {
   InternalServerErrorException,
   ConflictException,
 } from '@nestjs/common';
+import { ActivityLogsService } from 'src/activity-logs/activity-logs.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateRouteDto } from './dto/create-route.dto';
 import { UpdateRouteDto } from './dto/update-route.dto';
 import { GetRouteTripsDto } from './dto/get-route-trips';
 import { CreateTripRouteMapDto } from './dto/create-trip-route-map.dto';
+import { QueryTripRouteMapDto } from './dto/query-trip-route-map.dto';
 import {
   Prisma,
   TripStatus,
@@ -25,9 +27,17 @@ export class RoutesService {
   private readonly WEEKEND_SURCHARGE = 0.05;
   private readonly HOLIDAY_SURCHARGE = 0.1;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityLogService: ActivityLogsService,
+  ) {}
 
-  async create(createRouteDto: CreateRouteDto) {
+  async create(
+    createRouteDto: CreateRouteDto,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     try {
       const { originLocationId, destinationLocationId } = createRouteDto;
 
@@ -73,6 +83,16 @@ export class RoutesService {
           origin: true,
           destination: true,
         },
+      });
+
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'CREATE_ROUTE',
+        entityId: route.id,
+        entityType: 'Routes',
+        metadata: { routeId: route.id },
+        ipAddress: ip,
+        userAgent: userAgent,
       });
 
       return { message: 'Route created successfully', data: route };
@@ -139,7 +159,13 @@ export class RoutesService {
     }
   }
 
-  async update(id: string, updateRouteDto: UpdateRouteDto) {
+  async update(
+    id: string,
+    updateRouteDto: UpdateRouteDto,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     try {
       const existingRoute = await this.prisma.routes.findUnique({
         where: { id },
@@ -194,6 +220,16 @@ export class RoutesService {
         },
       });
 
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'UPDATE_ROUTE',
+        entityId: updatedRoute.id,
+        entityType: 'Routes',
+        metadata: { routeId: updatedRoute.id },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return { message: 'Route updated successfully', data: updatedRoute };
     } catch (err) {
       if (
@@ -208,7 +244,7 @@ export class RoutesService {
     }
   }
 
-  async remove(id: string) {
+  async remove(id: string, userId: string, ip: string, userAgent: string) {
     try {
       const route = await this.prisma.routes.findUnique({ where: { id } });
       if (!route) throw new NotFoundException('Route not found');
@@ -232,6 +268,16 @@ export class RoutesService {
         }),
       ]);
 
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'DELETE_ROUTE',
+        entityId: id,
+        entityType: 'Routes',
+        metadata: { routeId: id },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return {
         message: 'Route and associated trip-maps deleted successfully',
       };
@@ -248,6 +294,7 @@ export class RoutesService {
     }
   }
 
+  // trip contain location of route, not sure it's activate
   async findTripsForRoute(routeId: string, query: GetRouteTripsDto) {
     try {
       const route = await this.prisma.routes.findUnique({
@@ -507,6 +554,96 @@ export class RoutesService {
       if (err instanceof NotFoundException) throw err;
       throw new InternalServerErrorException(
         'Failed to get trip route map detail',
+        { cause: err },
+      );
+    }
+  }
+
+  // Get All Trip Maps with Pagination & Filter
+  // Get All Trip Maps with Pagination & Filter
+  async findAllTripRouteMaps(query: QueryTripRouteMapDto) {
+    try {
+      const {
+        page = 1,
+        limit = 20,
+        routeId,
+        tripId,
+        locationId,
+        minPrice,
+        maxPrice,
+        sortByPrice,
+      } = query;
+
+      const skip = (page - 1) * limit;
+
+      const where: Prisma.TripRouteMapWhereInput = {};
+
+      if (routeId) where.routeId = routeId;
+      if (tripId) where.tripId = tripId;
+
+      if (locationId) {
+        where.route = {
+          OR: [
+            { originLocationId: locationId },
+            { destinationLocationId: locationId },
+          ],
+        };
+      }
+
+      if (minPrice !== undefined || maxPrice !== undefined) {
+        where.price = {};
+        if (minPrice !== undefined) where.price.gte = minPrice;
+        if (maxPrice !== undefined) where.price.lte = maxPrice;
+      }
+
+      const orderBy: Prisma.TripRouteMapOrderByWithRelationInput = {};
+      if (sortByPrice) {
+        orderBy.price = sortByPrice;
+      } else {
+        orderBy.trip = { startTime: 'desc' };
+      }
+
+      const [data, total] = await this.prisma.$transaction([
+        this.prisma.tripRouteMap.findMany({
+          skip,
+          take: limit,
+          where,
+          orderBy,
+          include: {
+            route: {
+              select: {
+                name: true,
+                origin: { select: { city: true, name: true } },
+                destination: { select: { city: true, name: true } },
+              },
+            },
+            trip: {
+              select: {
+                startTime: true,
+                status: true,
+                bus: { select: { plate: true } },
+              },
+            },
+          },
+        }),
+        this.prisma.tripRouteMap.count({ where }),
+      ]);
+
+      return {
+        message: 'Fetched trip route maps successfully',
+        data: {
+          items: data,
+          meta: {
+            total,
+            page,
+            limit,
+            lastPage: Math.ceil(total / limit),
+          },
+        },
+      };
+    } catch (err) {
+      throw new InternalServerErrorException(
+        'Failed to fetch trip route maps',
         { cause: err },
       );
     }

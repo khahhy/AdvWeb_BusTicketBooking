@@ -11,6 +11,8 @@ import { RoutesModule } from './routes/routes.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AuthModule } from './auth/auth.module';
+import { SettingModule } from './setting/setting.module';
+import { ActivityLogsModule } from './activity-logs/activity-logs.module';
 @Module({
   imports: [
     PrismaModule,
@@ -22,6 +24,8 @@ import { AuthModule } from './auth/auth.module';
     BookingsModule,
     NotificationsModule,
     AuthModule,
+    SettingModule,
+    ActivityLogsModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

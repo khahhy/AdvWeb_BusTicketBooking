@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { BusesService } from './buses.service';
 import {
@@ -25,6 +26,7 @@ import { Roles } from 'src/common/decorators/role.decorator';
 import { UserRole } from '@prisma/client';
 import { CreateBusDto } from './dto/create-bus.dto';
 import { UpdateBusDto } from './dto/update-bus.dto';
+import type { RequestWithUser } from 'src/common/type/request-with-user.interface';
 
 @ApiTags('buses')
 @Controller('buses')
@@ -40,8 +42,14 @@ export class BusesController {
   @ApiResponse({ status: 400, description: 'Plate already exists.' })
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createBusDto: CreateBusDto) {
-    return this.busesService.create(createBusDto);
+  async create(
+    @Body() createBusDto: CreateBusDto,
+    @Req() req: RequestWithUser,
+  ) {
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.busesService.create(createBusDto, userId, ip, userAgent);
   }
 
   @ApiOperation({ summary: 'Get all buses' })
@@ -81,8 +89,15 @@ export class BusesController {
   @ApiResponse({ status: 200, description: 'Bus updated successfully.' })
   @ApiResponse({ status: 404, description: 'Bus not found.' })
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateBusDto: UpdateBusDto) {
-    return this.busesService.update(id, updateBusDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateBusDto: UpdateBusDto,
+    @Req() req: RequestWithUser,
+  ) {
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.busesService.update(id, updateBusDto, userId, ip, userAgent);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -93,7 +108,10 @@ export class BusesController {
   @ApiResponse({ status: 200, description: 'Bus deleted successfully.' })
   @ApiResponse({ status: 404, description: 'Bus not found.' })
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.busesService.remove(id);
+  async remove(@Param('id') id: string, @Req() req: RequestWithUser) {
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.busesService.remove(id, userId, ip, userAgent);
   }
 }

@@ -27,6 +27,7 @@ model Users {
   bookings            Bookings[]
   notifications       Notifications[]
   reviews             Reviews[]
+  activityLogs        ActivityLog[]
 }
 
 model Locations {
@@ -215,6 +216,41 @@ model Notifications {
   createdAt DateTime           @default(now())
   booking   Bookings?          @relation(fields: [bookingId], references: [id])
   user      Users              @relation(fields: [userId], references: [id])
+}
+
+model SystemSettings {
+  key         SettingKey @id
+  value       Json            
+  description String?     
+  createdAt   DateTime   @default(now())    
+  updatedAt   DateTime   @updatedAt
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      Users?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String   // 'CREATE_BOOKING', 'LOGIN', 'UPDATE_BUS_PRICE', ...
+
+  entityId    String?  // bookingId, busId
+  entityType  String?  // 'Bookings', 'Buses'
+  metadata  Json?    // { oldData: ..., newData: ... } 
+  
+  // Security
+  ipAddress String?  // ip
+  userAgent String?  // 
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityId, entityType]) 
+  @@index([createdAt])
+}
+
+enum SettingKey {
+  GENERAL           
+  BOOKING_RULES     
+  BUS_AMENITIES     
+  PAYMENT_GATEWAYS  
 }
 
 enum UserRole {

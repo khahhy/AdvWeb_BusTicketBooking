@@ -2,9 +2,10 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { BadRequestException } from '@nestjs/common';
+import { ActivityLogsService } from 'src/activity-logs/activity-logs.service';
 import { CreateTripDto } from 'src/trips/dto/create-trip.dto';
 import { TripQueryDto } from 'src/trips/dto/trip-query.dto';
 import { UpdateTripDto } from 'src/trips/dto/update-trip.dto';
@@ -13,9 +14,17 @@ import { TripStatus } from '@prisma/client';
 
 @Injectable()
 export class TripsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityLogService: ActivityLogsService,
+  ) {}
 
-  async create(dto: CreateTripDto) {
+  async create(
+    dto: CreateTripDto,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     const { busId, stops } = dto;
 
     const bus = await this.prisma.buses.findUnique({ where: { id: busId } });
@@ -144,6 +153,18 @@ export class TripsService {
 
       await prisma.tripSegments.createMany({ data: segments });
 
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'CREATE_TRIP',
+        entityId: trip.id,
+        entityType: 'Trips',
+        metadata: {
+          tripId: trip.id,
+        },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return prisma.trips.findUnique({
         where: { id: trip.id },
         include: { tripStops: true },
@@ -268,7 +289,13 @@ export class TripsService {
     return trip;
   }
 
-  async update(tripId: string, dto: UpdateTripDto) {
+  async update(
+    tripId: string,
+    dto: UpdateTripDto,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     const trip = await this.prisma.trips.findUnique({
       where: { id: tripId },
       include: { bookings: true, tripStops: true, segments: true },
@@ -419,6 +446,18 @@ export class TripsService {
         await prisma.tripSegments.createMany({ data: segments });
       }
 
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'UPDATE_TRIP',
+        entityType: 'Trips',
+        entityId: trip.id,
+        metadata: {
+          tripId: trip.id,
+        },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return prisma.trips.findUnique({
         where: { id: tripId },
         include: {
@@ -433,7 +472,13 @@ export class TripsService {
     });
   }
 
-  async updateStatus(tripId: string, status: TripStatus) {
+  async updateStatus(
+    tripId: string,
+    status: TripStatus,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     const trip = await this.prisma.trips.findUnique({ where: { id: tripId } });
     if (!trip) throw new NotFoundException('Trip not found');
 
@@ -446,10 +491,22 @@ export class TripsService {
       data: { status },
     });
 
+    await this.activityLogService.logAction({
+      userId: userId,
+      action: 'UPDATE_STATUS_TRIP',
+      entityType: 'Trips',
+      entityId: trip.id,
+      metadata: {
+        tripId: trip.id,
+      },
+      ipAddress: ip,
+      userAgent: userAgent,
+    });
+
     return updatedTrip;
   }
 
-  async remove(tripId: string) {
+  async remove(tripId: string, userId: string, ip: string, userAgent: string) {
     const trip = await this.prisma.trips.findUnique({
       where: { id: tripId },
       include: { bookings: true },
@@ -464,6 +521,18 @@ export class TripsService {
         'Cannot delete trip with existing bookings',
       );
     }
+
+    await this.activityLogService.logAction({
+      userId: userId,
+      action: 'DELETE_TRIP',
+      entityType: 'Trips',
+      entityId: trip.id,
+      metadata: {
+        tripId: trip.id,
+      },
+      ipAddress: ip,
+      userAgent: userAgent,
+    });
 
     return this.prisma.$transaction(async (prisma) => {
       await prisma.tripSegments.deleteMany({ where: { tripId } });

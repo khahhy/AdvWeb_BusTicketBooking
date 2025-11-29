@@ -5,12 +5,16 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ActivityLogsService } from 'src/activity-logs/activity-logs.service';
 import { CreateBusDto } from './dto/create-bus.dto';
 import { UpdateBusDto } from './dto/update-bus.dto';
 
 @Injectable()
 export class BusesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityLogService: ActivityLogsService,
+  ) {}
 
   private generateSeats(busId: string) {
     const seats: Array<{
@@ -34,7 +38,12 @@ export class BusesService {
     return seats;
   }
 
-  async create(createBusDto: CreateBusDto) {
+  async create(
+    createBusDto: CreateBusDto,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     try {
       const exists = await this.prisma.buses.findUnique({
         where: { plate: createBusDto.plate },
@@ -54,6 +63,16 @@ export class BusesService {
 
       await this.prisma.seats.createMany({
         data: seats,
+      });
+
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'CREATE_BUS',
+        entityId: bus.id,
+        entityType: 'Buses',
+        metadata: { busId: bus.id },
+        ipAddress: ip,
+        userAgent: userAgent,
       });
 
       return { message: 'Bus created successfully', data: bus };
@@ -93,7 +112,13 @@ export class BusesService {
     }
   }
 
-  async update(id: string, data: UpdateBusDto) {
+  async update(
+    id: string,
+    data: UpdateBusDto,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     try {
       const bus = await this.prisma.buses.findUnique({ where: { id } });
       if (!bus) throw new NotFoundException('Bus not found');
@@ -102,6 +127,16 @@ export class BusesService {
         where: { id },
         data,
       });
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'UPDATE_BUS',
+        entityId: bus.id,
+        entityType: 'Buses',
+        metadata: { busId: bus.id },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return { message: 'Bus updated successfully', data: updatedBus };
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
@@ -111,7 +146,7 @@ export class BusesService {
     }
   }
 
-  async remove(id: string) {
+  async remove(id: string, userId: string, ip: string, userAgent: string) {
     try {
       const bus = await this.prisma.buses.findUnique({ where: { id } });
       if (!bus) throw new NotFoundException('Bus not found');
@@ -120,6 +155,16 @@ export class BusesService {
         this.prisma.seats.deleteMany({ where: { busId: id } }),
         this.prisma.buses.delete({ where: { id } }),
       ]);
+
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'DELETE_BUS',
+        entityId: bus.id,
+        entityType: 'Buses',
+        metadata: { busId: bus.id },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
 
       return { message: 'Bus deleted successfully', data: deletedBus };
     } catch (err) {

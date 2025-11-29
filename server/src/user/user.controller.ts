@@ -10,6 +10,7 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import {
@@ -29,6 +30,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { QueryUserDto } from './dto/query-user.dto';
+import type { RequestWithUser } from 'src/common/type/request-with-user.interface';
 
 @ApiTags('users')
 @Controller('users')
@@ -57,8 +59,14 @@ export class UserController {
   })
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async createAdmin(@Body() createUserDto: CreateUserDto) {
-    return this.userService.createAdmin(createUserDto);
+  async createAdmin(
+    @Body() createUserDto: CreateUserDto,
+    @Req() req: RequestWithUser,
+  ) {
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.userService.createAdmin(createUserDto, userId, ip, userAgent);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -96,6 +104,9 @@ export class UserController {
     return this.userService.update(id, updateUserDto);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update user role' })
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiBody({ type: UpdateRoleDto })
@@ -105,10 +116,23 @@ export class UserController {
   async updateRole(
     @Param('id') id: string,
     @Body() updateRoleDto: UpdateRoleDto,
+    @Req() req: RequestWithUser,
   ) {
-    return this.userService.updateRole(id, updateRoleDto);
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.userService.updateRole(
+      id,
+      updateRoleDto,
+      userId,
+      ip,
+      userAgent,
+    );
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update user status' })
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiBody({ type: UpdateStatusDto })
@@ -121,16 +145,32 @@ export class UserController {
   async updateStatus(
     @Param('id') id: string,
     @Body() updateStatusDto: UpdateStatusDto,
+    @Req() req: RequestWithUser,
   ) {
-    return this.userService.updateStatus(id, updateStatusDto);
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.userService.updateStatus(
+      id,
+      updateStatusDto,
+      userId,
+      ip,
+      userAgent,
+    );
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Delete a user' })
   @ApiParam({ name: 'id', description: 'User ID', type: String })
   @ApiResponse({ status: 200, description: 'User deleted successfully.' })
   @ApiResponse({ status: 404, description: 'User not found.' })
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.userService.remove(id);
+  async remove(@Param('id') id: string, @Req() req: RequestWithUser) {
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.userService.remove(id, userId, ip, userAgent);
   }
 }

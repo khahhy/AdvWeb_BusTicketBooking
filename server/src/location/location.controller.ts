@@ -10,6 +10,7 @@ import {
   HttpStatus,
   UseGuards,
   Query,
+  Req,
 } from '@nestjs/common';
 import { LocationsService } from './location.service';
 import {
@@ -27,6 +28,7 @@ import { UserRole } from '@prisma/client';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
 import { QueryLocationDto } from './dto/query-location.dto';
+import type { RequestWithUser } from 'src/common/type/request-with-user.interface';
 
 @ApiTags('locations')
 @Controller('locations')
@@ -41,8 +43,19 @@ export class LocationsController {
   @ApiResponse({ status: 201, description: 'Location created successfully.' })
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createLocationDto: CreateLocationDto) {
-    return this.locationsService.create(createLocationDto);
+  async create(
+    @Body() createLocationDto: CreateLocationDto,
+    @Req() req: RequestWithUser,
+  ) {
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.locationsService.create(
+      createLocationDto,
+      userId,
+      ip,
+      userAgent,
+    );
   }
 
   @Get()
@@ -88,8 +101,18 @@ export class LocationsController {
   async update(
     @Param('id') id: string,
     @Body() updateLocationDto: UpdateLocationDto,
+    @Req() req: RequestWithUser,
   ) {
-    return this.locationsService.update(id, updateLocationDto);
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.locationsService.update(
+      id,
+      updateLocationDto,
+      userId,
+      ip,
+      userAgent,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -100,7 +123,10 @@ export class LocationsController {
   @ApiResponse({ status: 200, description: 'Location deleted successfully.' })
   @ApiResponse({ status: 404, description: 'Location not found.' })
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.locationsService.remove(id);
+  async remove(@Param('id') id: string, @Req() req: RequestWithUser) {
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.locationsService.remove(id, userId, ip, userAgent);
   }
 }

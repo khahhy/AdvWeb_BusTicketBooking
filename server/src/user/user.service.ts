@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ActivityLogsService } from 'src/activity-logs/activity-logs.service';
 import { hash } from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -15,7 +16,10 @@ import { QueryUserDto } from './dto/query-user.dto';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityLogService: ActivityLogsService,
+  ) {}
 
   async findAll(query: QueryUserDto) {
     try {
@@ -88,7 +92,12 @@ export class UserService {
     }
   }
 
-  async createAdmin(dto: CreateUserDto) {
+  async createAdmin(
+    dto: CreateUserDto,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     try {
       const existing = await this.prisma.users.findUnique({
         where: { email: dto.email },
@@ -118,6 +127,19 @@ export class UserService {
           role: 'admin',
           status: 'active',
         },
+      });
+
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'CREATE_ADMIN',
+        entityType: 'Users',
+        entityId: newUser.id,
+        metadata: {
+          userId: newUser.id,
+          email: newUser.email,
+        },
+        ipAddress: ip,
+        userAgent: userAgent,
       });
 
       return { message: 'Admin created successfully', data: newUser };
@@ -173,7 +195,13 @@ export class UserService {
     }
   }
 
-  async updateRole(id: string, dto: UpdateRoleDto) {
+  async updateRole(
+    id: string,
+    dto: UpdateRoleDto,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     try {
       const user = await this.prisma.users.findUnique({ where: { id } });
       if (!user) throw new NotFoundException('User not found');
@@ -183,6 +211,19 @@ export class UserService {
         data: { role: dto.role },
       });
 
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'UPDATE_ROLE_USER',
+        entityType: 'Users',
+        entityId: updatedUser.id,
+        metadata: {
+          userId: updatedUser.id,
+          email: updatedUser.email,
+        },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return { message: 'User role updated successfully', data: updatedUser };
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
@@ -190,7 +231,13 @@ export class UserService {
     }
   }
 
-  async updateStatus(id: string, dto: UpdateStatusDto) {
+  async updateStatus(
+    id: string,
+    dto: UpdateStatusDto,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     try {
       const user = await this.prisma.users.findUnique({ where: { id } });
       if (!user) throw new NotFoundException('User not found');
@@ -200,6 +247,19 @@ export class UserService {
         data: { status: dto.status },
       });
 
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'UPDARE_STATUS_USER',
+        entityType: 'Users',
+        entityId: updatedUser.id,
+        metadata: {
+          userId: updatedUser.id,
+          status: updatedUser.status,
+        },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return { message: 'User status updated successfully', data: updatedUser };
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
@@ -207,12 +267,24 @@ export class UserService {
     }
   }
 
-  async remove(id: string) {
+  async remove(id: string, userId: string, ip: string, userAgent: string) {
     try {
       const user = await this.prisma.users.findUnique({ where: { id } });
       if (!user) throw new NotFoundException('User not found');
 
       const deletedUser = await this.prisma.users.delete({ where: { id } });
+
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'DELETE_USER',
+        entityType: 'Users',
+        entityId: deletedUser.id,
+        metadata: {
+          userId: deletedUser.id,
+        },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
 
       return { message: 'User deleted successfully', data: deletedUser };
     } catch (err) {

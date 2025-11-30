@@ -116,8 +116,19 @@ export class RoutesController {
   })
   @Post('trip-map')
   @HttpCode(HttpStatus.CREATED)
-  createTripRouteMap(@Body() createDto: CreateTripRouteMapDto) {
-    return this.routesService.createTripRouteMap(createDto);
+  createTripRouteMap(
+    @Body() createDto: CreateTripRouteMapDto,
+    @Req() req: RequestWithUser,
+  ) {
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.routesService.createTripRouteMap(
+      createDto,
+      userId,
+      ip,
+      userAgent,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -140,8 +151,18 @@ export class RoutesController {
   removeTripRouteMap(
     @Query('tripId') tripId: string,
     @Query('routeId') routeId: string,
+    @Req() req: RequestWithUser,
   ) {
-    return this.routesService.removeTripRouteMap(tripId, routeId);
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.routesService.removeTripRouteMap(
+      tripId,
+      routeId,
+      userId,
+      ip,
+      userAgent,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

@@ -1,11 +1,11 @@
 import { PrismaClient } from '@prisma/client';
-import { BusType } from '@prisma/client';
+import { BusType, SeatCapacity } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('Creating locations...');
-  
+
   // Create locations
   const hcmcStation = await prisma.locations.create({
     data: {
@@ -17,35 +17,35 @@ async function main() {
     },
   });
 
-  const hanoiStation = await prisma.locations.create({
-    data: {
-      name: 'Hanoi My Dinh Station',
-      address: 'My Dinh Bus Station, Nam Tu Liem',
-      city: 'Hanoi',
-      latitude: 21.0278,
-      longitude: 105.8342,
-    },
-  });
+  // const hanoiStation = await prisma.locations.create({
+  //   data: {
+  //     name: 'Hanoi My Dinh Station',
+  //     address: 'My Dinh Bus Station, Nam Tu Liem',
+  //     city: 'Hanoi',
+  //     latitude: 21.0278,
+  //     longitude: 105.8342,
+  //   },
+  // });
 
   const muineStation = await prisma.locations.create({
     data: {
       name: 'Mui Ne Station',
       address: 'Nguyen Dinh Chieu, Ham Tien',
       city: 'Mui Ne',
-      latitude: 10.9500,
+      latitude: 10.95,
       longitude: 108.2833,
     },
   });
 
-  const danangStation = await prisma.locations.create({
-    data: {
-      name: 'Da Nang Station',
-      address: '33 Dien Bien Phu, Hai Chau',
-      city: 'Da Nang',
-      latitude: 16.0471,
-      longitude: 108.2068,
-    },
-  });
+  // const danangStation = await prisma.locations.create({
+  //   data: {
+  //     name: 'Da Nang Station',
+  //     address: '33 Dien Bien Phu, Hai Chau',
+  //     city: 'Da Nang',
+  //     latitude: 16.0471,
+  //     longitude: 108.2068,
+  //   },
+  // });
 
   console.log('Creating buses...');
 
@@ -54,6 +54,7 @@ async function main() {
     data: {
       plate: '51A-12345',
       busType: BusType.standard,
+      seatCapacity: SeatCapacity.SEAT_32,
       amenities: {
         wifi: true,
         airCondition: true,
@@ -71,6 +72,7 @@ async function main() {
     data: {
       plate: '51A-67890',
       busType: BusType.vip,
+      seatCapacity: SeatCapacity.SEAT_16,
       amenities: {
         wifi: true,
         airCondition: true,
@@ -88,6 +90,7 @@ async function main() {
     data: {
       plate: '51A-11111',
       busType: BusType.sleeper,
+      seatCapacity: SeatCapacity.SEAT_32,
       amenities: {
         wifi: true,
         airCondition: true,
@@ -105,6 +108,7 @@ async function main() {
     data: {
       plate: '51A-22222',
       busType: BusType.limousine,
+      seatCapacity: SeatCapacity.SEAT_16,
       amenities: {
         wifi: true,
         airCondition: true,
@@ -131,32 +135,32 @@ async function main() {
     },
   });
 
-  const hanoiToMuine = await prisma.routes.create({
-    data: {
-      name: 'Hanoi to Mui Ne',
-      description: 'Long distance route from Hanoi to Mui Ne',
-      originLocationId: hanoiStation.id,
-      destinationLocationId: muineStation.id,
-      isActive: true,
-    },
-  });
+  // const hanoiToMuine = await prisma.routes.create({
+  //   data: {
+  //     name: 'Hanoi to Mui Ne',
+  //     description: 'Long distance route from Hanoi to Mui Ne',
+  //     originLocationId: hanoiStation.id,
+  //     destinationLocationId: muineStation.id,
+  //     isActive: true,
+  //   },
+  // });
 
-  const hcmcToDanang = await prisma.routes.create({
-    data: {
-      name: 'Ho Chi Minh City to Da Nang',
-      description: 'Route from Ho Chi Minh City to Da Nang',
-      originLocationId: hcmcStation.id,
-      destinationLocationId: danangStation.id,
-      isActive: true,
-    },
-  });
+  // const hcmcToDanang = await prisma.routes.create({
+  //   data: {
+  //     name: 'Ho Chi Minh City to Da Nang',
+  //     description: 'Route from Ho Chi Minh City to Da Nang',
+  //     originLocationId: hcmcStation.id,
+  //     destinationLocationId: danangStation.id,
+  //     isActive: true,
+  //   },
+  // });
 
   console.log('Creating trips...');
 
   // Create trips for next few days
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  
+
   const trip1 = await prisma.trips.create({
     data: {
       busId: standardBus.id,

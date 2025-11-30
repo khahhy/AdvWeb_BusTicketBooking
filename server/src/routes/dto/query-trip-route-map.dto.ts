@@ -1,17 +1,20 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsUUID, IsNumber, Min, IsEnum, IsArray, IsString, IsDateString } from 'class-validator';
-import { Type } from 'class-transformer';
+import {
+  IsOptional,
+  IsUUID,
+  IsNumber,
+  Min,
+  IsEnum,
+  IsArray,
+  IsString,
+  IsDateString,
+} from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { BusType, SeatCapacity } from '@prisma/client';
 
 export enum SortOrder {
   ASC = 'asc',
   DESC = 'desc',
-}
-
-export enum BusType {
-  STANDARD = 'standard',
-  VIP = 'vip',
-  SLEEPER = 'sleeper',
-  LIMOUSINE = 'limousine',
 }
 
 export class QueryTripRouteMapDto {
@@ -38,6 +41,14 @@ export class QueryTripRouteMapDto {
   @IsOptional()
   @IsUUID()
   routeId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by Route Name (partial match)',
+    example: 'Ho Chi Minh City - Đà Lạt',
+  })
+  @IsOptional()
+  @IsString()
+  routeName?: string;
 
   @ApiPropertyOptional({
     description: 'Filter by Location (Origin OR Destination)',
@@ -74,31 +85,50 @@ export class QueryTripRouteMapDto {
   @Min(0)
   maxPrice?: number;
 
+  @ApiPropertyOptional({ description: 'Minimum travel duration in minutes' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  minDuration?: number;
+
+  @ApiPropertyOptional({ description: 'Maximum travel duration in minutes' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  maxDuration?: number;
+
   @ApiPropertyOptional({ description: 'Sort by Price', enum: SortOrder })
   @IsOptional()
   @IsEnum(SortOrder)
   sortByPrice?: SortOrder;
 
+  @ApiPropertyOptional({ description: 'Sort by Duration', enum: SortOrder })
+  @IsOptional()
+  @IsEnum(SortOrder)
+  sortByDuration?: SortOrder;
+
   // Advanced filtering options
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Filter by departure date',
-    example: '2024-01-01'
+    example: '2024-01-01',
   })
   @IsOptional()
   @IsDateString()
   departureDate?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Filter by departure time start (HH:mm)',
-    example: '06:00'
+    example: '06:00',
   })
   @IsOptional()
   @IsString()
   departureTimeStart?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Filter by departure time end (HH:mm)',
-    example: '22:00'
+    example: '22:00',
   })
   @IsOptional()
   @IsString()
@@ -106,13 +136,31 @@ export class QueryTripRouteMapDto {
 
   @ApiPropertyOptional({
     enum: BusType,
-    description: 'Filter by bus type',
+    description: 'Filter by bus type (crtl + click with swagger)',
     isArray: true,
   })
   @IsOptional()
+  @Transform(({ value }) => {
+    return Array.isArray(value) ? (value as BusType[]) : ([value] as BusType[]);
+  })
   @IsArray()
   @IsEnum(BusType, { each: true })
   busType?: BusType[];
+
+  @ApiPropertyOptional({
+    enum: SeatCapacity,
+    description: 'Filter by seat capacity (crtl + click with swagger)',
+    isArray: true,
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    return Array.isArray(value)
+      ? (value as SeatCapacity[])
+      : ([value] as SeatCapacity[]);
+  })
+  @IsArray()
+  @IsEnum(SeatCapacity, { each: true })
+  seatCapacity?: SeatCapacity[];
 
   @ApiPropertyOptional({
     description: 'Filter by amenities (comma-separated)',

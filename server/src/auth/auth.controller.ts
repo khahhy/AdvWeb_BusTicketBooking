@@ -35,6 +35,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Register a new user - sends verification email' })
   @Post('signup')
   async signUp(@Body() dto: SignUpDto) {
+    console.log('controller', dto);
     return this.authService.signUp(dto);
   }
 

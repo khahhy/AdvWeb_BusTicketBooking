@@ -45,14 +45,15 @@ model Locations {
 }
 
 model Buses {
-  id        String   @id @default(uuid())
-  plate     String   @unique
-  busType   BusType  @default(standard)
-  amenities Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  seats     Seats[]
-  trips     Trips[]
+  id            String          @id @default(uuid())
+  plate         String          @unique
+  busType       BusType         @default(standard)
+  seatCapacity  SeatCapacity    @default(SEAT_16)
+  amenities     Json?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  seats         Seats[]
+  trips         Trips[]
 }
 
 model Seats {
@@ -65,6 +66,7 @@ model Seats {
   bus         Buses              @relation(fields: [busId], references: [id])
 
   @@unique([busId, seatNumber])
+  @@index([busId])
 }
 
 model Trips {
@@ -84,6 +86,8 @@ model Trips {
   bus        Buses              @relation(fields: [busId], references: [id])
 
   @@index([busId, startTime])
+  @@index([startTime])
+  @@index([status])
 }
 
 model TripStops {
@@ -101,6 +105,7 @@ model TripStops {
   trip            Trips          @relation(fields: [tripId], references: [id])
 
   @@unique([tripId, sequence])
+  @@index([tripId])
 }
 
 model TripSegments {
@@ -116,6 +121,7 @@ model TripSegments {
   trip            Trips              @relation(fields: [tripId], references: [id])
 
   @@unique([tripId, segmentIndex])
+  @@index([tripId])
 }
 
 model Routes {
@@ -141,6 +147,8 @@ model TripRouteMap {
   trip    Trips  @relation(fields: [tripId], references: [id])
 
   @@id([tripId, routeId])
+  @@index([routeId])
+  @@index([tripId])
 }
 
 model Bookings {
@@ -167,6 +175,11 @@ model Bookings {
   payments      Payments[]
   reviews       Reviews[]
   seatLocks     SeatSegmentLocks[]
+
+  @@index([userId])
+  @@index([tripId])
+  @@index([routeId])
+  @@index([seatId])
 }
 
 model SeatSegmentLocks {
@@ -180,6 +193,8 @@ model SeatSegmentLocks {
   trip      Trips        @relation(fields: [tripId], references: [id])
 
   @@id([tripId, seatId, segmentId])
+  @@index([tripId])
+  @@index([seatId])
 }
 
 model Payments {
@@ -192,6 +207,8 @@ model Payments {
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
   booking              Bookings      @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
 }
 
 model Reviews {
@@ -217,6 +234,9 @@ model Notifications {
   createdAt DateTime           @default(now())
   booking   Bookings?          @relation(fields: [bookingId], references: [id])
   user      Users              @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([bookingId])
 }
 
 model SystemSettings {
@@ -313,4 +333,10 @@ enum BusType {
   vip
   sleeper
   limousine
+}
+
+enum SeatCapacity {
+  SEAT_16
+  SEAT_28
+  SEAT_32
 }

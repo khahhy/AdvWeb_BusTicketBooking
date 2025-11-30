@@ -9,7 +9,7 @@ import { ActivityLogsService } from 'src/activity-logs/activity-logs.service';
 import { CreateBusDto } from './dto/create-bus.dto';
 import { UpdateBusDto } from './dto/update-bus.dto';
 import { QueryBusesDto } from './dto/query-buses.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, SeatCapacity, BusType } from '@prisma/client';
 
 @Injectable()
 export class BusesService {
@@ -18,22 +18,63 @@ export class BusesService {
     private readonly activityLogService: ActivityLogsService,
   ) {}
 
-  private generateSeats(busId: string) {
+  private generateSeats(busId: string, capacity: SeatCapacity) {
     const seats: Array<{
       busId: string;
       seatNumber: string;
       coordinates: { x: number; y: number };
     }> = [];
-    const columns = ['A', 'B', 'C', 'D'];
-    const rows = 8;
 
-    for (const col of columns) {
-      for (let row = 1; row <= rows; row++) {
+    if (capacity === SeatCapacity.SEAT_16) {
+      const seatLayout = [
+        { num: '01', x: 2, y: 0 },
+        { num: '02', x: 1, y: 0 },
+        { num: '03', x: 2, y: 1 },
+        { num: '04', x: 1, y: 1 },
+        { num: '05', x: 0, y: 1 },
+        { num: '06', x: 2, y: 2 },
+        { num: '07', x: 1, y: 2 },
+        { num: '08', x: 0, y: 2 },
+        { num: '09', x: 2, y: 3 },
+        { num: '10', x: 1, y: 3 },
+        { num: '11', x: 0, y: 3 },
+        { num: '12', x: 3, y: 4 },
+        { num: '13', x: 2, y: 4 },
+        { num: '14', x: 1, y: 4 },
+        { num: '15', x: 0, y: 4 },
+      ];
+
+      seatLayout.forEach((s) => {
         seats.push({
           busId,
-          seatNumber: `${col}${row}`,
-          coordinates: { x: columns.indexOf(col), y: row - 1 },
+          seatNumber: s.num,
+          coordinates: { x: s.x, y: s.y },
         });
+      });
+    } else {
+      let totalRows = 0;
+
+      switch (capacity) {
+        case SeatCapacity.SEAT_28:
+          totalRows = 7;
+          break;
+        case SeatCapacity.SEAT_32:
+        default:
+          totalRows = 8;
+          break;
+      }
+
+      let seatCounter = 1;
+
+      for (let row = 0; row < totalRows; row++) {
+        for (let col = 0; col < 4; col++) {
+          seats.push({
+            busId,
+            seatNumber: String(seatCounter).padStart(2, '0'),
+            coordinates: { x: col, y: row },
+          });
+          seatCounter++;
+        }
       }
     }
 
@@ -54,15 +95,18 @@ export class BusesService {
         throw new BadRequestException('Plate already exists');
       }
 
+      const seatCapacity = createBusDto.seatCapacity || SeatCapacity.SEAT_16;
+
       const bus = await this.prisma.buses.create({
         data: {
           plate: createBusDto.plate,
-          busType: createBusDto.busType || 'standard',
-          amenities: createBusDto.amenities || {},
+          busType: createBusDto.busType || BusType.standard,
+          seatCapacity: seatCapacity,
+          amenities: createBusDto.amenities || Prisma.JsonNull,
         },
       });
 
-      const seats = this.generateSeats(bus.id);
+      const seats = this.generateSeats(bus.id, seatCapacity);
 
       await this.prisma.seats.createMany({
         data: seats,
@@ -73,7 +117,7 @@ export class BusesService {
         action: 'CREATE_BUS',
         entityId: bus.id,
         entityType: 'Buses',
-        metadata: { busId: bus.id },
+        metadata: { busId: bus.id, plate: bus.plate },
         ipAddress: ip,
         userAgent: userAgent,
       });
@@ -91,20 +135,24 @@ export class BusesService {
     try {
       const where: Prisma.BusesWhereInput = {};
 
-      // Filter by bus type
       if (query?.busType && query.busType.length > 0) {
         where.busType = {
           in: query.busType,
         };
       }
 
-      // Filter by amenities
+      if (query?.seatCapacity && query.seatCapacity.length > 0) {
+        where.seatCapacity = {
+          in: query.seatCapacity,
+        };
+      }
+
       if (query?.amenities && query.amenities.length > 0) {
-        const amenityConditions = query.amenities.map(amenity => ({
+        const amenityConditions = query.amenities.map((amenity) => ({
           amenities: {
             path: [amenity],
-            equals: true
-          }
+            equals: true,
+          },
         }));
         where.AND = amenityConditions;
       }
@@ -149,14 +197,18 @@ export class BusesService {
 
       const updatedBus = await this.prisma.buses.update({
         where: { id },
-        data,
+        data: {
+          ...data,
+          amenities: data.amenities ?? undefined,
+        },
       });
+
       await this.activityLogService.logAction({
         userId: userId,
         action: 'UPDATE_BUS',
         entityId: bus.id,
         entityType: 'Buses',
-        metadata: { busId: bus.id },
+        metadata: { busId: bus.id, changes: data },
         ipAddress: ip,
         userAgent: userAgent,
       });
@@ -185,7 +237,7 @@ export class BusesService {
         action: 'DELETE_BUS',
         entityId: bus.id,
         entityType: 'Buses',
-        metadata: { busId: bus.id },
+        metadata: { busId: bus.id, plate: bus.plate },
         ipAddress: ip,
         userAgent: userAgent,
       });

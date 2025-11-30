@@ -124,7 +124,7 @@ export default function SearchPage() {
 
   // Get locations data for filtering
   const { data: locationsResponse = [] } = useGetLocationsQuery();
-  
+
   // Get unique cities only
   const uniqueCities = useMemo(() => {
     const citiesSet = new Set();

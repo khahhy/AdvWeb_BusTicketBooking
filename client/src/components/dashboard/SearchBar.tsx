@@ -13,7 +13,7 @@ export default function SearchBar() {
 
   // Get locations data from API
   const { data: locationsResponse = [] } = useGetLocationsQuery();
-  
+
   // Get unique cities only
   const uniqueCities = React.useMemo(() => {
     const citiesSet = new Set();

@@ -8,6 +8,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { ActivityLogsService } from 'src/activity-logs/activity-logs.service';
 import { CreateBusDto } from './dto/create-bus.dto';
 import { UpdateBusDto } from './dto/update-bus.dto';
+import { QueryBusesDto } from './dto/query-buses.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class BusesService {
@@ -55,6 +57,7 @@ export class BusesService {
       const bus = await this.prisma.buses.create({
         data: {
           plate: createBusDto.plate,
+          busType: createBusDto.busType || 'standard',
           amenities: createBusDto.amenities || {},
         },
       });
@@ -84,9 +87,30 @@ export class BusesService {
     }
   }
 
-  async findAll() {
+  async findAll(query?: QueryBusesDto) {
     try {
+      const where: Prisma.BusesWhereInput = {};
+
+      // Filter by bus type
+      if (query?.busType && query.busType.length > 0) {
+        where.busType = {
+          in: query.busType,
+        };
+      }
+
+      // Filter by amenities
+      if (query?.amenities && query.amenities.length > 0) {
+        const amenityConditions = query.amenities.map(amenity => ({
+          amenities: {
+            path: [amenity],
+            equals: true
+          }
+        }));
+        where.AND = amenityConditions;
+      }
+
       const buses = await this.prisma.buses.findMany({
+        where,
         orderBy: { createdAt: 'desc' },
       });
       return { message: 'Fetched all buses successfully', data: buses };

@@ -10,6 +10,7 @@ import {
   HttpStatus,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import { BusesService } from './buses.service';
 import {
@@ -26,6 +27,7 @@ import { Roles } from 'src/common/decorators/role.decorator';
 import { UserRole } from '@prisma/client';
 import { CreateBusDto } from './dto/create-bus.dto';
 import { UpdateBusDto } from './dto/update-bus.dto';
+import { QueryBusesDto } from './dto/query-buses.dto';
 import type { RequestWithUser } from 'src/common/type/request-with-user.interface';
 
 @ApiTags('buses')
@@ -52,11 +54,11 @@ export class BusesController {
     return this.busesService.create(createBusDto, userId, ip, userAgent);
   }
 
-  @ApiOperation({ summary: 'Get all buses' })
+  @ApiOperation({ summary: 'Get all buses with optional filtering' })
   @ApiResponse({ status: 200, description: 'Fetched all buses successfully.' })
   @Get()
-  async findAll() {
-    return this.busesService.findAll();
+  async findAll(@Query() query: QueryBusesDto) {
+    return this.busesService.findAll(query);
   }
 
   @ApiOperation({ summary: 'Get a specific bus by ID' })

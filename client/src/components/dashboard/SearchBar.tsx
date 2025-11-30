@@ -1,6 +1,7 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftRight, Search } from "lucide-react";
+import { useGetLocationsQuery } from "@/store/api/routesApi";
 import { DateRangeCalendar } from "@mui/x-date-pickers-pro/DateRangeCalendar";
 import { Box, Popover } from "@mui/material";
 import dayjs, { Dayjs } from "dayjs";
@@ -9,6 +10,21 @@ export default function SearchBar() {
   const navigate = useNavigate();
   const [fromLocation, setFromLocation] = useState("");
   const [toLocation, setToLocation] = useState("");
+
+  // Get locations data from API
+  const { data: locationsResponse = [] } = useGetLocationsQuery();
+  
+  // Get unique cities only
+  const uniqueCities = React.useMemo(() => {
+    const citiesSet = new Set();
+    return locationsResponse.filter(location => {
+      if (citiesSet.has(location.city)) {
+        return false;
+      }
+      citiesSet.add(location.city);
+      return true;
+    });
+  }, [locationsResponse]);
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([
     null,
     null,
@@ -77,13 +93,15 @@ export default function SearchBar() {
             onChange={(e) => setFromLocation(e.target.value)}
           >
             <option value="" className="dark:bg-black dark:text-gray-100">Select departure</option>
-            <option value="Ho Chi Minh City" className="dark:bg-black dark:text-gray-100">Ho Chi Minh City</option>
-            <option value="Hanoi" className="dark:bg-black dark:text-gray-100">Hanoi</option>
-            <option value="Da Nang" className="dark:bg-black dark:text-gray-100">Da Nang</option>
-            <option value="Hai Phong" className="dark:bg-black dark:text-gray-100">Hai Phong</option>
-            <option value="Can Tho" className="dark:bg-black dark:text-gray-100">Can Tho</option>
-            <option value="Nha Trang" className="dark:bg-black dark:text-gray-100">Nha Trang</option>
-            <option value="Hue" className="dark:bg-black dark:text-gray-100">Hue</option>
+            {uniqueCities.map((location) => (
+              <option
+                key={location.id}
+                value={location.city}
+                className="dark:bg-black dark:text-gray-100"
+              >
+                {location.city}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -105,17 +123,15 @@ export default function SearchBar() {
             onChange={(e) => setToLocation(e.target.value)}
           >
             <option value="" className="dark:bg-black dark:text-gray-100">Select destination</option>
-            <option value="Ho Chi Minh City" className="dark:bg-black dark:text-gray-100">Ho Chi Minh City</option>
-            <option value="Hanoi" className="dark:bg-black dark:text-gray-100">Hanoi</option>
-            <option value="Da Nang" className="dark:bg-black dark:text-gray-100">Da Nang</option>
-            <option value="Da Lat" className="dark:bg-black dark:text-gray-100">Da Lat</option>
-            <option value="Nha Trang" className="dark:bg-black dark:text-gray-100">Nha Trang</option>
-            <option value="Can Tho" className="dark:bg-black dark:text-gray-100">Can Tho</option>
-            <option value="Mui Ne" className="dark:bg-black dark:text-gray-100">Mui Ne</option>
-            <option value="Phu Quoc" className="dark:bg-black dark:text-gray-100">Phu Quoc</option>
-            <option value="Sapa" className="dark:bg-black dark:text-gray-100">Sapa</option>
-            <option value="Hue" className="dark:bg-black dark:text-gray-100">Hue</option>
-            <option value="Hoi An" className="dark:bg-black dark:text-gray-100">Hoi An</option>
+            {uniqueCities.map((location) => (
+              <option
+                key={location.id}
+                value={location.city}
+                className="dark:bg-black dark:text-gray-100"
+              >
+                {location.city}
+              </option>
+            ))}
           </select>
         </div>
 

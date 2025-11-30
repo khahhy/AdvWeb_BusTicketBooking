@@ -569,9 +569,16 @@ export class RoutesService {
         routeId,
         tripId,
         locationId,
+        originLocationId,
+        destinationLocationId,
         minPrice,
         maxPrice,
         sortByPrice,
+        departureDate,
+        departureTimeStart,
+        departureTimeEnd,
+        busType,
+        amenities,
       } = query;
 
       const skip = (page - 1) * limit;
@@ -590,10 +597,95 @@ export class RoutesService {
         };
       }
 
+      // Specific origin and destination filtering
+      if (originLocationId || destinationLocationId) {
+        where.route = where.route || {};
+        if (originLocationId) {
+          where.route.originLocationId = originLocationId;
+        }
+        if (destinationLocationId) {
+          where.route.destinationLocationId = destinationLocationId;
+        }
+      }
+
       if (minPrice !== undefined || maxPrice !== undefined) {
         where.price = {};
         if (minPrice !== undefined) where.price.gte = minPrice;
         if (maxPrice !== undefined) where.price.lte = maxPrice;
+      }
+
+      // Advanced filtering conditions
+      const tripConditions: any = {};
+
+      // Filter by departure date
+      if (departureDate) {
+        const startOfDay = new Date(departureDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(departureDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        tripConditions.startTime = {
+          gte: startOfDay,
+          lte: endOfDay,
+        };
+      }
+
+      // Filter by departure time range
+      if (departureTimeStart || departureTimeEnd) {
+        if (!tripConditions.startTime) {
+          tripConditions.startTime = {};
+        }
+        
+        if (departureTimeStart) {
+          const [hours, minutes] = departureTimeStart.split(':').map(Number);
+          if (departureDate) {
+            const startTime = new Date(departureDate);
+            startTime.setHours(hours, minutes, 0, 0);
+            tripConditions.startTime.gte = startTime;
+          }
+        }
+        
+        if (departureTimeEnd) {
+          const [hours, minutes] = departureTimeEnd.split(':').map(Number);
+          if (departureDate) {
+            const endTime = new Date(departureDate);
+            endTime.setHours(hours, minutes, 59, 999);
+            tripConditions.startTime.lte = endTime;
+          }
+        }
+      }
+
+      // Filter by bus type
+      if (busType && busType.length > 0) {
+        tripConditions.bus = {
+          busType: {
+            in: busType,
+          },
+        };
+      }
+
+      // Filter by amenities
+      if (amenities && amenities.length > 0) {
+        const amenityConditions = amenities.map(amenity => ({
+          bus: {
+            amenities: {
+              path: [amenity],
+              equals: true
+            }
+          }
+        }));
+        
+        if (tripConditions.bus) {
+          tripConditions.AND = amenityConditions;
+        } else {
+          tripConditions.bus = {
+            AND: amenityConditions.map(condition => condition.bus)
+          };
+        }
+      }
+
+      if (Object.keys(tripConditions).length > 0) {
+        where.trip = tripConditions;
       }
 
       const orderBy: Prisma.TripRouteMapOrderByWithRelationInput = {};
@@ -620,8 +712,15 @@ export class RoutesService {
             trip: {
               select: {
                 startTime: true,
+                endTime: true,
                 status: true,
-                bus: { select: { plate: true } },
+                bus: { 
+                  select: { 
+                    plate: true, 
+                    busType: true,
+                    amenities: true
+                  } 
+                },
               },
             },
           },

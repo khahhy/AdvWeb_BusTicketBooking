@@ -1,33 +1,27 @@
-import { useState, useEffect, useMemo } from "react";
-import { ArrowLeftRight, Search } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import dayjs, { Dayjs } from "dayjs";
 import Navbar from "@/components/common/Navbar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import backgroundImage from "@/assets/images/background.png";
 import TripCard from "@/components/search/TripCard";
 import FilterPanel, { FilterState } from "@/components/search/FilterPanel";
 import Footer from "@/components/dashboard/Footer";
 import { mockTrips } from "@/data/mockTrips";
-import { useGetTripRouteMapQuery, useGetLocationsQuery } from "@/store/api/routesApi";
+import {
+  useGetTripRouteMapQuery,
+  useGetLocationsQuery,
+} from "@/store/api/routesApi";
 import { QueryTripRouteParams } from "@/store/type/tripRoutesType";
+import TripSearchBar from "@/components/common/TripSearchBar";
 
 export default function SearchPage() {
   const [searchParams] = useSearchParams();
-  const [fromLocation, setFromLocation] = useState(() => searchParams.get("from") || "Ho Chi Minh City");
-  const [toLocation, setToLocation] = useState(() => searchParams.get("to") || "Mui Ne");
+  const [fromLocation, setFromLocation] = useState(
+    () => searchParams.get("from") || "Ho Chi Minh City",
+  );
+  const [toLocation, setToLocation] = useState(
+    () => searchParams.get("to") || "Mui Ne",
+  );
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(() => {
     const dateParam = searchParams.get("departureDate");
     return dateParam ? dayjs(dateParam) : dayjs();
@@ -53,7 +47,9 @@ export default function SearchPage() {
   }, [searchParams]);
 
   // Convert frontend filters to API parameters
-  const convertFiltersToApiParams = (filterState: FilterState): QueryTripRouteParams => {
+  const convertFiltersToApiParams = (
+    filterState: FilterState,
+  ): QueryTripRouteParams => {
     const params: QueryTripRouteParams = {
       page: 1,
       limit: 20,
@@ -61,11 +57,11 @@ export default function SearchPage() {
 
     // Add location filtering - find location ID from city name
     if (locationsResponse && (fromLocation || toLocation)) {
-      const originLocation = locationsResponse.find(loc =>
-        loc.city === fromLocation || loc.name === fromLocation
+      const originLocation = locationsResponse.find(
+        (loc) => loc.city === fromLocation || loc.name === fromLocation,
       );
-      const destLocation = locationsResponse.find(loc =>
-        loc.city === toLocation || loc.name === toLocation
+      const destLocation = locationsResponse.find(
+        (loc) => loc.city === toLocation || loc.name === toLocation,
       );
 
       // Use specific origin and destination location IDs for precise filtering
@@ -79,25 +75,32 @@ export default function SearchPage() {
 
     // Add departure date if selected
     if (selectedDate) {
-      params.departureDate = selectedDate.format('YYYY-MM-DD');
+      params.departureDate = selectedDate.format("YYYY-MM-DD");
     }
 
     // Convert time slots to time ranges
     if (filterState.departureTime.length > 0) {
-      const timeRanges = filterState.departureTime.map(slot => {
-        switch (slot) {
-          case 'early-morning': return { start: '00:00', end: '06:00' };
-          case 'morning': return { start: '06:01', end: '12:00' };
-          case 'afternoon': return { start: '12:01', end: '18:00' };
-          case 'evening': return { start: '18:01', end: '23:59' };
-          default: return null;
-        }
-      }).filter(Boolean);
+      const timeRanges = filterState.departureTime
+        .map((slot) => {
+          switch (slot) {
+            case "early-morning":
+              return { start: "00:00", end: "06:00" };
+            case "morning":
+              return { start: "06:01", end: "12:00" };
+            case "afternoon":
+              return { start: "12:01", end: "18:00" };
+            case "evening":
+              return { start: "18:01", end: "23:59" };
+            default:
+              return null;
+          }
+        })
+        .filter(Boolean);
 
       if (timeRanges.length > 0) {
         // Use the earliest start and latest end
-        const starts = timeRanges.map(r => r!.start);
-        const ends = timeRanges.map(r => r!.end);
+        const starts = timeRanges.map((r) => r!.start);
+        const ends = timeRanges.map((r) => r!.end);
         params.departureTimeStart = starts.sort()[0];
         params.departureTimeEnd = ends.sort().reverse()[0];
       }
@@ -125,34 +128,27 @@ export default function SearchPage() {
   // Get locations data for filtering
   const { data: locationsResponse = [] } = useGetLocationsQuery();
 
-  // Get unique cities only
-  const uniqueCities = useMemo(() => {
-    const citiesSet = new Set();
-    return locationsResponse.filter(location => {
-      if (citiesSet.has(location.city)) {
-        return false;
-      }
-      citiesSet.add(location.city);
-      return true;
-    });
-  }, [locationsResponse]);
-
   // Get trip route maps with current filters
   const apiParams = convertFiltersToApiParams(filters);
-  const { data: tripRouteData, isLoading, error } = useGetTripRouteMapQuery(apiParams);
+  const {
+    data: tripRouteData,
+    isLoading,
+    error,
+  } = useGetTripRouteMapQuery(apiParams);
 
   const handleFilterChange = (newFilters: FilterState) => {
     setFilters(newFilters);
   };
 
-  const handleSwap = () => {
-    const temp = fromLocation;
-    setFromLocation(toLocation);
-    setToLocation(temp);
-  };
-
-  const handleSearch = () => {
-    console.log("Searching...", { fromLocation, toLocation, selectedDate });
+  const handleSearch = (params: {
+    from: string;
+    to: string;
+    date: Dayjs | null;
+  }) => {
+    setFromLocation(params.from);
+    setToLocation(params.to);
+    setSelectedDate(params.date);
+    console.log("Searching...", params);
   };
 
   const formatDate = () => {
@@ -191,83 +187,13 @@ export default function SearchPage() {
           </p>
 
           {/* Search Bar */}
-          <div className="max-w-4xl mx-auto opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]">
-            <div className="flex items-center gap-4 bg-white dark:bg-black rounded-full shadow-2xl p-2 border border-gray-200 dark:border-gray-700">
-              {/* From Field */}
-              <div className="flex-1 px-6 py-4">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                  From
-                </div>
-                <Select value={fromLocation} onValueChange={setFromLocation}>
-                  <SelectTrigger className="w-full text-lg font-medium border-0 focus:ring-0 bg-transparent h-auto p-0 dark:text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {uniqueCities?.map((location) => (
-                      <SelectItem key={location.id} value={location.city}>
-                        {location.city}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Swap Button */}
-              <button
-                onClick={handleSwap}
-                className="flex-shrink-0 p-3 bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full transition-colors duration-200"
-                type="button"
-              >
-                <ArrowLeftRight className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-              </button>
-
-              {/* To Field */}
-              <div className="flex-1 px-6 py-4">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">To</div>
-                <Select value={toLocation} onValueChange={setToLocation}>
-                  <SelectTrigger className="w-full text-lg font-medium border-0 focus:ring-0 bg-transparent h-auto p-0 dark:text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {uniqueCities?.map((location) => (
-                      <SelectItem key={location.id} value={location.city}>
-                        {location.city}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Date Picker */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <div className="flex-1 px-6 py-4 cursor-pointer">
-                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                      Date
-                    </div>
-                    <div className="text-lg font-medium text-gray-900 dark:text-white">
-                      {formatDate()}
-                    </div>
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="center">
-                  <Calendar
-                    value={selectedDate}
-                    onChange={setSelectedDate}
-                    disablePast
-                  />
-                </PopoverContent>
-              </Popover>
-
-              {/* Search Button */}
-              <button
-                onClick={handleSearch}
-                className="flex-shrink-0 bg-black dark:bg-white text-white dark:text-black p-4 rounded-full hover:bg-gray-800 dark:hover:bg-gray-200 transition-all duration-200 transform hover:scale-105"
-              >
-                <Search className="w-6 h-6" />
-              </button>
-            </div>
-          </div>
+          <TripSearchBar
+            initialFrom={fromLocation}
+            initialTo={toLocation}
+            initialDate={selectedDate}
+            onSearch={handleSearch}
+            showAnimation={true}
+          />
         </div>
       </div>
 
@@ -290,8 +216,13 @@ export default function SearchPage() {
                 {(() => {
                   if (isLoading) return "Loading...";
 
-                  const hasApiData = tripRouteData?.items && tripRouteData.items.length > 0;
-                  const trips = hasApiData ? tripRouteData.items : (error ? mockTrips : []);
+                  const hasApiData =
+                    tripRouteData?.items && tripRouteData.items.length > 0;
+                  const trips = hasApiData
+                    ? tripRouteData.items
+                    : error
+                      ? mockTrips
+                      : [];
                   return `${trips.length} trips found`;
                 })()}
               </div>
@@ -310,13 +241,17 @@ export default function SearchPage() {
           <div className="flex-1 space-y-6">
             {isLoading && (
               <div className="flex justify-center items-center py-8">
-                <div className="text-gray-600 dark:text-gray-400">Loading trips...</div>
+                <div className="text-gray-600 dark:text-gray-400">
+                  Loading trips...
+                </div>
               </div>
             )}
 
             {error && (
               <div className="flex justify-center items-center py-8">
-                <div className="text-red-600 dark:text-red-400">Error loading trips. Using mock data.</div>
+                <div className="text-red-600 dark:text-red-400">
+                  Error loading trips. Using mock data.
+                </div>
               </div>
             )}
 
@@ -328,22 +263,28 @@ export default function SearchPage() {
 
               if (tripRouteData?.items && tripRouteData.items.length > 0) {
                 // Convert TripRoute data to Trip format for TripCard component
-                return tripRouteData.items.map(tripRoute => ({
+                return tripRouteData.items.map((tripRoute) => ({
                   id: tripRoute.tripId,
-                  departureTime: dayjs(tripRoute.trip.startTime).format('HH:mm'),
-                  arrivalTime: dayjs(tripRoute.trip.endTime).format('HH:mm'),
-                  duration: dayjs(tripRoute.trip.endTime).diff(dayjs(tripRoute.trip.startTime), 'hour') + 'h',
+                  departureTime: dayjs(tripRoute.trip.startTime).format(
+                    "HH:mm",
+                  ),
+                  arrivalTime: dayjs(tripRoute.trip.endTime).format("HH:mm"),
+                  duration:
+                    dayjs(tripRoute.trip.endTime).diff(
+                      dayjs(tripRoute.trip.startTime),
+                      "hour",
+                    ) + "h",
                   from: tripRoute.route.origin.city,
                   to: tripRoute.route.destination.city,
                   price: Number(tripRoute.price),
                   availableSeats: 20, // This would need to come from backend
                   totalSeats: 32, // Default total seats
-                  busType: tripRoute.trip.bus.busType || 'standard',
+                  busType: tripRoute.trip.bus.busType || "standard",
                   amenities: tripRoute.trip.bus.amenities || {},
                 }));
               } else if (error) {
                 // Only use mock data as fallback when there's an error
-                console.warn('API error, falling back to mock data:', error);
+                console.warn("API error, falling back to mock data:", error);
                 return mockTrips;
               } else {
                 // No data available
@@ -364,8 +305,13 @@ export default function SearchPage() {
             {(() => {
               if (isLoading) return false;
 
-              const hasApiData = tripRouteData?.items && tripRouteData.items.length > 0;
-              const trips = hasApiData ? tripRouteData.items : (error ? mockTrips : []);
+              const hasApiData =
+                tripRouteData?.items && tripRouteData.items.length > 0;
+              const trips = hasApiData
+                ? tripRouteData.items
+                : error
+                  ? mockTrips
+                  : [];
               return trips.length === 0;
             })() && (
               <div className="text-center py-16">

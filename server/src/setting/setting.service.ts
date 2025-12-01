@@ -6,6 +6,7 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SettingKey, Prisma } from '@prisma/client';
 import { ActivityLogsService } from 'src/activity-logs/activity-logs.service';
+import { RedisCacheService } from 'src/cache/redis-cache.service';
 import { BookingRulesSettingsDto } from './dto/booking-rule-setting.dto';
 import { BusAmenitiesSettingsDto } from './dto/bus-amenities-setting.dto';
 import { GeneralSettingsDto } from './dto/general-setting.dto';
@@ -22,6 +23,7 @@ export class SettingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly activityLogService: ActivityLogsService,
+    private readonly cacheManager: RedisCacheService,
   ) {}
 
   private getDescriptionByKey(key: SettingKey): string {
@@ -41,6 +43,17 @@ export class SettingService {
 
   async findOne(key: SettingKey) {
     try {
+      const cacheKey = `settings:${key}`;
+      const cachedData =
+        await this.cacheManager.get<SettingsValueDto>(cacheKey);
+
+      if (cachedData) {
+        return {
+          message: 'Fetched settings successfully (from cache)',
+          data: cachedData,
+        };
+      }
+
       const setting = await this.prisma.systemSettings.findUnique({
         where: { key },
       });
@@ -48,7 +61,7 @@ export class SettingService {
       if (!setting) {
         return { message: 'Setting not found, returning default', data: null };
       }
-
+      await this.cacheManager.set(cacheKey, setting.value, 86400);
       return { message: 'Fetched settings successfully', data: setting.value };
     } catch (err) {
       throw new InternalServerErrorException('Failed to fetch settings', {
@@ -81,6 +94,7 @@ export class SettingService {
         },
       });
 
+      await this.cacheManager.del(`settings:${key}`);
       await this.activityLogService.logAction({
         userId: userId,
         action: 'UPSERT_SETTING',

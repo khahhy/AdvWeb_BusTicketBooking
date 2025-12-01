@@ -13,6 +13,9 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { AuthModule } from './auth/auth.module';
 import { SettingModule } from './setting/setting.module';
 import { ActivityLogsModule } from './activity-logs/activity-logs.module';
+import { RedisModule } from './redis/redis.module';
+import { RedisCacheModule } from './cache/redis-cache.module';
+
 @Module({
   imports: [
     PrismaModule,
@@ -26,6 +29,8 @@ import { ActivityLogsModule } from './activity-logs/activity-logs.module';
     AuthModule,
     SettingModule,
     ActivityLogsModule,
+    RedisModule,
+    RedisCacheModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

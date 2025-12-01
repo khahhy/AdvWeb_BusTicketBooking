@@ -6,6 +6,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { ActivityLogsService } from 'src/activity-logs/activity-logs.service';
+import { RedisCacheService } from 'src/cache/redis-cache.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateRouteDto } from './dto/create-route.dto';
 import { UpdateRouteDto } from './dto/update-route.dto';
@@ -22,7 +23,10 @@ import {
   TripStops,
   Locations,
   BookingStatus,
+  Routes,
 } from '@prisma/client';
+import { TripsForRouteResponse } from 'src/common/type/trip-available-for-route.interface';
+import { TopPerformingRoute } from 'src/common/type/top-performing-route.interface';
 
 @Injectable()
 export class RoutesService {
@@ -33,7 +37,27 @@ export class RoutesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly activityLogService: ActivityLogsService,
+    private readonly cacheManager: RedisCacheService,
   ) {}
+
+  private async clearRouteCache(id?: string) {
+    await this.cacheManager.delByPattern('routes:all*');
+    if (id) {
+      await this.cacheManager.del(`routes:detail:${id}`);
+    }
+  }
+
+  private async clearTripMapCache(tripId?: string, routeId?: string) {
+    await this.cacheManager.delByPattern('trip-route-map:search*');
+    await this.cacheManager.del('routes:top-performing');
+
+    if (routeId) {
+      await this.cacheManager.delByPattern(`routes:trips:${routeId}*`);
+    }
+    if (tripId && routeId) {
+      await this.cacheManager.del(`trip-route-map:detail:${tripId}:${routeId}`);
+    }
+  }
 
   async create(
     createRouteDto: CreateRouteDto,
@@ -88,6 +112,8 @@ export class RoutesService {
         },
       });
 
+      await this.clearRouteCache();
+
       await this.activityLogService.logAction({
         userId: userId,
         action: 'CREATE_ROUTE',
@@ -114,6 +140,13 @@ export class RoutesService {
 
   async findAll(originId?: string, destinationId?: string, isActive?: boolean) {
     try {
+      const cacheKey = `routes:all:${JSON.stringify({ originId, destinationId, isActive })}`;
+
+      const cachedData = await this.cacheManager.get<Routes[]>(cacheKey);
+      if (cachedData) {
+        return { message: 'Fetched routes successfully', data: cachedData };
+      }
+
       const where: Prisma.RoutesWhereInput = {};
       if (originId) where.originLocationId = originId;
       if (destinationId) where.destinationLocationId = destinationId;
@@ -128,6 +161,8 @@ export class RoutesService {
         orderBy: { createdAt: 'desc' },
       });
 
+      await this.cacheManager.set(cacheKey, routes, 86400);
+
       return { message: 'Fetched routes successfully', data: routes };
     } catch (err) {
       throw new InternalServerErrorException('Failed to fetch routes', {
@@ -138,6 +173,12 @@ export class RoutesService {
 
   async findOne(id: string) {
     try {
+      const cacheKey = `routes:detail:${id}`;
+      const cachedData = await this.cacheManager.get<Routes>(cacheKey);
+
+      if (cachedData)
+        return { message: 'Fetched route successfully', data: cachedData };
+
       const route = await this.prisma.routes.findUnique({
         where: { id },
         include: {
@@ -152,6 +193,8 @@ export class RoutesService {
       });
 
       if (!route) throw new NotFoundException('Route not found');
+
+      await this.cacheManager.set(cacheKey, route, 86400);
 
       return { message: 'Fetched route successfully', data: route };
     } catch (err) {
@@ -223,6 +266,7 @@ export class RoutesService {
         },
       });
 
+      await this.clearRouteCache(id);
       await this.activityLogService.logAction({
         userId: userId,
         action: 'UPDATE_ROUTE',
@@ -271,6 +315,7 @@ export class RoutesService {
         }),
       ]);
 
+      await this.clearRouteCache(id);
       await this.activityLogService.logAction({
         userId: userId,
         action: 'DELETE_ROUTE',
@@ -300,6 +345,16 @@ export class RoutesService {
   // trip contain location of route, not sure it's activate
   async findTripsForRoute(routeId: string, query: GetRouteTripsDto) {
     try {
+      const cacheKey = `routes:trips:${routeId}:${JSON.stringify(query)}`;
+      const cachedData =
+        await this.cacheManager.get<TripsForRouteResponse[]>(cacheKey);
+
+      if (cachedData) {
+        return {
+          message: `Found ${cachedData.length} trips matching this route`,
+          data: cachedData,
+        };
+      }
       const route = await this.prisma.routes.findUnique({
         where: { id: routeId },
       });
@@ -358,6 +413,7 @@ export class RoutesService {
         })
         .filter((item) => item !== null);
 
+      await this.cacheManager.set(cacheKey, result, 300);
       return {
         message: `Found ${result.length} trips matching this route`,
         data: result,
@@ -445,6 +501,7 @@ export class RoutesService {
 
       const [newTripRouteMap] = await this.prisma.$transaction(operations);
 
+      await this.clearTripMapCache(tripId, routeId);
       await this.activityLogService.logAction({
         userId: userId,
         action: 'CREATE_TRIP_ROUTE_MAP',
@@ -510,6 +567,7 @@ export class RoutesService {
         },
       });
 
+      await this.clearTripMapCache(tripId, routeId);
       await this.activityLogService.logAction({
         userId: userId,
         action: 'DELETE_TRIP_ROUTE_MAP',
@@ -536,6 +594,15 @@ export class RoutesService {
 
   async getTripRouteMap(tripId: string, routeId: string) {
     try {
+      const cacheKey = `trip-route-map:detail:${tripId}:${routeId}`;
+      const cachedData =
+        await this.cacheManager.get<TripsForRouteResponse>(cacheKey);
+      if (cachedData)
+        return {
+          message: 'Fetched trip detail successfully',
+          data: cachedData,
+        };
+
       const data = await this.prisma.tripRouteMap.findUnique({
         where: {
           tripId_routeId: { tripId, routeId },
@@ -559,7 +626,7 @@ export class RoutesService {
         throw new NotFoundException('TripRouteMap configuration not found');
       }
 
-      return {
+      const response = {
         message: 'Fetched trip detail successfully',
         data: {
           tripId: data.tripId,
@@ -569,12 +636,10 @@ export class RoutesService {
           startTime: data.trip.startTime,
           endTime: data.trip.endTime,
           status: data.trip.status,
-
           bus: {
             plate: data.trip.bus.plate,
             amenities: data.trip.bus.amenities,
           },
-
           routeName: data.route.name,
           origin: data.route.origin.name,
           originCity: data.route.origin.city,
@@ -582,6 +647,10 @@ export class RoutesService {
           destinationCity: data.route.destination.city,
         },
       };
+
+      await this.cacheManager.set(cacheKey, response, 1800);
+
+      return response;
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
       throw new InternalServerErrorException(
@@ -594,6 +663,17 @@ export class RoutesService {
   // Get All Trip Maps with Pagination & Filter
   async findAllTripRouteMaps(query: QueryTripRouteMapDto) {
     try {
+      const cacheKey = `trip-route-map:search:${JSON.stringify(query)}`;
+
+      const cachedData =
+        await this.cacheManager.get<TripsForRouteResponse>(cacheKey);
+      if (cachedData) {
+        return {
+          message: 'Fetched trip route maps successfully (from cache)',
+          data: cachedData,
+        };
+      }
+
       const {
         page = 1,
         limit = 20,
@@ -818,17 +898,15 @@ export class RoutesService {
         }
       }
 
+      const resultData = {
+        items: finalData,
+        meta: { total, page, limit, lastPage: Math.ceil(total / limit) },
+      };
+      await this.cacheManager.set(cacheKey, resultData, 300);
+
       return {
         message: 'Fetched trip route maps successfully',
-        data: {
-          items: finalData,
-          meta: {
-            total,
-            page,
-            limit,
-            lastPage: Math.ceil(total / limit),
-          },
-        },
+        data: resultData,
       };
     } catch (err) {
       throw new InternalServerErrorException(
@@ -955,6 +1033,16 @@ export class RoutesService {
 
   async getTopPerforming(limit: number = 5) {
     try {
+      const cacheKey = `routes:top-performing:${limit}`;
+      const cachedData =
+        await this.cacheManager.get<TopPerformingRoute[]>(cacheKey);
+
+      if (cachedData) {
+        return {
+          message: 'Fetched top performing routes successfully (from cache)',
+          data: cachedData,
+        };
+      }
       const topRoutesRaw = await this.prisma.bookings.groupBy({
         by: ['routeId'],
         where: {
@@ -1005,6 +1093,7 @@ export class RoutesService {
         };
       });
 
+      await this.cacheManager.set(cacheKey, formattedResult, 3600);
       return {
         message: 'Fetched top performing routes successfully',
         data: formattedResult,

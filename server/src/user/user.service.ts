@@ -7,6 +7,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ActivityLogsService } from 'src/activity-logs/activity-logs.service';
+import { RedisCacheService } from 'src/cache/redis-cache.service';
 import { hash } from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -14,11 +15,23 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { QueryUserDto } from './dto/query-user.dto';
 
+interface StatItem {
+  value: number;
+  growth: number;
+}
+
+interface UserStatsData {
+  total: StatItem;
+  newThisMonth: StatItem;
+  active: StatItem;
+}
+
 @Injectable()
 export class UserService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly activityLogService: ActivityLogsService,
+    private readonly cacheManager: RedisCacheService,
   ) {}
 
   async findAll(query: QueryUserDto) {
@@ -295,6 +308,16 @@ export class UserService {
 
   async getStats() {
     try {
+      const cacheKey = 'admin:user-stats';
+
+      const cachedData = await this.cacheManager.get<UserStatsData>(cacheKey);
+
+      if (cachedData) {
+        return {
+          message: 'Fetched user stats successfully (from cache)',
+          data: cachedData,
+        };
+      }
       const now = new Date();
       const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -352,22 +375,26 @@ export class UserService {
         return Number((((current - previous) / previous) * 100).toFixed(2));
       };
 
+      const resultData = {
+        total: {
+          value: totalUsers,
+          growth: calculateGrowth(totalUsers, totalUsersLastMonth),
+        },
+        newThisMonth: {
+          value: newUsersThisMonth,
+          growth: calculateGrowth(newUsersThisMonth, newUsersLastMonth),
+        },
+        active: {
+          value: activeUsersThisMonth,
+          growth: calculateGrowth(activeUsersThisMonth, activeUsersLastMonth),
+        },
+      };
+
+      await this.cacheManager.set(cacheKey, resultData, 600);
+
       return {
         message: 'Fetched user stats successfully',
-        data: {
-          total: {
-            value: totalUsers,
-            growth: calculateGrowth(totalUsers, totalUsersLastMonth),
-          },
-          newThisMonth: {
-            value: newUsersThisMonth,
-            growth: calculateGrowth(newUsersThisMonth, newUsersLastMonth),
-          },
-          active: {
-            value: activeUsersThisMonth,
-            growth: calculateGrowth(activeUsersThisMonth, activeUsersLastMonth),
-          },
-        },
+        data: resultData,
       };
     } catch (err) {
       throw new InternalServerErrorException('Failed to fetch user stats', {

@@ -3,9 +3,10 @@ import {
   NotFoundException,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, Locations } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ActivityLogsService } from 'src/activity-logs/activity-logs.service';
+import { RedisCacheService } from 'src/cache/redis-cache.service';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
 import { QueryLocationDto } from './dto/query-location.dto';
@@ -16,10 +17,28 @@ export class LocationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly activityLogService: ActivityLogsService,
+    private readonly cacheManager: RedisCacheService,
   ) {}
+
+  private async clearLocationCache(id?: string) {
+    await this.cacheManager.del('locations:cities');
+    await this.cacheManager.delByPattern('locations:all*');
+    if (id) await this.cacheManager.del(`locations:detail:${id}`);
+  }
 
   async findAll(query: QueryLocationDto) {
     try {
+      const cacheKey = `locations:all:${JSON.stringify(query)}`;
+
+      const cachedData = await this.cacheManager.get<Locations[]>(cacheKey);
+      if (cachedData) {
+        return {
+          message: 'Fetched locations successfully',
+          data: cachedData,
+          count: cachedData.length,
+        };
+      }
+
       const { city, search } = query;
       let cityCondition = {};
       if (city) {
@@ -62,6 +81,8 @@ export class LocationsService {
         orderBy: { createdAt: 'desc' },
       });
 
+      await this.cacheManager.set(cacheKey, locations, 3600);
+
       return {
         message: 'Fetched locations successfully',
         data: locations,
@@ -76,10 +97,17 @@ export class LocationsService {
 
   async findOne(id: string) {
     try {
+      const cacheKey = `locations:detail:${id}`;
+      const cachedData = await this.cacheManager.get<Locations>(cacheKey);
+      if (cachedData)
+        return { message: 'Fetched location successfully', data: cachedData };
+
       const location = await this.prisma.locations.findUnique({
         where: { id },
       });
       if (!location) throw new NotFoundException('Location not found');
+
+      await this.cacheManager.set(cacheKey, location, 86400);
       return { message: 'Fetched location successfully', data: location };
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
@@ -91,11 +119,24 @@ export class LocationsService {
 
   async getCities() {
     try {
+      const cacheKey = 'locations:cities';
+      const cachedCities = await this.cacheManager.get<string[]>(cacheKey);
+
+      if (cachedCities) {
+        return {
+          message: 'Fetched list of cities successfully',
+          data: cachedCities,
+        };
+      }
+
       const cities = await this.prisma.locations.findMany({
         distinct: ['city'],
         select: { city: true },
         orderBy: { city: 'asc' },
       });
+
+      const result = cities.map((c) => c.city);
+      await this.cacheManager.set(cacheKey, result, 86400);
 
       return {
         message: 'Fetched list of cities successfully',
@@ -118,6 +159,8 @@ export class LocationsService {
       const newLocation = await this.prisma.locations.create({
         data: createLocationDto,
       });
+
+      await this.clearLocationCache();
 
       await this.activityLogService.logAction({
         userId: userId,
@@ -155,6 +198,8 @@ export class LocationsService {
         data: updateLocationDto,
       });
 
+      await this.clearLocationCache(id);
+
       await this.activityLogService.logAction({
         userId: userId,
         action: 'UPDATE_LOCATION',
@@ -188,6 +233,7 @@ export class LocationsService {
         where: { id },
       });
 
+      await this.clearLocationCache(id);
       await this.activityLogService.logAction({
         userId: userId,
         action: 'DELETE_LOCATION',

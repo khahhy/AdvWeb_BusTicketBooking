@@ -6,18 +6,27 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ActivityLogsService } from 'src/activity-logs/activity-logs.service';
+import { RedisCacheService } from 'src/cache/redis-cache.service';
 import { CreateTripDto } from 'src/trips/dto/create-trip.dto';
 import { TripQueryDto } from 'src/trips/dto/trip-query.dto';
 import { UpdateTripDto } from 'src/trips/dto/update-trip.dto';
-import { Prisma } from '@prisma/client';
-import { TripStatus } from '@prisma/client';
+import { Prisma, TripStatus, Trips } from '@prisma/client';
 
 @Injectable()
 export class TripsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly activityLogService: ActivityLogsService,
+    private readonly cacheManager: RedisCacheService,
   ) {}
+
+  private async clearTripCache(tripId?: string) {
+    await this.cacheManager.delByPattern('trips:search*');
+
+    if (tripId) {
+      await this.cacheManager.del(`trips:detail:${tripId}`);
+    }
+  }
 
   async create(
     dto: CreateTripDto,
@@ -171,10 +180,17 @@ export class TripsService {
       });
     });
 
+    await this.clearTripCache();
     return result;
   }
 
   async findAll(query: TripQueryDto) {
+    const cacheKey = `trips:search:${JSON.stringify(query)}`;
+    const cachedData = await this.cacheManager.get<Trips[]>(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+
     const {
       startTime,
       endTime,
@@ -264,10 +280,29 @@ export class TripsService {
       });
     }
 
+    let result = trips;
+
+    if (origin && destination) {
+      result = trips.filter((trip) => {
+        const stops = trip.tripStops;
+        const originStop = stops.find((s) => s.locationId === origin);
+        const destStop = stops.find((s) => s.locationId === destination);
+        return (
+          originStop && destStop && originStop.sequence < destStop.sequence
+        );
+      });
+    }
+
+    // 5. SET CACHE (Lưu 300s = 5 phút)
+    await this.cacheManager.set(cacheKey, result, 300);
     return trips;
   }
 
   async findOne(id: string) {
+    const cacheKey = `trips:detail:${id}`;
+    const cachedData = await this.cacheManager.get<Trips>(cacheKey);
+    if (cachedData) return cachedData;
+
     const trip = await this.prisma.trips.findUnique({
       where: { id },
       include: {
@@ -285,7 +320,7 @@ export class TripsService {
     if (!trip) {
       throw new NotFoundException('Trip not found');
     }
-
+    await this.cacheManager.set(cacheKey, trip, 600);
     return trip;
   }
 
@@ -445,7 +480,7 @@ export class TripsService {
 
         await prisma.tripSegments.createMany({ data: segments });
       }
-
+      await this.clearTripCache(tripId);
       await this.activityLogService.logAction({
         userId: userId,
         action: 'UPDATE_TRIP',
@@ -491,6 +526,7 @@ export class TripsService {
       data: { status },
     });
 
+    await this.clearTripCache(tripId);
     await this.activityLogService.logAction({
       userId: userId,
       action: 'UPDATE_STATUS_TRIP',
@@ -534,6 +570,7 @@ export class TripsService {
       userAgent: userAgent,
     });
 
+    await this.clearTripCache(tripId);
     return this.prisma.$transaction(async (prisma) => {
       await prisma.tripSegments.deleteMany({ where: { tripId } });
 

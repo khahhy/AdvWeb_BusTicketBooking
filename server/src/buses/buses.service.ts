@@ -6,16 +6,18 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ActivityLogsService } from 'src/activity-logs/activity-logs.service';
+import { RedisCacheService } from 'src/cache/redis-cache.service';
 import { CreateBusDto } from './dto/create-bus.dto';
 import { UpdateBusDto } from './dto/update-bus.dto';
 import { QueryBusesDto } from './dto/query-buses.dto';
-import { Prisma, SeatCapacity, BusType } from '@prisma/client';
+import { Prisma, SeatCapacity, BusType, Buses, Seats } from '@prisma/client';
 
 @Injectable()
 export class BusesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly activityLogService: ActivityLogsService,
+    private readonly cacheManager: RedisCacheService,
   ) {}
 
   private generateSeats(busId: string, capacity: SeatCapacity) {
@@ -122,6 +124,8 @@ export class BusesService {
         userAgent: userAgent,
       });
 
+      await this.cacheManager.delByPattern('buses:all*');
+
       return { message: 'Bus created successfully', data: bus };
     } catch (err) {
       if (err instanceof BadRequestException) throw err;
@@ -133,6 +137,12 @@ export class BusesService {
 
   async findAll(query?: QueryBusesDto) {
     try {
+      const cacheKey = `buses:all:${JSON.stringify(query || {})}`;
+
+      const cachedData = await this.cacheManager.get<Buses[]>(cacheKey);
+      if (cachedData) {
+        return { message: 'Fetched all buses successfully', data: cachedData };
+      }
       const where: Prisma.BusesWhereInput = {};
 
       if (query?.busType && query.busType.length > 0) {
@@ -161,6 +171,9 @@ export class BusesService {
         where,
         orderBy: { createdAt: 'desc' },
       });
+
+      await this.cacheManager.set(cacheKey, buses, 600);
+
       return { message: 'Fetched all buses successfully', data: buses };
     } catch (err) {
       throw new InternalServerErrorException('Failed to fetch buses', {
@@ -171,10 +184,19 @@ export class BusesService {
 
   async findOne(id: string) {
     try {
+      const cacheKey = `buses:detail:${id}`;
+      const cachedData = await this.cacheManager.get<Buses>(cacheKey);
+
+      if (cachedData)
+        return { message: 'Fetched bus successfully', data: cachedData };
+
       const bus = await this.prisma.buses.findUnique({
         where: { id },
       });
       if (!bus) throw new NotFoundException('Bus not found');
+
+      await this.cacheManager.set(cacheKey, bus, 86400);
+
       return { message: 'Fetched bus successfully', data: bus };
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
@@ -213,6 +235,12 @@ export class BusesService {
         userAgent: userAgent,
       });
 
+      await this.cacheManager.del(`buses:detail:${id}`);
+      await this.cacheManager.delByPattern('buses:all*');
+      if (data.seatCapacity) {
+        await this.cacheManager.del(`buses:seats:${id}`);
+      }
+
       return { message: 'Bus updated successfully', data: updatedBus };
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
@@ -242,6 +270,12 @@ export class BusesService {
         userAgent: userAgent,
       });
 
+      await Promise.all([
+        this.cacheManager.del(`buses:detail:${id}`),
+        this.cacheManager.del(`buses:seats:${id}`),
+        this.cacheManager.delByPattern('buses:all*'),
+      ]);
+
       return { message: 'Bus deleted successfully', data: deletedBus };
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
@@ -253,6 +287,15 @@ export class BusesService {
 
   async getSeats(busId: string) {
     try {
+      const cacheKey = `buses:seats:${busId}`;
+      const cachedSeats = await this.cacheManager.get<Seats[]>(cacheKey);
+
+      if (cachedSeats)
+        return {
+          message: 'Fetched seats for bus successfully',
+          data: cachedSeats,
+        };
+
       const bus = await this.prisma.buses.findUnique({ where: { id: busId } });
       if (!bus) throw new NotFoundException('Bus not found');
 
@@ -260,6 +303,9 @@ export class BusesService {
         where: { busId },
         orderBy: { seatNumber: 'asc' },
       });
+
+      await this.cacheManager.set(cacheKey, seats, 604800);
+
       return { message: 'Fetched seats for bus successfully', data: seats };
     } catch (err) {
       if (err instanceof NotFoundException) throw err;

@@ -1,40 +1,253 @@
-import { useState } from "react";
-import { ArrowLeftRight, Search } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import dayjs, { Dayjs } from "dayjs";
 import Navbar from "@/components/common/Navbar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import backgroundImage from "@/assets/images/background.png";
 import TripCard from "@/components/search/TripCard";
-import FilterPanel from "@/components/search/FilterPanel";
 import Footer from "@/components/dashboard/Footer";
-import { mockTrips } from "@/data/mockTrips";
+import { mockTrips, Trip } from "@/data/mockTrips";
+import { useSearchTripsQuery, SearchTripResult } from "@/store/api/routesApi";
+import TripSearchBar from "@/components/common/TripSearchBar";
+import FilterPanel, { FilterState } from "@/components/search/FilterPanel";
 
 export default function SearchPage() {
-  const [fromLocation, setFromLocation] = useState("Ho Chi Minh City");
-  const [toLocation, setToLocation] = useState("Mui Ne");
-  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
+  const [searchParams] = useSearchParams();
+  const [fromLocation, setFromLocation] = useState(
+    () => searchParams.get("from") || "Ho Chi Minh City",
+  );
+  const [toLocation, setToLocation] = useState(
+    () => searchParams.get("to") || "Mui Ne",
+  );
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(() => {
+    const dateParam = searchParams.get("departureDate");
+    return dateParam ? dayjs(dateParam) : dayjs();
+  });
   const [openTripId, setOpenTripId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5); // Number of trips per page
+  const [filters, setFilters] = useState<FilterState>({
+    departureTime: [],
+    arrivalTime: [],
+    priceRange: [0, 1328000],
+    busType: [],
+    amenities: [],
+  });
 
-  const handleSwap = () => {
-    const temp = fromLocation;
-    setFromLocation(toLocation);
-    setToLocation(temp);
+  // Update locations and date when search params change
+  useEffect(() => {
+    const from = searchParams.get("from");
+    const to = searchParams.get("to");
+    const date = searchParams.get("departureDate");
+
+    if (from) setFromLocation(from);
+    if (to) setToLocation(to);
+    if (date) setSelectedDate(dayjs(date));
+  }, [searchParams]);
+
+  const searchApiParams = {
+    originCity: fromLocation,
+    destinationCity: toLocation,
+    departureDate: selectedDate?.format("YYYY-MM-DD"),
+    includeStops: "true",
+    includeRoutes: "true",
   };
 
-  const handleSearch = () => {
-    console.log("Searching...", { fromLocation, toLocation, selectedDate });
+  const {
+    data: searchTripsData,
+    isLoading,
+    error,
+  } = useSearchTripsQuery(searchApiParams);
+
+  // For backward compatibility, transform search results to old format
+  const tripRouteData =
+    searchTripsData?.map((trip: SearchTripResult) => ({
+      id: trip.id,
+      departureTime: trip.originStop?.departureTime || trip.departureTime,
+      arrivalTime: trip.destinationStop?.arrivalTime || trip.arrivalTime,
+      busType: trip.bus?.busType,
+      amenities: trip.bus?.amenities,
+      trip: {
+        id: trip.id,
+        tripName: trip.tripName,
+        startTime: trip.originStop?.departureTime || trip.departureTime,
+        endTime: trip.destinationStop?.arrivalTime || trip.arrivalTime,
+        bus: trip.bus || {
+          id: "",
+          plate: "Unknown",
+          busType: "standard",
+          seatCapacity: "SEAT_32",
+          amenities: {},
+        },
+      },
+      route: {
+        id: trip.id, // Use trip id as route id for now
+        name:
+          trip.routeName ||
+          `${trip.originStop?.location?.city} - ${trip.destinationStop?.location?.city}`,
+        origin: trip.originStop?.location || {
+          id: "",
+          name: "Unknown",
+          city: fromLocation || "",
+        },
+        destination: trip.destinationStop?.location || {
+          id: "",
+          name: "Unknown",
+          city: toLocation || "",
+        },
+      },
+      price: trip.tripRoutes?.[0]?.price || 200000, // Default price
+    })) || [];
+
+  // Filter function to apply filters to trips
+  const applyFilters = (trips: (Trip | (typeof tripRouteData)[0])[]) => {
+    return trips.filter((trip) => {
+      // Price filter
+      if (
+        trip.price < filters.priceRange[0] ||
+        trip.price > filters.priceRange[1]
+      ) {
+        return false;
+      }
+
+      // Departure time filter (using origin stop departure time)
+      if (filters.departureTime.length > 0) {
+        let departureHour = 0;
+        if (trip.departureTime) {
+          const date = new Date(trip.departureTime);
+          departureHour = date.getHours();
+        }
+
+        let matchesTimeSlot = false;
+
+        for (const timeSlot of filters.departureTime) {
+          switch (timeSlot) {
+            case "early-morning":
+              if (departureHour >= 0 && departureHour <= 6)
+                matchesTimeSlot = true;
+              break;
+            case "morning":
+              if (departureHour > 6 && departureHour <= 12)
+                matchesTimeSlot = true;
+              break;
+            case "afternoon":
+              if (departureHour > 12 && departureHour <= 18)
+                matchesTimeSlot = true;
+              break;
+            case "evening":
+              if (departureHour > 18 && departureHour <= 23)
+                matchesTimeSlot = true;
+              break;
+          }
+        }
+
+        if (!matchesTimeSlot) return false;
+      }
+
+      // Arrival time filter (using destination stop arrival time)
+      if (filters.arrivalTime.length > 0) {
+        let arrivalHour = 0;
+        if (trip.arrivalTime) {
+          const date = new Date(trip.arrivalTime);
+          arrivalHour = date.getHours();
+        }
+
+        let matchesTimeSlot = false;
+
+        for (const timeSlot of filters.arrivalTime) {
+          switch (timeSlot) {
+            case "early-morning":
+              if (arrivalHour >= 0 && arrivalHour <= 6) matchesTimeSlot = true;
+              break;
+            case "morning":
+              if (arrivalHour > 6 && arrivalHour <= 12) matchesTimeSlot = true;
+              break;
+            case "afternoon":
+              if (arrivalHour > 12 && arrivalHour <= 18) matchesTimeSlot = true;
+              break;
+            case "evening":
+              if (arrivalHour > 18 && arrivalHour <= 23) matchesTimeSlot = true;
+              break;
+          }
+        }
+
+        if (!matchesTimeSlot) return false;
+      }
+
+      // Bus type filter
+      if (filters.busType.length > 0) {
+        const tripBusType = trip.busType?.toLowerCase() || "standard";
+        const matchesBusType = filters.busType.some(
+          (filterType) => filterType.toLowerCase() === tripBusType,
+        );
+        if (!matchesBusType) return false;
+      }
+
+      // Amenities filter
+      if (filters.amenities.length > 0) {
+        const tripAmenities = trip.amenities || {};
+        const hasAllAmenities = filters.amenities.every((amenity) => {
+          return (
+            (tripAmenities as { [key: string]: boolean })[amenity] === true
+          );
+        });
+        if (!hasAllAmenities) return false;
+      }
+
+      return true;
+    });
+  };
+
+  // Pagination logic with filters applied
+  const getAllTrips = () => {
+    let trips: (Trip | (typeof tripRouteData)[0])[] = [];
+    if (tripRouteData && tripRouteData.length > 0) {
+      trips = tripRouteData;
+    } else if (error) {
+      trips = mockTrips;
+    }
+
+    // Apply filters to the trips
+    return applyFilters(trips);
+  };
+
+  const allTrips = getAllTrips();
+  const totalPages = Math.ceil(allTrips.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentTrips = allTrips.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of results
+    const resultsSection = document.querySelector(".trips-results");
+    if (resultsSection) {
+      resultsSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  // Reset to first page when search parameters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [fromLocation, toLocation, selectedDate]);
+
+  const handleFilterChange = (newFilters: FilterState) => {
+    setFilters(newFilters);
+    setCurrentPage(1); // Reset to first page when filters change
+  };
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
+
+  const handleSearch = (params: {
+    from: string;
+    to: string;
+    date: Dayjs | null;
+  }) => {
+    setFromLocation(params.from);
+    setToLocation(params.to);
+    setSelectedDate(params.date);
   };
 
   const formatDate = () => {
@@ -73,91 +286,13 @@ export default function SearchPage() {
           </p>
 
           {/* Search Bar */}
-          <div className="max-w-4xl mx-auto opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]">
-            <div className="flex items-center gap-4 bg-white dark:bg-black rounded-full shadow-2xl p-2 border border-gray-200 dark:border-gray-700">
-              {/* From Field */}
-              <div className="flex-1 px-6 py-4">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                  From
-                </div>
-                <Select value={fromLocation} onValueChange={setFromLocation}>
-                  <SelectTrigger className="w-full text-lg font-medium border-0 focus:ring-0 bg-transparent h-auto p-0 dark:text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Ho Chi Minh City">
-                      Ho Chi Minh City
-                    </SelectItem>
-                    <SelectItem value="Mui Ne">Mui Ne</SelectItem>
-                    <SelectItem value="Da Lat">Da Lat</SelectItem>
-                    <SelectItem value="Nha Trang">Nha Trang</SelectItem>
-                    <SelectItem value="Ba Ria - Vung Tau">
-                      Ba Ria - Vung Tau
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Swap Button */}
-              <button
-                onClick={handleSwap}
-                className="flex-shrink-0 p-3 bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full transition-colors duration-200"
-                type="button"
-              >
-                <ArrowLeftRight className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-              </button>
-
-              {/* To Field */}
-              <div className="flex-1 px-6 py-4">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">To</div>
-                <Select value={toLocation} onValueChange={setToLocation}>
-                  <SelectTrigger className="w-full text-lg font-medium border-0 focus:ring-0 bg-transparent h-auto p-0 dark:text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Mui Ne">Mui Ne</SelectItem>
-                    <SelectItem value="Da Lat">Da Lat</SelectItem>
-                    <SelectItem value="Nha Trang">Nha Trang</SelectItem>
-                    <SelectItem value="Ho Chi Minh City">
-                      Ho Chi Minh City
-                    </SelectItem>
-                    <SelectItem value="Ba Ria - Vung Tau">
-                      Ba Ria - Vung Tau
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Date Picker */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <div className="flex-1 px-6 py-4 cursor-pointer">
-                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                      Date
-                    </div>
-                    <div className="text-lg font-medium text-gray-900 dark:text-white">
-                      {formatDate()}
-                    </div>
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="center">
-                  <Calendar
-                    value={selectedDate}
-                    onChange={setSelectedDate}
-                    disablePast
-                  />
-                </PopoverContent>
-              </Popover>
-
-              {/* Search Button */}
-              <button
-                onClick={handleSearch}
-                className="flex-shrink-0 bg-black dark:bg-white text-white dark:text-black p-4 rounded-full hover:bg-gray-800 dark:hover:bg-gray-200 transition-all duration-200 transform hover:scale-105"
-              >
-                <Search className="w-6 h-6" />
-              </button>
-            </div>
-          </div>
+          <TripSearchBar
+            initialFrom={fromLocation}
+            initialTo={toLocation}
+            initialDate={selectedDate}
+            onSearch={handleSearch}
+            showAnimation={true}
+          />
         </div>
       </div>
 
@@ -177,7 +312,34 @@ export default function SearchPage() {
                 </p>
               </div>
               <div className="text-sm text-gray-500 dark:text-gray-300">
-                {mockTrips.length} trips found
+                {(() => {
+                  if (isLoading) return "Loading...";
+                  const totalTrips = allTrips.length;
+                  const originalTrips =
+                    tripRouteData?.length || (error ? mockTrips.length : 0);
+
+                  if (totalTrips === 0) {
+                    return originalTrips > 0
+                      ? "No trips match your filters"
+                      : "No trips found";
+                  }
+
+                  const displayStart = startIndex + 1;
+                  const displayEnd = Math.min(endIndex, totalTrips);
+                  const hasFilters =
+                    filters.departureTime.length > 0 ||
+                    filters.arrivalTime.length > 0 ||
+                    filters.busType.length > 0 ||
+                    filters.amenities.length > 0 ||
+                    filters.priceRange[0] > 0 ||
+                    filters.priceRange[1] < 1328000;
+
+                  if (hasFilters && totalTrips < originalTrips) {
+                    return `Showing ${displayStart}-${displayEnd} of ${totalTrips} trips (${originalTrips - totalTrips} filtered out)`;
+                  }
+
+                  return `Showing ${displayStart}-${displayEnd} of ${totalTrips} trips`;
+                })()}
               </div>
             </div>
           </div>
@@ -187,32 +349,192 @@ export default function SearchPage() {
         <div className="flex gap-6">
           {/* Filter Panel - Left Side */}
           <div className="w-80 flex-shrink-0">
-            <FilterPanel />
+            <FilterPanel onFilterChange={handleFilterChange} />
           </div>
 
           {/* Trip Cards - Right Side */}
-          <div className="flex-1 space-y-6">
-            {mockTrips.map((trip) => (
-              <TripCard
-                key={trip.id}
-                trip={trip}
-                isOpen={openTripId === trip.id}
-                onToggle={(tripId) =>
-                  setOpenTripId(openTripId === tripId ? null : tripId)
-                }
-              />
-            ))}
+          <div className="flex-1 trips-results">
+            <div className="space-y-6">
+              {isLoading && (
+                <div className="flex justify-center items-center py-8">
+                  <div className="text-gray-600 dark:text-gray-400">
+                    Loading trips...
+                  </div>
+                </div>
+              )}
 
-            {/* No Results */}
-            {mockTrips.length === 0 && (
-              <div className="text-center py-16">
-                <div className="text-6xl mb-4">🚌</div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                  No trips found
-                </h3>
-                <p className="text-gray-600 dark:text-gray-300">
-                  Try adjusting your search criteria
-                </p>
+              {error && (
+                <div className="flex justify-center items-center py-8">
+                  <div className="text-red-600 dark:text-red-400">
+                    Error loading trips. Using mock data.
+                  </div>
+                </div>
+              )}
+
+              {/* Use paginated trips data */}
+              {!isLoading && currentTrips.length > 0 && (
+                <>
+                  {currentTrips.map((tripRoute) => {
+                    // Check if this is API data or mock data
+                    const isApiData = "trip" in tripRoute;
+
+                    if (isApiData) {
+                      // Convert TripRoute data to Trip format for TripCard component
+                      const startTime = dayjs(tripRoute.trip.startTime);
+                      const endTime = dayjs(tripRoute.trip.endTime);
+                      const durationHours = endTime.diff(
+                        startTime,
+                        "hour",
+                        true,
+                      );
+                      const durationText =
+                        durationHours >= 1
+                          ? `${Math.floor(durationHours)}h ${Math.round((durationHours % 1) * 60)}m`
+                          : `${Math.round(durationHours * 60)}m`;
+
+                      // Map seat capacity to total seats number
+                      const seatCapacityMap: { [key: string]: number } = {
+                        SEAT_16: 16,
+                        SEAT_28: 28,
+                        SEAT_32: 32,
+                      };
+
+                      const totalSeats =
+                        seatCapacityMap[tripRoute.trip.bus.seatCapacity] || 32;
+
+                      const tripData = {
+                        id: tripRoute.id,
+                        departureTime: startTime.format("HH:mm"),
+                        arrivalTime: endTime.format("HH:mm"),
+                        duration: durationText,
+                        from: tripRoute.route.origin.city,
+                        to: tripRoute.route.destination.city,
+                        price: Number(tripRoute.price),
+                        availableSeats: Math.floor(totalSeats * 0.6), // Estimate 60% availability
+                        totalSeats,
+                        busType:
+                          tripRoute.trip.bus.busType?.toLowerCase() ||
+                          "standard",
+                        amenities:
+                          (tripRoute.trip.bus.amenities as {
+                            [key: string]: boolean;
+                          }) || {},
+                      };
+
+                      return (
+                        <TripCard
+                          key={tripData.id}
+                          trip={tripData}
+                          isOpen={openTripId === tripData.id}
+                          onToggle={(tripId) =>
+                            setOpenTripId(openTripId === tripId ? null : tripId)
+                          }
+                        />
+                      );
+                    } else {
+                      // This is mock data
+                      return (
+                        <TripCard
+                          key={tripRoute.id}
+                          trip={tripRoute as Trip}
+                          isOpen={openTripId === tripRoute.id}
+                          onToggle={(tripId) =>
+                            setOpenTripId(openTripId === tripId ? null : tripId)
+                          }
+                        />
+                      );
+                    }
+                  })}
+                </>
+              )}
+
+              {/* No results message */}
+              {!isLoading && currentTrips.length === 0 && (
+                <div className="flex justify-center items-center py-8">
+                  <div className="text-gray-600 dark:text-gray-400">
+                    No trips found for your search criteria.
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Pagination Controls */}
+            {!isLoading && totalPages > 1 && (
+              <div className="mt-8 flex justify-center items-center space-x-2">
+                {/* Previous Button */}
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    currentPage === 1
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600"
+                      : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:border-gray-600"
+                  }`}
+                >
+                  Previous
+                </button>
+
+                {/* Page Numbers */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => {
+                    // Show first page, last page, current page, and pages around current page
+                    const showPage =
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1);
+
+                    if (!showPage && page === currentPage - 2) {
+                      return (
+                        <span
+                          key="dots-before"
+                          className="px-2 py-2 text-gray-400"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+
+                    if (!showPage && page === currentPage + 2) {
+                      return (
+                        <span
+                          key="dots-after"
+                          className="px-2 py-2 text-gray-400"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+
+                    if (!showPage) return null;
+
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`px-3 py-2 rounded-md text-sm font-medium ${
+                          currentPage === page
+                            ? "bg-blue-600 text-white dark:bg-blue-700"
+                            : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:border-gray-600"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  },
+                )}
+
+                {/* Next Button */}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    currentPage === totalPages
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600"
+                      : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:border-gray-600"
+                  }`}
+                >
+                  Next
+                </button>
               </div>
             )}
           </div>

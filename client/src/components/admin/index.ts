@@ -18,6 +18,8 @@ export { default as BusDetailsDrawer } from "./BusDetailsDrawer/BusDetailsDrawer
 export { default as TripDetailsDrawer } from "./TripDetailsDrawer/TripDetailsDrawer";
 
 export { default as RouteDetailsDrawer } from "./RouteDetailsDrawer/RouteDetailsDrawer";
+export { default as TripAssignmentDialog } from "./TripAssignmentDialog/TripAssignmentDialog";
+export { default as CreateRouteDialog } from "./CreateRouteDialog/CreateRouteDialog";
 
 export { default as BookingDetailModal } from "./BookingDetailModal/BookingDetailModal";
 

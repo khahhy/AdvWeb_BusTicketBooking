@@ -21,6 +21,15 @@ export const API_ENDPOINTS = {
     list: "/bookings",
     details: "/bookings/{id}",
   },
+  buses: {
+    list: "/buses",
+    details: "/buses/{id}",
+  },
+  routes: {
+    list: "/routes",
+    tripMaps: "/routes/trip-maps",
+    details: "/routes/{id}",
+  },
 } as const;
 
 // Helper function to build full URL

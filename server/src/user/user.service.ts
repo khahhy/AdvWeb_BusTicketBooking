@@ -4,23 +4,89 @@ import {
   BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ActivityLogsService } from 'src/activity-logs/activity-logs.service';
+import { RedisCacheService } from 'src/cache/redis-cache.service';
 import { hash } from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
+import { QueryUserDto } from './dto/query-user.dto';
+
+export interface StatItem {
+  value: number;
+  growth: number;
+}
+
+export interface UserStatsData {
+  total: StatItem;
+  newThisMonth: StatItem;
+  active: StatItem;
+}
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityLogService: ActivityLogsService,
+    private readonly cacheManager: RedisCacheService,
+  ) {}
 
-  async findAll() {
+  async findAll(query: QueryUserDto) {
     try {
-      const users = await this.prisma.users.findMany({
-        orderBy: { createdAt: 'desc' },
-      });
-      return { message: 'Fetched all users successfully', data: users };
+      const { page = 1, limit = 10, search, role } = query;
+      const skip = (Number(page) - 1) * Number(limit);
+      const take = Number(limit);
+
+      const where: Prisma.UsersWhereInput = {
+        AND: [
+          role ? { role: role } : {},
+          search
+            ? {
+                OR: [
+                  { fullName: { contains: search, mode: 'insensitive' } },
+                  { email: { contains: search, mode: 'insensitive' } },
+                ],
+              }
+            : {},
+        ],
+      };
+
+      const [users, total] = await Promise.all([
+        this.prisma.users.findMany({
+          where,
+          skip,
+          take,
+          orderBy: { createdAt: 'desc' },
+
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phoneNumber: true,
+            role: true,
+            status: true,
+            createdAt: true,
+            _count: { select: { bookings: true } },
+          },
+        }),
+        this.prisma.users.count({ where }),
+      ]);
+
+      const totalPages = Math.ceil(total / take);
+
+      return {
+        message: 'Fetched users successfully',
+        data: users,
+        meta: {
+          total,
+          page: Number(page),
+          limit: Number(take),
+          totalPages,
+        },
+      };
     } catch (err) {
       throw new InternalServerErrorException('Failed to fetch users', {
         cause: err,
@@ -39,7 +105,12 @@ export class UserService {
     }
   }
 
-  async createAdmin(dto: CreateUserDto) {
+  async createAdmin(
+    dto: CreateUserDto,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     try {
       const existing = await this.prisma.users.findUnique({
         where: { email: dto.email },
@@ -69,6 +140,19 @@ export class UserService {
           role: 'admin',
           status: 'active',
         },
+      });
+
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'CREATE_ADMIN',
+        entityType: 'Users',
+        entityId: newUser.id,
+        metadata: {
+          userId: newUser.id,
+          email: newUser.email,
+        },
+        ipAddress: ip,
+        userAgent: userAgent,
       });
 
       return { message: 'Admin created successfully', data: newUser };
@@ -124,7 +208,13 @@ export class UserService {
     }
   }
 
-  async updateRole(id: string, dto: UpdateRoleDto) {
+  async updateRole(
+    id: string,
+    dto: UpdateRoleDto,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     try {
       const user = await this.prisma.users.findUnique({ where: { id } });
       if (!user) throw new NotFoundException('User not found');
@@ -134,6 +224,19 @@ export class UserService {
         data: { role: dto.role },
       });
 
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'UPDATE_ROLE_USER',
+        entityType: 'Users',
+        entityId: updatedUser.id,
+        metadata: {
+          userId: updatedUser.id,
+          email: updatedUser.email,
+        },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return { message: 'User role updated successfully', data: updatedUser };
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
@@ -141,7 +244,13 @@ export class UserService {
     }
   }
 
-  async updateStatus(id: string, dto: UpdateStatusDto) {
+  async updateStatus(
+    id: string,
+    dto: UpdateStatusDto,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     try {
       const user = await this.prisma.users.findUnique({ where: { id } });
       if (!user) throw new NotFoundException('User not found');
@@ -151,6 +260,19 @@ export class UserService {
         data: { status: dto.status },
       });
 
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'UPDARE_STATUS_USER',
+        entityType: 'Users',
+        entityId: updatedUser.id,
+        metadata: {
+          userId: updatedUser.id,
+          status: updatedUser.status,
+        },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return { message: 'User status updated successfully', data: updatedUser };
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
@@ -158,17 +280,126 @@ export class UserService {
     }
   }
 
-  async remove(id: string) {
+  async remove(id: string, userId: string, ip: string, userAgent: string) {
     try {
       const user = await this.prisma.users.findUnique({ where: { id } });
       if (!user) throw new NotFoundException('User not found');
 
       const deletedUser = await this.prisma.users.delete({ where: { id } });
 
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'DELETE_USER',
+        entityType: 'Users',
+        entityId: deletedUser.id,
+        metadata: {
+          userId: deletedUser.id,
+        },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return { message: 'User deleted successfully', data: deletedUser };
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
       throw new InternalServerErrorException('Failed to delete user');
+    }
+  }
+
+  async getStats() {
+    try {
+      const cacheKey = 'admin:user-stats';
+
+      const cachedData = await this.cacheManager.get<UserStatsData>(cacheKey);
+
+      if (cachedData) {
+        return {
+          message: 'Fetched user stats successfully (from cache)',
+          data: cachedData,
+        };
+      }
+      const now = new Date();
+      const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      const startOfLastMonth = new Date(
+        now.getFullYear(),
+        now.getMonth() - 1,
+        1,
+      );
+
+      // Total Users
+      const totalUsers = await this.prisma.users.count();
+      const totalUsersLastMonth = await this.prisma.users.count({
+        where: { createdAt: { lt: startOfThisMonth } },
+      });
+
+      // New Users
+      const newUsersThisMonth = await this.prisma.users.count({
+        where: { createdAt: { gte: startOfThisMonth } },
+      });
+      const newUsersLastMonth = await this.prisma.users.count({
+        where: {
+          createdAt: {
+            gte: startOfLastMonth,
+            lt: startOfThisMonth,
+          },
+        },
+      });
+
+      // Active Users (made a booking)
+      const activeUsersThisMonth = await this.prisma.users.count({
+        where: {
+          bookings: {
+            some: {
+              createdAt: { gte: startOfThisMonth },
+            },
+          },
+        },
+      });
+
+      const activeUsersLastMonth = await this.prisma.users.count({
+        where: {
+          bookings: {
+            some: {
+              createdAt: {
+                gte: startOfLastMonth,
+                lt: startOfThisMonth,
+              },
+            },
+          },
+        },
+      });
+
+      const calculateGrowth = (current: number, previous: number) => {
+        if (previous === 0) return current > 0 ? 100 : 0;
+        return Number((((current - previous) / previous) * 100).toFixed(2));
+      };
+
+      const resultData = {
+        total: {
+          value: totalUsers,
+          growth: calculateGrowth(totalUsers, totalUsersLastMonth),
+        },
+        newThisMonth: {
+          value: newUsersThisMonth,
+          growth: calculateGrowth(newUsersThisMonth, newUsersLastMonth),
+        },
+        active: {
+          value: activeUsersThisMonth,
+          growth: calculateGrowth(activeUsersThisMonth, activeUsersLastMonth),
+        },
+      };
+
+      await this.cacheManager.set(cacheKey, resultData, 600);
+
+      return {
+        message: 'Fetched user stats successfully',
+        data: resultData,
+      };
+    } catch (err) {
+      throw new InternalServerErrorException('Failed to fetch user stats', {
+        cause: err,
+      });
     }
   }
 }

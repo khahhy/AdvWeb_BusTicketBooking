@@ -60,7 +60,9 @@ export default function ContactInformationCard({
                 }
               }}
               className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
-                errors.contactName ? "border-red-500 dark:border-red-400" : "border-gray-300 dark:border-gray-600"
+                errors.contactName
+                  ? "border-red-500 dark:border-red-400"
+                  : "border-gray-300 dark:border-gray-600"
               }`}
             />
             {contactName && (
@@ -102,7 +104,9 @@ export default function ContactInformationCard({
                     }
                   }}
                   className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
-                    errors.phoneNumber ? "border-red-500 dark:border-red-400" : "border-gray-300 dark:border-gray-600"
+                    errors.phoneNumber
+                      ? "border-red-500 dark:border-red-400"
+                      : "border-gray-300 dark:border-gray-600"
                   }`}
                 />
                 {phoneNumber && (
@@ -136,7 +140,9 @@ export default function ContactInformationCard({
                 }
               }}
               className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
-                errors.email ? "border-red-500 dark:border-red-400" : "border-gray-300 dark:border-gray-600"
+                errors.email
+                  ? "border-red-500 dark:border-red-400"
+                  : "border-gray-300 dark:border-gray-600"
               }`}
             />
             {email && (
@@ -164,7 +170,9 @@ export default function ContactInformationCard({
                 }
               }}
               className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
-                errors.contactPersonalId ? "border-red-500 dark:border-red-400" : "border-gray-300 dark:border-gray-600"
+                errors.contactPersonalId
+                  ? "border-red-500 dark:border-red-400"
+                  : "border-gray-300 dark:border-gray-600"
               }`}
             />
             {errors.contactPersonalId && (

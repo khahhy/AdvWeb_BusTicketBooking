@@ -9,6 +9,10 @@ export interface Trip {
   totalSeats: number;
   price: number;
   note?: string;
+  busType?: string;
+  amenities?: {
+    [key: string]: boolean;
+  };
 }
 
 export const mockTrips: Trip[] = [
@@ -23,6 +27,13 @@ export const mockTrips: Trip[] = [
     totalSeats: 32,
     price: 200000,
     note: "Passengers are choosing a route that goes through Highway - Long Thanh - Dau Giay - Phan Thiet.",
+    busType: "standard",
+    amenities: {
+      wifi: true,
+      aircondition: true,
+      water: true,
+      charger: true,
+    },
   },
   {
     id: "2",
@@ -34,6 +45,16 @@ export const mockTrips: Trip[] = [
     availableSeats: 18,
     totalSeats: 32,
     price: 250000,
+    busType: "vip",
+    amenities: {
+      wifi: true,
+      tv: true,
+      aircondition: true,
+      water: true,
+      snack: true,
+      charger: true,
+      blanket: true,
+    },
   },
   {
     id: "3",
@@ -45,6 +66,12 @@ export const mockTrips: Trip[] = [
     availableSeats: 28,
     totalSeats: 32,
     price: 195000,
+    busType: "standard",
+    amenities: {
+      wifi: true,
+      aircondition: true,
+      water: true,
+    },
   },
   {
     id: "4",
@@ -56,6 +83,17 @@ export const mockTrips: Trip[] = [
     availableSeats: 10,
     totalSeats: 32,
     price: 320000,
+    busType: "limousine",
+    amenities: {
+      wifi: true,
+      tv: true,
+      aircondition: true,
+      water: true,
+      snack: true,
+      toilet: true,
+      charger: true,
+      blanket: true,
+    },
   },
   {
     id: "5",
@@ -67,6 +105,15 @@ export const mockTrips: Trip[] = [
     availableSeats: 22,
     totalSeats: 32,
     price: 205000,
+    busType: "sleeper",
+    amenities: {
+      wifi: true,
+      tv: true,
+      aircondition: true,
+      water: true,
+      blanket: true,
+      charger: true,
+    },
   },
 ];
 

@@ -1,5 +1,16 @@
-import { useState, useEffect } from "react";
-import { Bus, Eye, Wifi, Plug, Armchair, User } from "lucide-react";
+import { useState } from "react";
+import {
+  Eye,
+  Wifi,
+  Tv,
+  Coffee,
+  Droplets,
+  Bath,
+  ShirtIcon,
+  Zap,
+  Snowflake,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -11,261 +22,244 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AddBusDialog, BusDetailsDrawer } from "@/components/admin";
+import {
+  useGetBusesQuery,
+  useDeleteBusMutation,
+  useCreateBusMutation,
+  BusType,
+  SeatCapacity,
+  BusAmenities,
+} from "@/store/api/busApi";
+import BusLayoutVisualization from "@/components/admin/BusLayoutVisualization";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+// import BusDetailsDrawer from "@/components/admin/BusDetailsDrawer/BusDetailsDrawer";
 
-// const amenities = [
-//   { id: "wifi", label: "Wifi" },
-//   { id: "charging", label: "Cổng sạc USB" },
-//   { id: "wc", label: "WC (Nhà vệ sinh)" },
-//   { id: "blanket", label: "Chăn đắp" },
-//   { id: "water", label: "Nước uống" },
-//   { id: "cold_towel", label: "Khăn lạnh" },
-// ];
-
-type Bus = {
-  id: string;
-  name: string;
-  plate: string;
-  status: "Active" | "Maintenance";
-  amenities: string[];
-};
-
-type Trip = {
-  id: string;
-  routeName: string;
-  origin: string;
-  destination: string;
-  departureTime: string;
-  arrivalTime: string;
-};
-
-const mockBuses: Bus[] = [
-  {
-    id: "BUS-001",
-    name: "Xe 01",
-    plate: "51B-123.45",
-    status: "Active",
-    amenities: ["wifi", "charging", "water", "cold_towel"],
-  },
-  {
-    id: "BUS-002",
-    name: "Xe 02",
-    plate: "29A-678.90",
-    status: "Active",
-    amenities: ["wifi", "charging", "wc", "blanket", "water", "cold_towel"],
-  },
-  {
-    id: "BUS-003",
-    name: "Xe 03",
-    plate: "30E-555.55",
-    status: "Maintenance",
-    amenities: ["wifi", "water"],
-  },
-];
-
-const mockTrips: Trip[] = [
-  {
-    id: "TRIP-001",
-    routeName: "Sài Gòn - Đà Lạt",
-    departureTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toString(),
-    origin: "Sài Gòn",
-    destination: "Đà Lạt",
-    arrivalTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toString(),
-  },
-  {
-    id: "TRIP-002",
-    routeName: "Sài Gòn - Đà Lạt",
-    departureTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toString(),
-    origin: "Sài Gòn",
-    destination: "Đà Lạt",
-    arrivalTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toString(),
-  },
-];
-
-const SeatMap = () => {
-  const rows = Array.from({ length: 8 }, (_, i) => i + 1);
-
-  return (
-    <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 w-full max-w-[300px] mx-auto relative">
-      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gray-300 dark:bg-gray-600 w-24 h-4 rounded-b-lg text-[10px] text-center text-gray-600 dark:text-gray-300 font-bold uppercase tracking-wider">
-        FRONT
-      </div>
-
-      <div className="flex justify-between items-end mb-2 mt-2 border-b-2 border-dashed border-gray-300 dark:border-gray-600 pb-2">
-        <div className="flex flex-col items-center gap-1">
-          <div className="p-2 bg-slate-800 dark:bg-slate-700 rounded-lg text-white shadow-sm">
-            <User size={24} />
-          </div>
-          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-            Driver
-          </span>
-        </div>
-        <div className="text-xs text-gray-400 dark:text-gray-500 italic pr-2">
-          Entry Door
-        </div>
-      </div>
-
-      <div className="grid grid-cols-5 gap-y-2 gap-x-1">
-        <div className="text-center text-xs font-medium text-gray-400 dark:text-gray-500 mb-1">
-          A
-        </div>
-        <div className="text-center text-xs font-medium text-gray-400 dark:text-gray-500 mb-1">
-          B
-        </div>
-        <div className="w-4"></div>
-        <div className="text-center text-xs font-medium text-gray-400 dark:text-gray-500 mb-1">
-          C
-        </div>
-        <div className="text-center text-xs font-medium text-gray-400 dark:text-gray-500 mb-1">
-          D
-        </div>
-        {rows.map((row) => (
-          <>
-            <div className="flex justify-center">
-              <SeatIcon label={`A${row}`} />
-            </div>
-            <div className="flex justify-center">
-              <SeatIcon label={`B${row}`} />
-            </div>
-            <div className="flex justify-center items-center">
-              <span className="text-[10px] text-gray-300 font-mono">{row}</span>
-            </div>
-            <div className="flex justify-center">
-              <SeatIcon label={`C${row}`} />
-            </div>
-            <div className="flex justify-center">
-              <SeatIcon label={`D${row}`} />
-            </div>
-          </>
-        ))}
-      </div>
-      <div className="mt-6 flex justify-center">
-        <div className="h-2 w-32 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-      </div>
-    </div>
-  );
-};
-
-const SeatIcon = ({ label }: { label: string }) => (
-  <div
-    className="group flex flex-col items-center gap-0.5 cursor-pointer hover:scale-105 transition-transform"
-    title={`Ghế ${label}`}
-  >
-    <div className="p-1.5 bg-white dark:bg-gray-700 border border-blue-200 dark:border-blue-600 rounded-md shadow-sm text-blue-500 dark:text-blue-400 group-hover:bg-blue-50 dark:group-hover:bg-blue-900 group-hover:border-blue-400 dark:group-hover:border-blue-500 transition-colors">
-      <Armchair size={18} strokeWidth={2.5} />
-    </div>
-    <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-      {label}
-    </span>
-  </div>
-);
+// Bus type definitions and layout configurations are now in busApi.ts
 
 const BusManagement = () => {
-  const [selectedBus, setSelectedBus] = useState<Bus | null>(null);
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  // const [selectedBus, setSelectedBus] = useState<Bus | null>(null);
+  // const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-
-  const [name, setName] = useState("");
   const [plate, setPlate] = useState("");
-  const [currentAmenities, setCurrentAmenities] = useState<string[]>([]);
+  const [selectedBusType, setSelectedBusType] = useState<BusType>(
+    BusType.STANDARD,
+  );
+  const [selectedSeatCapacity, setSelectedSeatCapacity] =
+    useState<SeatCapacity>(SeatCapacity.SEAT_16);
+  const [selectedAmenities, setSelectedAmenities] = useState<BusAmenities>({
+    tv: false,
+    wifi: false,
+    snack: false,
+    water: false,
+    toilet: false,
+    blanket: false,
+    charger: false,
+    airCondition: false,
+  });
 
-  useEffect(() => {
-    if (selectedBus) {
-      setName(selectedBus.name);
-      setPlate(selectedBus.plate);
-      setCurrentAmenities(selectedBus.amenities);
+  const { data: buses = [], isLoading, error, refetch } = useGetBusesQuery();
+  const [deleteBus] = useDeleteBusMutation();
+  const [createBus] = useCreateBusMutation();
+
+  const handleDeleteBus = async (busId: string) => {
+    if (window.confirm("Are you sure you want to delete this bus?")) {
+      try {
+        await deleteBus(busId).unwrap();
+        refetch();
+      } catch (error) {
+        console.error("Failed to delete bus:", error);
+      }
     }
-  }, [selectedBus]);
+  };
 
-  function handleAmenityChange(id: string, checked: boolean) {
-    setCurrentAmenities((prev) =>
-      checked ? [...prev, id] : prev.filter((x) => x !== id),
+  // const handleViewDetails = (bus: Bus) => {
+  //   setSelectedBus(bus);
+  //   setIsSheetOpen(true);
+  // };
+
+  const getAmenityIcon = (amenity: keyof BusAmenities, enabled: boolean) => {
+    const iconClass = `w-4 h-4 ${enabled ? "text-green-600" : "text-gray-300"}`;
+
+    switch (amenity) {
+      case "tv":
+        return <Tv className={iconClass} />;
+      case "wifi":
+        return <Wifi className={iconClass} />;
+      case "snack":
+        return <Coffee className={iconClass} />;
+      case "water":
+        return <Droplets className={iconClass} />;
+      case "toilet":
+        return <Bath className={iconClass} />;
+      case "blanket":
+        return <ShirtIcon className={iconClass} />;
+      case "charger":
+        return <Zap className={iconClass} />;
+      case "airCondition":
+        return <Snowflake className={iconClass} />;
+      default:
+        return null;
+    }
+  };
+
+  const getBusTypeColor = (busType: BusType) => {
+    switch (busType) {
+      case BusType.STANDARD:
+        return "bg-blue-100 text-blue-800";
+      case BusType.VIP:
+        return "bg-purple-100 text-purple-800";
+      case BusType.SLEEPER:
+        return "bg-green-100 text-green-800";
+      case BusType.LIMOUSINE:
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  if (isLoading)
+    return <div className="flex justify-center py-8">Loading buses...</div>;
+  if (error)
+    return (
+      <div className="text-red-500 text-center py-8">Error loading buses</div>
     );
-  }
 
   function handleOpenCreate() {
-    setName("");
     setPlate("");
-    setCurrentAmenities([]);
+    setSelectedBusType(BusType.STANDARD);
+    setSelectedSeatCapacity(SeatCapacity.SEAT_16);
+    setSelectedAmenities({
+      tv: false,
+      wifi: false,
+      snack: false,
+      water: false,
+      toilet: false,
+      blanket: false,
+      charger: false,
+      airCondition: false,
+    });
     setIsCreateOpen(true);
   }
 
+  const handleCreateBus = async () => {
+    if (!plate.trim()) {
+      alert("Please enter a license plate");
+      return;
+    }
+
+    try {
+      await createBus({
+        plate: plate.trim(),
+        busType: selectedBusType,
+        seatCapacity: selectedSeatCapacity,
+        amenities: selectedAmenities,
+      }).unwrap();
+
+      setIsCreateOpen(false);
+      refetch();
+    } catch (error) {
+      console.error("Failed to create bus:", error);
+      alert("Failed to create bus. Please try again.");
+    }
+  };
+
+  const handleAmenityToggle = (amenity: keyof BusAmenities) => {
+    setSelectedAmenities((prev) => ({
+      ...prev,
+      [amenity]: !prev[amenity],
+    }));
+  };
+
   return (
     <div className="flex flex-1 flex-col gap-4 md:gap-8 md:p-2">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        <Card className="lg:col-span-1 border-0 shadow-none h-full">
-          <CardContent className="flex justify-center pb-8">
-            <SeatMap />
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Bus Management</h2>
+        </div>
+        <Button onClick={handleOpenCreate} className="shadow-lg">
+          Add New Bus
+        </Button>
+      </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {/* Left side - Interactive Bus Layout Visualization */}
+        <div className="lg:col-span-1">
+          <BusLayoutVisualization />
+        </div>
+
+        {/* Right side - Bus Table */}
         <div className="lg:col-span-2 flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight">
-                Bus Management
-              </h2>
-            </div>
-            <Button onClick={handleOpenCreate} className="shadow-lg">
-              Add New Bus
-            </Button>
-          </div>
-          <Card className="lg:col-span-2 border shadow-sm">
+          <Card className="border shadow-sm">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="pl-4">Name</TableHead>
-                    <TableHead>License Plate</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead className="pl-4">License Plate</TableHead>
+                    <TableHead>Bus Type</TableHead>
+                    <TableHead>Capacity</TableHead>
                     <TableHead>Amenities</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockBuses.map((bus) => (
+                  {buses.map((bus) => (
                     <TableRow key={bus.id}>
                       <TableCell className="font-medium pl-4">
-                        {bus.name}
+                        {bus.plate}
                       </TableCell>
-                      <TableCell>{bus.plate}</TableCell>
                       <TableCell>
-                        <Badge
-                          variant={
-                            bus.status === "Active"
-                              ? "secondary"
-                              : "destructive"
-                          }
-                        >
-                          {bus.status}
+                        <Badge className={getBusTypeColor(bus.busType)}>
+                          {bus.busType.toUpperCase()}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          {bus.amenities.includes("wifi") && (
-                            <Wifi className="h-4 w-4 text-blue-500" />
-                          )}
-                          {bus.amenities.includes("charging") && (
-                            <Plug className="h-4 w-4 text-green-500" />
-                          )}
-                          {bus.amenities.length > 2 && (
-                            <span className="text-xs text-muted-foreground bg-slate-100 px-1.5 py-0.5 rounded">
-                              +{bus.amenities.length - 2}
-                            </span>
+                        {bus.seatCapacity.replace("SEAT_", "")}{" "}
+                        {bus.busType === BusType.SLEEPER ? "beds" : "seats"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {Object.entries(bus.amenities).map(
+                            ([amenity, enabled]) =>
+                              getAmenityIcon(
+                                amenity as keyof BusAmenities,
+                                enabled,
+                              ),
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedBus(bus);
-                            setIsSheetOpen(true);
-                          }}
-                        >
-                          <Eye className="h-4 w-4 mr-1" /> Chi tiết
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => console.log("View details:", bus)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteBus(bus.id)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -274,33 +268,142 @@ const BusManagement = () => {
             </CardContent>
           </Card>
         </div>
-
-        <AddBusDialog
-          open={isCreateOpen}
-          onOpenChange={setIsCreateOpen}
-          name={name}
-          plate={plate}
-          amenities={currentAmenities}
-          setName={setName}
-          setPlate={setPlate}
-          onAmenityChange={handleAmenityChange}
-          onCreate={() => setIsCreateOpen(false)}
-        />
-
-        <BusDetailsDrawer
-          open={isSheetOpen}
-          onOpenChange={setIsSheetOpen}
-          bus={selectedBus}
-          name={name}
-          plate={plate}
-          amenities={currentAmenities}
-          setName={setName}
-          setPlate={setPlate}
-          onAmenityChange={handleAmenityChange}
-          relatedTrips={mockTrips}
-          onSave={() => setIsSheetOpen(false)}
-        />
       </div>
+
+      {/* Add Bus Dialog */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add New Bus</DialogTitle>
+          </DialogHeader>
+
+          <div className="grid gap-6">
+            <div className="grid gap-2">
+              <Label htmlFor="plate">License Plate</Label>
+              <Input
+                id="plate"
+                value={plate}
+                onChange={(e) => setPlate(e.target.value)}
+                placeholder="Enter license plate number"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="busType">Bus Type</Label>
+                <Select
+                  value={selectedBusType}
+                  onValueChange={(value: BusType) => setSelectedBusType(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select bus type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={BusType.STANDARD}>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-blue-100 text-blue-800">
+                          Standard
+                        </Badge>
+                        <span className="text-sm text-gray-600">
+                          2-2 Layout
+                        </span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value={BusType.VIP}>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-purple-100 text-purple-800">
+                          VIP
+                        </Badge>
+                        <span className="text-sm text-gray-600">
+                          2-1 Layout
+                        </span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value={BusType.SLEEPER}>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-green-100 text-green-800">
+                          Sleeper
+                        </Badge>
+                        <span className="text-sm text-gray-600">
+                          1-1 Layout
+                        </span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value={BusType.LIMOUSINE}>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-yellow-100 text-yellow-800">
+                          Limousine
+                        </Badge>
+                        <span className="text-sm text-gray-600">
+                          1-2-1 Layout
+                        </span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="seatCapacity">Seat Capacity</Label>
+                <Select
+                  value={selectedSeatCapacity}
+                  onValueChange={(value: SeatCapacity) =>
+                    setSelectedSeatCapacity(value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select capacity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={SeatCapacity.SEAT_16}>
+                      <Badge variant="outline">16 seats</Badge>
+                    </SelectItem>
+                    <SelectItem value={SeatCapacity.SEAT_28}>
+                      <Badge variant="outline">28 seats</Badge>
+                    </SelectItem>
+                    <SelectItem value={SeatCapacity.SEAT_32}>
+                      <Badge variant="outline">32 seats</Badge>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              <Label>Amenities</Label>
+              <div className="grid grid-cols-2 gap-4">
+                {Object.entries(selectedAmenities).map(([amenity, enabled]) => (
+                  <div key={amenity} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id={amenity}
+                      checked={enabled}
+                      onChange={() =>
+                        handleAmenityToggle(amenity as keyof BusAmenities)
+                      }
+                      className="rounded"
+                    />
+                    <Label
+                      htmlFor={amenity}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      {getAmenityIcon(amenity as keyof BusAmenities, enabled)}
+                      {amenity.charAt(0).toUpperCase() + amenity.slice(1)}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateBus}>Create Bus</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

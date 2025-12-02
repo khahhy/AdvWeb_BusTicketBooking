@@ -5,18 +5,28 @@ import {
   InternalServerErrorException,
   ConflictException,
 } from '@nestjs/common';
+import { ActivityLogsService } from 'src/activity-logs/activity-logs.service';
+import { RedisCacheService } from 'src/cache/redis-cache.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateRouteDto } from './dto/create-route.dto';
 import { UpdateRouteDto } from './dto/update-route.dto';
 import { GetRouteTripsDto } from './dto/get-route-trips';
 import { CreateTripRouteMapDto } from './dto/create-trip-route-map.dto';
 import {
+  QueryTripRouteMapDto,
+  SortOrder,
+} from './dto/query-trip-route-map.dto';
+import {
   Prisma,
   TripStatus,
   Trips,
   TripStops,
   Locations,
+  BookingStatus,
+  Routes,
 } from '@prisma/client';
+import { TripsForRouteResponse } from 'src/common/type/trip-available-for-route.interface';
+import { TopPerformingRoute } from 'src/common/type/top-performing-route.interface';
 
 @Injectable()
 export class RoutesService {
@@ -24,9 +34,37 @@ export class RoutesService {
   private readonly WEEKEND_SURCHARGE = 0.05;
   private readonly HOLIDAY_SURCHARGE = 0.1;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityLogService: ActivityLogsService,
+    private readonly cacheManager: RedisCacheService,
+  ) {}
 
-  async create(createRouteDto: CreateRouteDto) {
+  private async clearRouteCache(id?: string) {
+    await this.cacheManager.delByPattern('routes:all*');
+    if (id) {
+      await this.cacheManager.del(`routes:detail:${id}`);
+    }
+  }
+
+  private async clearTripMapCache(tripId?: string, routeId?: string) {
+    await this.cacheManager.delByPattern('trip-route-map:search*');
+    await this.cacheManager.del('routes:top-performing');
+
+    if (routeId) {
+      await this.cacheManager.delByPattern(`routes:trips:${routeId}*`);
+    }
+    if (tripId && routeId) {
+      await this.cacheManager.del(`trip-route-map:detail:${tripId}:${routeId}`);
+    }
+  }
+
+  async create(
+    createRouteDto: CreateRouteDto,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     try {
       const { originLocationId, destinationLocationId } = createRouteDto;
 
@@ -74,6 +112,18 @@ export class RoutesService {
         },
       });
 
+      await this.clearRouteCache();
+
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'CREATE_ROUTE',
+        entityId: route.id,
+        entityType: 'Routes',
+        metadata: { routeId: route.id },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return { message: 'Route created successfully', data: route };
     } catch (err) {
       if (
@@ -90,6 +140,13 @@ export class RoutesService {
 
   async findAll(originId?: string, destinationId?: string, isActive?: boolean) {
     try {
+      const cacheKey = `routes:all:${JSON.stringify({ originId, destinationId, isActive })}`;
+
+      const cachedData = await this.cacheManager.get<Routes[]>(cacheKey);
+      if (cachedData) {
+        return { message: 'Fetched routes successfully', data: cachedData };
+      }
+
       const where: Prisma.RoutesWhereInput = {};
       if (originId) where.originLocationId = originId;
       if (destinationId) where.destinationLocationId = destinationId;
@@ -104,6 +161,8 @@ export class RoutesService {
         orderBy: { createdAt: 'desc' },
       });
 
+      await this.cacheManager.set(cacheKey, routes, 86400);
+
       return { message: 'Fetched routes successfully', data: routes };
     } catch (err) {
       throw new InternalServerErrorException('Failed to fetch routes', {
@@ -114,6 +173,12 @@ export class RoutesService {
 
   async findOne(id: string) {
     try {
+      const cacheKey = `routes:detail:${id}`;
+      const cachedData = await this.cacheManager.get<Routes>(cacheKey);
+
+      if (cachedData)
+        return { message: 'Fetched route successfully', data: cachedData };
+
       const route = await this.prisma.routes.findUnique({
         where: { id },
         include: {
@@ -129,6 +194,8 @@ export class RoutesService {
 
       if (!route) throw new NotFoundException('Route not found');
 
+      await this.cacheManager.set(cacheKey, route, 86400);
+
       return { message: 'Fetched route successfully', data: route };
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
@@ -138,7 +205,13 @@ export class RoutesService {
     }
   }
 
-  async update(id: string, updateRouteDto: UpdateRouteDto) {
+  async update(
+    id: string,
+    updateRouteDto: UpdateRouteDto,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     try {
       const existingRoute = await this.prisma.routes.findUnique({
         where: { id },
@@ -193,6 +266,17 @@ export class RoutesService {
         },
       });
 
+      await this.clearRouteCache(id);
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'UPDATE_ROUTE',
+        entityId: updatedRoute.id,
+        entityType: 'Routes',
+        metadata: { routeId: updatedRoute.id },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return { message: 'Route updated successfully', data: updatedRoute };
     } catch (err) {
       if (
@@ -207,7 +291,7 @@ export class RoutesService {
     }
   }
 
-  async remove(id: string) {
+  async remove(id: string, userId: string, ip: string, userAgent: string) {
     try {
       const route = await this.prisma.routes.findUnique({ where: { id } });
       if (!route) throw new NotFoundException('Route not found');
@@ -231,6 +315,17 @@ export class RoutesService {
         }),
       ]);
 
+      await this.clearRouteCache(id);
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'DELETE_ROUTE',
+        entityId: id,
+        entityType: 'Routes',
+        metadata: { routeId: id },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return {
         message: 'Route and associated trip-maps deleted successfully',
       };
@@ -247,8 +342,19 @@ export class RoutesService {
     }
   }
 
+  // trip contain location of route, not sure it's activate
   async findTripsForRoute(routeId: string, query: GetRouteTripsDto) {
     try {
+      const cacheKey = `routes:trips:${routeId}:${JSON.stringify(query)}`;
+      const cachedData =
+        await this.cacheManager.get<TripsForRouteResponse[]>(cacheKey);
+
+      if (cachedData) {
+        return {
+          message: `Found ${cachedData.length} trips matching this route`,
+          data: cachedData,
+        };
+      }
       const route = await this.prisma.routes.findUnique({
         where: { id: routeId },
       });
@@ -307,6 +413,7 @@ export class RoutesService {
         })
         .filter((item) => item !== null);
 
+      await this.cacheManager.set(cacheKey, result, 300);
       return {
         message: `Found ${result.length} trips matching this route`,
         data: result,
@@ -319,7 +426,12 @@ export class RoutesService {
     }
   }
 
-  async createTripRouteMap(dto: CreateTripRouteMapDto) {
+  async createTripRouteMap(
+    dto: CreateTripRouteMapDto,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     try {
       const { tripId, routeId, manualPrice } = dto;
 
@@ -389,6 +501,16 @@ export class RoutesService {
 
       const [newTripRouteMap] = await this.prisma.$transaction(operations);
 
+      await this.clearTripMapCache(tripId, routeId);
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'CREATE_TRIP_ROUTE_MAP',
+        entityType: 'Routes',
+        metadata: { routeId: routeId, tripId: tripId },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return {
         message: 'Trip Route Map created successfully',
         data: newTripRouteMap,
@@ -408,7 +530,13 @@ export class RoutesService {
     }
   }
 
-  async removeTripRouteMap(tripId: string, routeId: string) {
+  async removeTripRouteMap(
+    tripId: string,
+    routeId: string,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     try {
       const tripRouteMap = await this.prisma.tripRouteMap.findUnique({
         where: {
@@ -439,6 +567,16 @@ export class RoutesService {
         },
       });
 
+      await this.clearTripMapCache(tripId, routeId);
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'DELETE_TRIP_ROUTE_MAP',
+        entityType: 'Routes',
+        metadata: { routeId: routeId, tripId: tripId },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return { message: 'TripRouteMap deleted successfully' };
     } catch (err) {
       if (
@@ -456,6 +594,15 @@ export class RoutesService {
 
   async getTripRouteMap(tripId: string, routeId: string) {
     try {
+      const cacheKey = `trip-route-map:detail:${tripId}:${routeId}`;
+      const cachedData =
+        await this.cacheManager.get<TripsForRouteResponse>(cacheKey);
+      if (cachedData)
+        return {
+          message: 'Fetched trip detail successfully',
+          data: cachedData,
+        };
+
       const data = await this.prisma.tripRouteMap.findUnique({
         where: {
           tripId_routeId: { tripId, routeId },
@@ -479,7 +626,7 @@ export class RoutesService {
         throw new NotFoundException('TripRouteMap configuration not found');
       }
 
-      return {
+      const response = {
         message: 'Fetched trip detail successfully',
         data: {
           tripId: data.tripId,
@@ -489,12 +636,10 @@ export class RoutesService {
           startTime: data.trip.startTime,
           endTime: data.trip.endTime,
           status: data.trip.status,
-
           bus: {
             plate: data.trip.bus.plate,
             amenities: data.trip.bus.amenities,
           },
-
           routeName: data.route.name,
           origin: data.route.origin.name,
           originCity: data.route.origin.city,
@@ -502,10 +647,359 @@ export class RoutesService {
           destinationCity: data.route.destination.city,
         },
       };
+
+      await this.cacheManager.set(cacheKey, response, 1800);
+
+      return response;
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
       throw new InternalServerErrorException(
         'Failed to get trip route map detail',
+        { cause: err },
+      );
+    }
+  }
+
+  // Get All Trip Maps with Pagination & Filter
+  async findAllTripRouteMaps(query: QueryTripRouteMapDto) {
+    try {
+      const cacheKey = `trip-route-map:search:${JSON.stringify(query)}`;
+
+      const cachedData =
+        await this.cacheManager.get<TripsForRouteResponse>(cacheKey);
+      if (cachedData) {
+        return {
+          message: 'Fetched trip route maps successfully (from cache)',
+          data: cachedData,
+        };
+      }
+
+      const {
+        page = 1,
+        limit = 20,
+        routeId,
+        tripId,
+        routeName,
+        locationId,
+        originLocationId,
+        destinationLocationId,
+        minPrice,
+        maxPrice,
+        sortByPrice,
+        departureDate,
+        departureTimeStart,
+        departureTimeEnd,
+        busType,
+        seatCapacity,
+        amenities,
+        minDuration,
+        maxDuration,
+        sortByDuration,
+      } = query;
+
+      const skip = (page - 1) * limit;
+
+      const where: Prisma.TripRouteMapWhereInput = {};
+
+      if (routeId) where.routeId = routeId;
+      if (tripId) where.tripId = tripId;
+
+      if (locationId) {
+        where.route = {
+          OR: [
+            { originLocationId: locationId },
+            { destinationLocationId: locationId },
+          ],
+        };
+      }
+
+      if (routeName) {
+        where.route = where.route || {};
+
+        where.route.name = {
+          contains: routeName,
+          mode: 'insensitive',
+        };
+      }
+
+      if (minPrice !== undefined || maxPrice !== undefined) {
+        where.price = {};
+        if (minPrice !== undefined) where.price.gte = minPrice;
+        if (maxPrice !== undefined) where.price.lte = maxPrice;
+      }
+
+      // Advanced filtering conditions
+      const tripConditions: Prisma.TripsWhereInput = {};
+
+      // Specific origin and destination filtering based on trip stops
+      if (originLocationId || destinationLocationId) {
+        const locationFilters: Prisma.TripsWhereInput = {};
+
+        // If both origin and destination are specified, find trips with both locations in correct order
+        if (originLocationId && destinationLocationId) {
+          locationFilters.AND = [
+            {
+              tripStops: {
+                some: {
+                  locationId: originLocationId,
+                },
+              },
+            },
+            {
+              tripStops: {
+                some: {
+                  locationId: destinationLocationId,
+                },
+              },
+            },
+          ];
+        } else if (originLocationId) {
+          // Only origin specified
+          locationFilters.tripStops = {
+            some: {
+              locationId: originLocationId,
+            },
+          };
+        } else if (destinationLocationId) {
+          // Only destination specified
+          locationFilters.tripStops = {
+            some: {
+              locationId: destinationLocationId,
+            },
+          };
+        }
+
+        // Merge with existing trip conditions
+        where.trip = {
+          ...tripConditions,
+          ...locationFilters,
+        };
+      }
+
+      // Filter by departure date
+      if (departureDate) {
+        const startOfDay = new Date(departureDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(departureDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        tripConditions.startTime = {
+          gte: startOfDay,
+          lte: endOfDay,
+        };
+      }
+
+      // Filter by departure time range
+      if (departureTimeStart || departureTimeEnd) {
+        if (!tripConditions.startTime) {
+          tripConditions.startTime = {};
+        }
+
+        if (departureTimeStart) {
+          const [hours, minutes] = departureTimeStart.split(':').map(Number);
+          if (departureDate) {
+            const startTime = new Date(departureDate);
+            startTime.setHours(hours, minutes, 0, 0);
+            const currentGte = (
+              tripConditions.startTime as Prisma.DateTimeFilter
+            ).gte;
+            tripConditions.startTime = {
+              ...(tripConditions.startTime as Prisma.DateTimeFilter),
+              gte:
+                currentGte && currentGte > startTime ? currentGte : startTime,
+            };
+          }
+        }
+
+        if (departureTimeEnd) {
+          const [hours, minutes] = departureTimeEnd.split(':').map(Number);
+          if (departureDate) {
+            const endTime = new Date(departureDate);
+            endTime.setHours(hours, minutes, 59, 999);
+            const currentLte = (
+              tripConditions.startTime as Prisma.DateTimeFilter
+            ).lte;
+            tripConditions.startTime = {
+              ...(tripConditions.startTime as Prisma.DateTimeFilter),
+              lte: currentLte && currentLte < endTime ? currentLte : endTime,
+            };
+          }
+        }
+      }
+
+      const busWhere: Prisma.BusesWhereInput = {};
+
+      // Filter by bus type
+      if (busType && busType.length > 0) {
+        busWhere.busType = { in: busType };
+      }
+
+      // Filter by Seat Capacity
+      if (seatCapacity && seatCapacity.length > 0) {
+        busWhere.seatCapacity = { in: seatCapacity };
+      }
+
+      // Filter by Amenities - Enhanced to handle both object and array formats
+      if (amenities && amenities.length > 0) {
+        busWhere.OR = [
+          // Handle object format: { wifi: true, airCondition: true, ... }
+          {
+            AND: amenities.map((amenity) => ({
+              amenities: {
+                path: [amenity],
+                equals: true,
+              },
+            })),
+          },
+          // Handle array format: ["wifi", "airCondition", ...]
+          {
+            amenities: {
+              array_contains: amenities,
+            },
+          },
+        ];
+      }
+
+      if (Object.keys(busWhere).length > 0) {
+        tripConditions.bus = busWhere;
+      }
+
+      // Only set trip conditions if origin/destination filtering wasn't already applied
+      if (Object.keys(tripConditions).length > 0 && !where.trip) {
+        where.trip = tripConditions;
+      }
+
+      const orderBy: Prisma.TripRouteMapOrderByWithRelationInput = {};
+      if (sortByPrice) {
+        orderBy.price = sortByPrice;
+      } else {
+        orderBy.trip = { startTime: 'desc' };
+      }
+
+      const [rawTripData, total] = await this.prisma.$transaction([
+        this.prisma.tripRouteMap.findMany({
+          skip,
+          take: limit,
+          where,
+          orderBy,
+          include: {
+            route: {
+              select: {
+                name: true,
+                origin: { select: { city: true, name: true } },
+                destination: { select: { city: true, name: true } },
+              },
+            },
+            trip: {
+              select: {
+                id: true,
+                startTime: true,
+                endTime: true,
+                status: true,
+                tripStops: {
+                  include: {
+                    location: true,
+                  },
+                  orderBy: {
+                    sequence: 'asc',
+                  },
+                },
+                bus: {
+                  select: {
+                    plate: true,
+                    busType: true,
+                    seatCapacity: true,
+                    amenities: true,
+                  },
+                },
+              },
+            },
+          },
+        }),
+        this.prisma.tripRouteMap.count({ where }),
+      ]);
+
+      type RawItem = (typeof rawTripData)[number];
+      type ProcessedItem = RawItem & { durationMinutes?: number };
+
+      // Filter trips based on origin/destination sequence order
+      let filteredTripData = rawTripData;
+      if (originLocationId && destinationLocationId) {
+        filteredTripData = rawTripData.filter((item) => {
+          const tripStops = item.trip.tripStops;
+          const originStop = tripStops.find(
+            (stop) => stop.locationId === originLocationId,
+          );
+          const destinationStop = tripStops.find(
+            (stop) => stop.locationId === destinationLocationId,
+          );
+
+          // Both stops must exist and origin must come before destination
+          return (
+            originStop &&
+            destinationStop &&
+            originStop.sequence < destinationStop.sequence
+          );
+        });
+      }
+
+      let finalData: ProcessedItem[] = filteredTripData;
+
+      if (minDuration || maxDuration || sortByDuration) {
+        finalData = rawTripData.map((item) => {
+          const start = new Date(item.trip.startTime).getTime();
+          const end = new Date(item.trip.endTime).getTime();
+          const durationMinutes = (end - start) / 60000;
+
+          return { ...item, durationMinutes };
+        });
+
+        if (minDuration !== undefined) {
+          finalData = finalData.filter(
+            (item) => (item.durationMinutes ?? 0) >= minDuration,
+          );
+        }
+        if (maxDuration !== undefined) {
+          finalData = finalData.filter(
+            (item) => (item.durationMinutes ?? 0) <= maxDuration,
+          );
+        }
+
+        if (sortByDuration) {
+          finalData.sort((a, b) => {
+            const durationA = a.durationMinutes ?? 0;
+            const durationB = b.durationMinutes ?? 0;
+            return sortByDuration === SortOrder.ASC
+              ? durationA - durationB
+              : durationB - durationA;
+          });
+        }
+      }
+
+      // Update total count if we filtered by sequence order
+      const actualTotal =
+        originLocationId && destinationLocationId
+          ? filteredTripData.length
+          : total;
+
+      const resultData = {
+        items: finalData,
+        meta: {
+          total: actualTotal,
+          page,
+          limit,
+          lastPage: Math.ceil(actualTotal / limit),
+        },
+      };
+      await this.cacheManager.set(cacheKey, resultData, 300);
+
+      return {
+        message: 'Fetched trip route maps successfully',
+        data: resultData,
+      };
+    } catch (err) {
+      throw new InternalServerErrorException(
+        'Failed to fetch trip route maps',
         { cause: err },
       );
     }
@@ -624,5 +1118,80 @@ export class RoutesService {
       surchargeReason: reason,
       finalPrice: Math.round(finalPrice),
     };
+  }
+
+  async getTopPerforming(limit: number = 5) {
+    try {
+      const cacheKey = `routes:top-performing:${limit}`;
+      const cachedData =
+        await this.cacheManager.get<TopPerformingRoute[]>(cacheKey);
+
+      if (cachedData) {
+        return {
+          message: 'Fetched top performing routes successfully (from cache)',
+          data: cachedData,
+        };
+      }
+      const topRoutesRaw = await this.prisma.bookings.groupBy({
+        by: ['routeId'],
+        where: {
+          status: BookingStatus.confirmed,
+        },
+        _count: {
+          id: true, // Đếm số lượng booking ID
+        },
+        _sum: {
+          price: true,
+        },
+        orderBy: {
+          _count: {
+            id: 'desc',
+          },
+        },
+        take: limit,
+      });
+
+      if (topRoutesRaw.length === 0) {
+        return { message: 'No booking data available', data: [] };
+      }
+
+      const routeIds = topRoutesRaw.map((item) => item.routeId);
+
+      const routesDetails = await this.prisma.routes.findMany({
+        where: {
+          id: { in: routeIds },
+        },
+        select: {
+          id: true,
+          name: true,
+          origin: { select: { city: true, name: true } },
+          destination: { select: { city: true, name: true } },
+        },
+      });
+
+      const formattedResult = topRoutesRaw.map((stat) => {
+        const routeInfo = routesDetails.find((r) => r.id === stat.routeId);
+
+        return {
+          routeId: stat.routeId,
+          routeName: routeInfo?.name || 'Unknown Route',
+          origin: routeInfo?.origin.city,
+          destination: routeInfo?.destination.city,
+          totalBookings: stat._count.id,
+          totalRevenue: stat._sum.price || 0,
+        };
+      });
+
+      await this.cacheManager.set(cacheKey, formattedResult, 3600);
+      return {
+        message: 'Fetched top performing routes successfully',
+        data: formattedResult,
+      };
+    } catch (err) {
+      throw new InternalServerErrorException(
+        'Failed to fetch top performing routes',
+        { cause: err },
+      );
+    }
   }
 }

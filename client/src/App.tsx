@@ -46,6 +46,7 @@ import ProfilePage from "./pages/ProfilePage";
 import AboutPage from "./pages/AboutPage";
 import SupportPage from "./pages/SupportPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import TripDetailPage from "./pages/TripDetailPage";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
 function AppContent() {
@@ -59,17 +60,6 @@ function AppContent() {
     "/email-verified",
     "/auth-success",
     "/404",
-  ].includes(location.pathname);
-
-  // Check if current page is authentication page
-  const isAuthPage = [
-    "/signup",
-    "/login",
-    "/forgot-password",
-    "/reset-password",
-    "/verify-email",
-    "/email-verified",
-    "/auth-success",
   ].includes(location.pathname);
 
   const routeContent = (
@@ -134,6 +124,14 @@ function AppContent() {
         element={
           <ProtectedRoute requiredRole="passenger">
             <SearchPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/trip-detail"
+        element={
+          <ProtectedRoute requiredRole="passenger">
+            <TripDetailPage />
           </ProtectedRoute>
         }
       />

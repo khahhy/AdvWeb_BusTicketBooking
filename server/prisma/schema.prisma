@@ -27,6 +27,7 @@ model Users {
   bookings            Bookings[]
   notifications       Notifications[]
   reviews             Reviews[]
+  activityLogs        ActivityLog[]
 }
 
 model Locations {
@@ -44,13 +45,15 @@ model Locations {
 }
 
 model Buses {
-  id        String   @id @default(uuid())
-  plate     String   @unique
-  amenities Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  seats     Seats[]
-  trips     Trips[]
+  id            String          @id @default(uuid())
+  plate         String          @unique
+  busType       BusType         @default(standard)
+  seatCapacity  SeatCapacity    @default(SEAT_16)
+  amenities     Json?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  seats         Seats[]
+  trips         Trips[]
 }
 
 model Seats {
@@ -63,6 +66,7 @@ model Seats {
   bus         Buses              @relation(fields: [busId], references: [id])
 
   @@unique([busId, seatNumber])
+  @@index([busId])
 }
 
 model Trips {
@@ -82,6 +86,8 @@ model Trips {
   bus        Buses              @relation(fields: [busId], references: [id])
 
   @@index([busId, startTime])
+  @@index([startTime])
+  @@index([status])
 }
 
 model TripStops {
@@ -99,6 +105,7 @@ model TripStops {
   trip            Trips          @relation(fields: [tripId], references: [id])
 
   @@unique([tripId, sequence])
+  @@index([tripId])
 }
 
 model TripSegments {
@@ -114,6 +121,7 @@ model TripSegments {
   trip            Trips              @relation(fields: [tripId], references: [id])
 
   @@unique([tripId, segmentIndex])
+  @@index([tripId])
 }
 
 model Routes {
@@ -139,6 +147,8 @@ model TripRouteMap {
   trip    Trips  @relation(fields: [tripId], references: [id])
 
   @@id([tripId, routeId])
+  @@index([routeId])
+  @@index([tripId])
 }
 
 model Bookings {
@@ -165,6 +175,11 @@ model Bookings {
   payments      Payments[]
   reviews       Reviews[]
   seatLocks     SeatSegmentLocks[]
+
+  @@index([userId])
+  @@index([tripId])
+  @@index([routeId])
+  @@index([seatId])
 }
 
 model SeatSegmentLocks {
@@ -178,6 +193,8 @@ model SeatSegmentLocks {
   trip      Trips        @relation(fields: [tripId], references: [id])
 
   @@id([tripId, seatId, segmentId])
+  @@index([tripId])
+  @@index([seatId])
 }
 
 model Payments {
@@ -190,6 +207,8 @@ model Payments {
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
   booking              Bookings      @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
 }
 
 model Reviews {
@@ -215,6 +234,44 @@ model Notifications {
   createdAt DateTime           @default(now())
   booking   Bookings?          @relation(fields: [bookingId], references: [id])
   user      Users              @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([bookingId])
+}
+
+model SystemSettings {
+  key         SettingKey @id
+  value       Json            
+  description String?     
+  createdAt   DateTime   @default(now())    
+  updatedAt   DateTime   @updatedAt
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      Users?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String   // 'CREATE_BOOKING', 'LOGIN', 'UPDATE_BUS_PRICE', ...
+
+  entityId    String?  // bookingId, busId
+  entityType  String?  // 'Bookings', 'Buses'
+  metadata  Json?    // { oldData: ..., newData: ... } 
+  
+  // Security
+  ipAddress String?  // ip
+  userAgent String?  // 
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityId, entityType]) 
+  @@index([createdAt])
+}
+
+enum SettingKey {
+  GENERAL           
+  BOOKING_RULES     
+  BUS_AMENITIES     
+  PAYMENT_GATEWAYS  
 }
 
 enum UserRole {
@@ -269,4 +326,17 @@ enum GatewayType {
   zalopay
   payos
   paypal_sandbox
+}
+
+enum BusType {
+  standard
+  vip
+  sleeper
+  limousine
+}
+
+enum SeatCapacity {
+  SEAT_16
+  SEAT_28
+  SEAT_32
 }

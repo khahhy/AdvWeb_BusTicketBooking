@@ -68,8 +68,16 @@ export default function EmailVerifiedPage() {
           onClick={() => navigate("/dashboard")}
           className="hover:opacity-80 transition-opacity"
         >
-          <img src={logoImage} alt="Bus Booking Logo" className="w-32 dark:hidden" />
-          <img src={logoWhiteImage} alt="Bus Booking Logo White" className="w-32 hidden dark:block" />
+          <img
+            src={logoImage}
+            alt="Bus Booking Logo"
+            className="w-32 dark:hidden"
+          />
+          <img
+            src={logoWhiteImage}
+            alt="Bus Booking Logo White"
+            className="w-32 hidden dark:block"
+          />
         </button>
       </div>
 
@@ -139,7 +147,9 @@ export default function EmailVerifiedPage() {
                     Verification Failed
                   </h1>
 
-                  <p className="text-red-600 dark:text-red-400 mb-2 font-medium">{error}</p>
+                  <p className="text-red-600 dark:text-red-400 mb-2 font-medium">
+                    {error}
+                  </p>
 
                   <p className="text-gray-600 dark:text-gray-400 mb-8 text-sm">
                     Your verification link may have expired or is invalid.

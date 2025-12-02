@@ -14,7 +14,10 @@ export default function PaymentButton({ onPayment }: PaymentButtonProps) {
 
       <div className="text-sm text-gray-600 dark:text-gray-400 text-center">
         By tapping I have transferred, you agree to our{" "}
-        <a href="#" className="text-blue-600 dark:text-blue-400 hover:underline">
+        <a
+          href="#"
+          className="text-blue-600 dark:text-blue-400 hover:underline"
+        >
           Payment Security Policy
         </a>{" "}
         of Vexere

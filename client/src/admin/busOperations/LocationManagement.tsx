@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Search, MapPin, Plus, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,14 @@ import {
 } from "@/components/admin";
 import type { Location } from "@/store/type/locationsType";
 import type { RouteTime } from "@/store/type/routesType";
+import {
+  useGetLocationsQuery,
+  useGetCitiesQuery,
+  useCreateLocationMutation,
+  useUpdateLocationMutation,
+  useDeleteLocationMutation,
+} from "@/store/api/locationApi";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const LocationManagement = () => {
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(
@@ -27,31 +35,71 @@ const LocationManagement = () => {
   );
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
   const [search, setSearch] = useState("");
   const [cityFilter, setCityFilter] = useState<string | null>(null);
+
+  const debouncedSearch = useDebounce(search, 500);
+
+  const { data: locations = [], isLoading: isLoadingLocations } =
+    useGetLocationsQuery({
+      search: debouncedSearch || undefined,
+      city: cityFilter === "all" ? undefined : cityFilter || undefined,
+    });
+
+  const { data: cities = [] } = useGetCitiesQuery();
+
+  const [createLocation] = useCreateLocationMutation();
+  const [updateLocation] = useUpdateLocationMutation();
+  const [deleteLocation] = useDeleteLocationMutation();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleCreateLocation = async (data: any) => {
+    try {
+      const payload = {
+        name: data.name,
+        city: data.city,
+        address: data.address,
+        latitude: data.lat,
+        longitude: data.lng,
+      };
+
+      await createLocation(payload).unwrap();
+      setIsCreateModalOpen(false);
+    } catch (error) {
+      console.error("Failed to create location", error);
+    }
+  };
+
+  const handleSaveLocation = async (
+    id: string,
+    data: { name: string; city: string; address: string },
+  ) => {
+    try {
+      await updateLocation({ id, ...data }).unwrap();
+      setIsSheetOpen(false);
+      // Toast thành công
+    } catch (error) {
+      console.error("Failed to update location", error);
+    }
+  };
+
+  const handleDeleteLocation = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this location?"))
+      return;
+    try {
+      await deleteLocation(id).unwrap();
+      setIsSheetOpen(false);
+      setSelectedLocation(null);
+    } catch (error) {
+      console.error("Failed to delete location", error);
+    }
+  };
 
   const handleSelectLocation = (location: Location) => {
     setSelectedLocation(location);
     setIsSheetOpen(true);
   };
-
-  const handleCreateLocation = () => {
-    console.log("Creating new location...");
-    setIsCreateModalOpen(false);
-  };
-
-  const cities = useMemo(() => {
-    const set = new Set(mockLocations.map((l) => l.city));
-    return Array.from(set);
-  }, []);
-
-  const filteredLocations = useMemo(() => {
-    return mockLocations.filter((loc) => {
-      const matchSearch = loc.name.toLowerCase().includes(search.toLowerCase());
-      const matchCity = cityFilter ? loc.city === cityFilter : true;
-      return matchSearch && matchCity;
-    });
-  }, [search, cityFilter]);
 
   return (
     <div className="flex flex-col h-[calc(100vh-10rem)] gap-4 md:flex-row">
@@ -97,12 +145,14 @@ const LocationManagement = () => {
 
         <CardContent className="flex-1 p-0 overflow-hidden">
           <div className="h-full overflow-y-auto p-3 space-y-2">
-            {filteredLocations.length === 0 ? (
+            {isLoadingLocations ? (
+              <div className="text-center p-4">Loading...</div>
+            ) : locations.length === 0 ? (
               <div className="text-center text-muted-foreground py-8 text-sm">
                 No locations found.
               </div>
             ) : (
-              filteredLocations.map((loc) => (
+              locations.map((loc) => (
                 <div
                   key={loc.id}
                   onClick={() => handleSelectLocation(loc)}
@@ -142,7 +192,7 @@ const LocationManagement = () => {
 
       <div className="flex-1 border rounded-xl overflow-hidden shadow-sm bg-gray-100 relative">
         <LocationMap
-          locations={filteredLocations}
+          locations={locations}
           selectedId={selectedLocation?.id}
           onSelect={handleSelectLocation}
         />
@@ -159,210 +209,13 @@ const LocationManagement = () => {
         onOpenChange={setIsSheetOpen}
         location={selectedLocation}
         allRoutes={mockRelatedRoutes}
-        onSave={() => setIsSheetOpen(false)}
-        onDelete={() => setIsSheetOpen(false)}
+        onSave={handleSaveLocation}
+        onDelete={handleDeleteLocation}
       />
     </div>
   );
 };
 
-const mockLocations: Location[] = [
-  {
-    id: "LOC-001",
-    name: "Bến xe Miền Đông",
-    city: "TP. Hồ Chí Minh",
-    address: "292 Đinh Bộ Lĩnh, P.26, Q. Bình Thạnh",
-  },
-  {
-    id: "LOC-002",
-    name: "Bến xe Đà Lạt",
-    city: "TP. Đà Lạt",
-    address: "01 Tô Hiến Thành, P.3, TP. Đà Lạt",
-  },
-  {
-    id: "LOC-003",
-    name: "Bến xe Trung tâm Đà Nẵng",
-    city: "TP. Đà Nẵng",
-    address: "201 Tôn Đức Thắng, P. Hòa Minh, Q. Liên Chiểu",
-  },
-];
-
-const mockRelatedRoutes: RouteTime[] = [
-  {
-    id: "R-001",
-
-    name: "SGN-DAL",
-
-    originLocationId: "LOC-001",
-
-    destinationLocationId: "LOC-002",
-
-    description: null,
-
-    price: 100,
-
-    isActive: true,
-
-    createdAt: new Date().toISOString(),
-
-    updatedAt: new Date().toISOString(),
-
-    origin: {
-      id: "LOC-001",
-
-      name: "SGN",
-
-      address: "Bến xe Miền Đông",
-
-      city: "TP. Hồ Chí Minh",
-    },
-
-    destination: {
-      id: "LOC-002",
-
-      name: "DAL",
-
-      address: "Bến xe Miền Đông",
-
-      city: "TP. Hồ Chí Minh",
-    },
-
-    tripRoutes: [],
-
-    departureTime: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-  },
-
-  {
-    id: "R-002",
-
-    name: "SGN-DAN",
-
-    originLocationId: "LOC-001",
-
-    destinationLocationId: "LOC-003",
-
-    description: null,
-
-    price: 120,
-
-    isActive: true,
-
-    createdAt: new Date().toISOString(),
-
-    updatedAt: new Date().toISOString(),
-
-    origin: {
-      id: "LOC-001",
-
-      name: "SGN",
-
-      address: "Bến xe Miền Đông",
-
-      city: "TP. Hồ Chí Minh",
-    },
-
-    destination: {
-      id: "LOC-003",
-
-      name: "DAN",
-
-      address: "Bến xe Miền Đông",
-
-      city: "TP. Hồ Chí Minh",
-    },
-
-    tripRoutes: [],
-
-    departureTime: new Date(Date.now() - 12 * 60 * 60 * 1000),
-  },
-
-  {
-    id: "R-003",
-
-    name: "DAN-SGN",
-
-    originLocationId: "LOC-003",
-
-    destinationLocationId: "LOC-001",
-
-    description: null,
-
-    price: 150,
-
-    isActive: true,
-
-    createdAt: new Date().toISOString(),
-
-    updatedAt: new Date().toISOString(),
-
-    origin: {
-      id: "LOC-003",
-
-      name: "DAN",
-
-      address: "Bến xe Miền Đông",
-
-      city: "TP. Hồ Chí Minh",
-    },
-
-    destination: {
-      id: "LOC-001",
-
-      name: "SGN",
-
-      address: "Bến xe Miền Đông",
-
-      city: "TP. Hồ Chí Minh",
-    },
-
-    tripRoutes: [],
-
-    departureTime: new Date(Date.now() + 6 * 60 * 60 * 1000),
-  },
-
-  {
-    id: "R-004",
-
-    name: "DAL-SGN",
-
-    originLocationId: "LOC-002",
-
-    destinationLocationId: "LOC-001",
-
-    description: null,
-
-    price: 130,
-
-    isActive: true,
-
-    createdAt: new Date().toISOString(),
-
-    updatedAt: new Date().toISOString(),
-
-    origin: {
-      id: "LOC-002",
-
-      name: "DAL",
-
-      address: "Bến xe Miền Đông",
-
-      city: "TP. Hồ Chí Minh",
-    },
-
-    destination: {
-      id: "LOC-001",
-
-      name: "SGN",
-
-      address: "Bến xe Miền Đông",
-
-      city: "TP. Hồ Chí Minh",
-    },
-
-    tripRoutes: [],
-
-    departureTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-  },
-];
+const mockRelatedRoutes: RouteTime[] = [];
 
 export default LocationManagement;

@@ -152,8 +152,16 @@ export default function ResetPasswordPage() {
           onClick={() => navigate("/dashboard")}
           className="hover:opacity-80 transition-opacity"
         >
-          <img src={logoImage} alt="Bus Booking Logo" className="w-32 dark:hidden" />
-          <img src={logoWhiteImage} alt="Bus Booking Logo White" className="w-32 hidden dark:block" />
+          <img
+            src={logoImage}
+            alt="Bus Booking Logo"
+            className="w-32 dark:hidden"
+          />
+          <img
+            src={logoWhiteImage}
+            alt="Bus Booking Logo White"
+            className="w-32 hidden dark:block"
+          />
         </button>
       </div>
 
@@ -247,7 +255,9 @@ export default function ResetPasswordPage() {
               </div>
 
               {error && (
-                <p className="text-sm text-red-600 dark:text-red-400 text-center">{error}</p>
+                <p className="text-sm text-red-600 dark:text-red-400 text-center">
+                  {error}
+                </p>
               )}
 
               {/* Submit Button */}

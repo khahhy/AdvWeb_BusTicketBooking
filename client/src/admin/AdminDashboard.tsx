@@ -205,7 +205,9 @@ const AdminDashboard = () => {
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700 shadow-sm">
-          <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-6">Top Routes</h2>
+          <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-6">
+            Top Routes
+          </h2>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
@@ -256,12 +258,19 @@ const AdminDashboard = () => {
               </thead>
               <tbody className="divide-y dark:divide-gray-700">
                 {RECENT_BOOKINGS.map((booking) => (
-                  <tr key={booking.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <tr
+                    key={booking.id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
                     <td className="px-6 py-4 font-medium text-primary">
                       {booking.id}
                     </td>
-                    <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{booking.user}</td>
-                    <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{booking.route}</td>
+                    <td className="px-6 py-4 text-gray-600 dark:text-gray-300">
+                      {booking.user}
+                    </td>
+                    <td className="px-6 py-4 text-gray-600 dark:text-gray-300">
+                      {booking.route}
+                    </td>
                     <td className="px-6 py-4 font-medium dark:text-white">
                       {formatVND(booking.amount)}
                     </td>
@@ -288,7 +297,9 @@ const AdminDashboard = () => {
 
         <div className="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 shadow-sm p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold text-gray-800 dark:text-white">Upcoming Trips</h2>
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white">
+              Upcoming Trips
+            </h2>
             <Clock className="w-4 h-4 text-gray-400" />
           </div>
           <div className="space-y-4">

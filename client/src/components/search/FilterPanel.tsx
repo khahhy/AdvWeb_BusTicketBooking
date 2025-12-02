@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BusType } from "@/store/type/busType";
 
 interface FilterPanelProps {
   onFilterChange?: (filters: FilterState) => void;
@@ -8,6 +9,8 @@ export interface FilterState {
   departureTime: string[];
   arrivalTime: string[];
   priceRange: [number, number];
+  busType: BusType[];
+  amenities: string[];
 }
 
 export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
@@ -18,6 +21,8 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
     [],
   );
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1328000]);
+  const [selectedBusTypes, setSelectedBusTypes] = useState<BusType[]>([]);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
 
   const departureTimeSlots = [
     { label: "Early Morning", time: "00:00 - 06:00", value: "early-morning" },
@@ -33,6 +38,25 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
     { label: "Evening", time: "18:01 - 23:59", value: "evening" },
   ];
 
+  const busTypes = [
+    { label: "Standard", value: BusType.STANDARD, icon: "🚌" },
+    { label: "VIP", value: BusType.VIP, icon: "✨" },
+    { label: "Sleeper", value: BusType.SLEEPER, icon: "🛏️" },
+    { label: "Limousine", value: BusType.LIMOUSINE, icon: "🚐" },
+  ];
+
+  const amenityOptions = [
+    { label: "WiFi", value: "wifi", icon: "📶" },
+    { label: "Air Condition", value: "airCondition", icon: "❄️" },
+    { label: "TV", value: "tv", icon: "📺" },
+    { label: "Toilet", value: "toilet", icon: "🚻" },
+    { label: "Blanket", value: "blanket", icon: "🛏️" },
+    { label: "Snack", value: "snack", icon: "🍪" },
+    { label: "Entertainment", value: "entertainment", icon: "🎬" },
+    { label: "USB", value: "usb", icon: "🔌" },
+    { label: "Reclining", value: "reclining", icon: "🪑" },
+  ];
+
   const handleDepartureTimeToggle = (value: string) => {
     setSelectedDepartureTimes((prev) => {
       const newTimes = prev.includes(value)
@@ -44,6 +68,8 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
           departureTime: newTimes,
           arrivalTime: selectedArrivalTimes,
           priceRange,
+          busType: selectedBusTypes,
+          amenities: selectedAmenities,
         });
       }
       return newTimes;
@@ -61,9 +87,49 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
           departureTime: selectedDepartureTimes,
           arrivalTime: newTimes,
           priceRange,
+          busType: selectedBusTypes,
+          amenities: selectedAmenities,
         });
       }
       return newTimes;
+    });
+  };
+
+  const handleBusTypeToggle = (value: BusType) => {
+    setSelectedBusTypes((prev) => {
+      const newTypes = prev.includes(value)
+        ? prev.filter((t) => t !== value)
+        : [...prev, value];
+
+      if (onFilterChange) {
+        onFilterChange({
+          departureTime: selectedDepartureTimes,
+          arrivalTime: selectedArrivalTimes,
+          priceRange,
+          busType: newTypes,
+          amenities: selectedAmenities,
+        });
+      }
+      return newTypes;
+    });
+  };
+
+  const handleAmenityToggle = (value: string) => {
+    setSelectedAmenities((prev) => {
+      const newAmenities = prev.includes(value)
+        ? prev.filter((a) => a !== value)
+        : [...prev, value];
+
+      if (onFilterChange) {
+        onFilterChange({
+          departureTime: selectedDepartureTimes,
+          arrivalTime: selectedArrivalTimes,
+          priceRange,
+          busType: selectedBusTypes,
+          amenities: newAmenities,
+        });
+      }
+      return newAmenities;
     });
   };
 
@@ -71,12 +137,16 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
     setSelectedDepartureTimes([]);
     setSelectedArrivalTimes([]);
     setPriceRange([0, 1328000]);
+    setSelectedBusTypes([]);
+    setSelectedAmenities([]);
 
     if (onFilterChange) {
       onFilterChange({
         departureTime: [],
         arrivalTime: [],
         priceRange: [0, 1328000],
+        busType: [],
+        amenities: [],
       });
     }
   };
@@ -89,7 +159,9 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
     <div className="bg-white dark:bg-black rounded-2xl shadow-md p-6 sticky top-32 z-10">
       {/* Filter Header */}
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Filters</h3>
+        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+          Filters
+        </h3>
         <button
           onClick={handleClearAll}
           className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 font-medium text-sm"
@@ -117,7 +189,9 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
               <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
                 {slot.label}
               </div>
-              <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">{slot.time}</div>
+              <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                {slot.time}
+              </div>
             </button>
           ))}
         </div>
@@ -125,7 +199,9 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
 
       {/* Arrival Time */}
       <div className="mb-8">
-        <h4 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-4">Arrival time</h4>
+        <h4 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-4">
+          Arrival time
+        </h4>
         <div className="grid grid-cols-2 gap-3">
           {arrivalTimeSlots.map((slot) => (
             <button
@@ -140,7 +216,63 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
               <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
                 {slot.label}
               </div>
-              <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">{slot.time}</div>
+              <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                {slot.time}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Bus Type */}
+      <div className="mb-8">
+        <h4 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-4">
+          Bus Type
+        </h4>
+        <div className="grid grid-cols-2 gap-3">
+          {busTypes.map((type) => (
+            <button
+              key={type.value}
+              onClick={() => handleBusTypeToggle(type.value)}
+              className={`p-3 rounded-2xl border-2 transition-all ${
+                selectedBusTypes.includes(type.value)
+                  ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-500"
+                  : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+              }`}
+            >
+              <div className="flex items-center justify-center mb-1">
+                <span className="text-lg">{type.icon}</span>
+              </div>
+              <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
+                {type.label}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Amenities */}
+      <div className="mb-8">
+        <h4 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-4">
+          Amenities
+        </h4>
+        <div className="grid grid-cols-3 gap-2">
+          {amenityOptions.map((amenity) => (
+            <button
+              key={amenity.value}
+              onClick={() => handleAmenityToggle(amenity.value)}
+              className={`p-2 rounded-xl border transition-all ${
+                selectedAmenities.includes(amenity.value)
+                  ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-500"
+                  : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+              }`}
+            >
+              <div className="flex flex-col items-center">
+                <span className="text-sm mb-1">{amenity.icon}</span>
+                <span className="text-xs text-gray-900 dark:text-gray-100 font-medium">
+                  {amenity.label}
+                </span>
+              </div>
             </button>
           ))}
         </div>
@@ -148,7 +280,9 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
 
       {/* Price Range */}
       <div>
-        <h4 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-4">Price</h4>
+        <h4 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-4">
+          Price
+        </h4>
         <div className="flex items-center justify-between text-sm text-gray-700 dark:text-gray-300 font-medium mb-3">
           <span>{formatPrice(priceRange[0])}</span>
           <span>-</span>
@@ -186,6 +320,8 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
                     departureTime: selectedDepartureTimes,
                     arrivalTime: selectedArrivalTimes,
                     priceRange: newRange,
+                    busType: selectedBusTypes,
+                    amenities: selectedAmenities,
                   });
                 }
               }
@@ -210,6 +346,8 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
                     departureTime: selectedDepartureTimes,
                     arrivalTime: selectedArrivalTimes,
                     priceRange: newRange,
+                    busType: selectedBusTypes,
+                    amenities: selectedAmenities,
                   });
                 }
               }

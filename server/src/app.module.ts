@@ -11,6 +11,11 @@ import { RoutesModule } from './routes/routes.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AuthModule } from './auth/auth.module';
+import { SettingModule } from './setting/setting.module';
+import { ActivityLogsModule } from './activity-logs/activity-logs.module';
+import { RedisModule } from './redis/redis.module';
+import { RedisCacheModule } from './cache/redis-cache.module';
+
 @Module({
   imports: [
     PrismaModule,
@@ -22,6 +27,10 @@ import { AuthModule } from './auth/auth.module';
     BookingsModule,
     NotificationsModule,
     AuthModule,
+    SettingModule,
+    ActivityLogsModule,
+    RedisModule,
+    RedisCacheModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

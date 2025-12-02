@@ -188,7 +188,9 @@ export default function FeedbackRatingPage() {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary dark:border-white mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Loading trip details...</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              Loading trip details...
+            </p>
           </div>
         </div>
       </div>
@@ -331,20 +333,26 @@ export default function FeedbackRatingPage() {
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-sm">
               <div>
-                <span className="text-gray-600 dark:text-gray-400">Booking Code:</span>
+                <span className="text-gray-600 dark:text-gray-400">
+                  Booking Code:
+                </span>
                 <div className="font-semibold text-gray-900 dark:text-white">
                   {booking.bookingCode}
                 </div>
               </div>
               <div>
-                <span className="text-gray-600 dark:text-gray-400">Travel Date:</span>
+                <span className="text-gray-600 dark:text-gray-400">
+                  Travel Date:
+                </span>
                 <div className="font-semibold text-gray-900 dark:text-white flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
                   {formatDate(booking.date)}
                 </div>
               </div>
               <div>
-                <span className="text-gray-600 dark:text-gray-400">Bus Type:</span>
+                <span className="text-gray-600 dark:text-gray-400">
+                  Bus Type:
+                </span>
                 <div className="font-semibold text-gray-900 dark:text-white">
                   {booking.busType}
                 </div>

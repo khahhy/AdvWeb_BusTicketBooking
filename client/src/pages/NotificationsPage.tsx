@@ -465,7 +465,9 @@ export default function NotificationsPage() {
 
                     <p
                       className={`text-sm leading-relaxed ${
-                        !notification.isRead ? "text-gray-800 dark:text-gray-200" : "text-gray-600 dark:text-gray-400"
+                        !notification.isRead
+                          ? "text-gray-800 dark:text-gray-200"
+                          : "text-gray-600 dark:text-gray-400"
                       }`}
                     >
                       {notification.message}
@@ -517,25 +519,33 @@ export default function NotificationsPage() {
                   <div className="text-2xl font-bold text-blue-600">
                     {notifications.length}
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Total</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Total
+                  </div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-red-600">
                     {unreadCount}
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Unread</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Unread
+                  </div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-green-600">
                     {notifications.filter((n) => n.type === "booking").length}
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Bookings</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Bookings
+                  </div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-secondary">
                     {notifications.filter((n) => n.type === "promotion").length}
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Promotions</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Promotions
+                  </div>
                 </div>
               </div>
             </div>

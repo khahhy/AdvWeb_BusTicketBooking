@@ -22,7 +22,9 @@ const ReviewDetailModal = ({
     >
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl overflow-hidden">
         <div className="flex justify-between items-center p-6 border-b dark:border-gray-700">
-          <h2 className="text-lg font-bold text-gray-800 dark:text-white">Review Details</h2>
+          <h2 className="text-lg font-bold text-gray-800 dark:text-white">
+            Review Details
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-1"
@@ -42,7 +44,9 @@ const ReviewDetailModal = ({
                   {review.userName.charAt(0)}
                 </div>
                 <div>
-                  <div className="font-medium text-sm text-gray-900 dark:text-white">{review.userName}</div>
+                  <div className="font-medium text-sm text-gray-900 dark:text-white">
+                    {review.userName}
+                  </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">
                     Verified Passenger
                   </div>
@@ -57,7 +61,9 @@ const ReviewDetailModal = ({
               <div className="space-y-2 text-sm">
                 <div className="flex items-start gap-2">
                   <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500 mt-0.5" />
-                  <span className="font-medium text-gray-900 dark:text-white">{review.routeName}</span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {review.routeName}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                   <Calendar className="w-4 h-4" />

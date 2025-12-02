@@ -10,6 +10,7 @@ import {
   Query,
   Delete,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { TripsService } from './trips.service';
 import {
@@ -25,8 +26,10 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { UserRole } from '@prisma/client';
+import type { RequestWithUser } from 'src/common/type/request-with-user.interface';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { TripQueryDto } from './dto/trip-query.dto';
+import { SearchTripDto } from './dto/search-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
 import { UpdateTripStatusDto } from './dto/update-trip-status.dto';
 
@@ -47,25 +50,31 @@ export class TripsController {
   })
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createTripDto: CreateTripDto) {
-    return this.tripsService.create(createTripDto);
+  async create(
+    @Body() createTripDto: CreateTripDto,
+    @Req() req: RequestWithUser,
+  ) {
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.tripsService.create(createTripDto, userId, ip, userAgent);
   }
 
   @ApiOperation({
     summary:
-      'Get all trips with filters (startTime, endTime, origin, destination, busId, status)',
+      'Get all trips with filters (startTime, endTime, origin stop of route, destination stop of route, busId, status). Note: trip contain route, that route maybe not set sold yet',
   })
   @ApiQuery({ name: 'startTime', required: false })
   @ApiQuery({ name: 'endTime', required: false })
   @ApiQuery({
     name: 'origin',
     required: false,
-    description: 'Location ID to match as origin stop',
+    description: 'Location ID to MATCH as origin stop',
   })
   @ApiQuery({
     name: 'destination',
     required: false,
-    description: 'Location ID to match as destination stop',
+    description: 'Location ID to MACTH as destination stop',
   })
   @ApiQuery({ name: 'busId', required: false })
   @ApiQuery({ name: 'status', required: false })
@@ -76,11 +85,68 @@ export class TripsController {
     return this.tripsService.findAll(query);
   }
 
+  @ApiOperation({
+    summary: 'Search trips by city names and departure date',
+    description:
+      'Enhanced search that allows searching by city name (e.g., "HCMC") instead of location IDs. Time is taken from trip stops. When searching "HCMC", it will find all bus stations in Ho Chi Minh City.',
+  })
+  @ApiQuery({
+    name: 'originCity',
+    required: false,
+    description:
+      'Origin city name (e.g., "HCMC", "Hà Nội"). Will find all locations in this city.',
+    example: 'HCMC',
+  })
+  @ApiQuery({
+    name: 'destinationCity',
+    required: false,
+    description:
+      'Destination city name (e.g., "Đà Nẵng", "Cần Thơ"). Will find all locations in this city.',
+    example: 'Đà Nẵng',
+  })
+  @ApiQuery({
+    name: 'departureDate',
+    required: false,
+    description:
+      'Departure date (YYYY-MM-DD format). Will search trips that depart on this date.',
+    example: '2024-12-15',
+  })
+  @ApiQuery({
+    name: 'includeStops',
+    required: false,
+    description: 'Include detailed trip stops information',
+    example: 'true',
+  })
+  @ApiQuery({
+    name: 'includeRoutes',
+    required: false,
+    description: 'Include route information',
+    example: 'true',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Trips found successfully with route information based on trip stops',
+  })
+  @Get('search')
+  async searchTrips(@Query() searchDto: SearchTripDto) {
+    return this.tripsService.searchTrips(searchDto);
+  }
+
   @ApiOperation({ summary: 'Get a trip by ID with stops & segments' })
   @ApiParam({ name: 'id', type: String, required: true })
+  @ApiQuery({
+    name: 'includeRoutes',
+    required: false,
+    description: 'Include route and price information',
+    example: 'true',
+  })
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.tripsService.findOne(id);
+  async findOne(
+    @Param('id') id: string,
+    @Query('includeRoutes') includeRoutes?: string,
+  ) {
+    return this.tripsService.findOne(id, includeRoutes);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -96,8 +162,15 @@ export class TripsController {
   })
   @ApiResponse({ status: 404, description: 'Trip not found.' })
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() dto: UpdateTripDto) {
-    return this.tripsService.update(id, dto);
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateTripDto,
+    @Req() req: RequestWithUser,
+  ) {
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.tripsService.update(id, dto, userId, ip, userAgent);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -109,8 +182,18 @@ export class TripsController {
   async updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateTripStatusDto,
+    @Req() req: RequestWithUser,
   ) {
-    return this.tripsService.updateStatus(id, dto.status);
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.tripsService.updateStatus(
+      id,
+      dto.status,
+      userId,
+      ip,
+      userAgent,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -119,8 +202,11 @@ export class TripsController {
   @ApiOperation({ summary: 'Delete a trip (only if no bookings exist)' })
   @ApiParam({ name: 'id', type: String })
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.tripsService.remove(id);
+  async remove(@Param('id') id: string, @Req() req: RequestWithUser) {
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.tripsService.remove(id, userId, ip, userAgent);
   }
 
   @ApiOperation({

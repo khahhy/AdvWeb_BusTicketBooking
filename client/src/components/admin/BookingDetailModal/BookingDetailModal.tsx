@@ -51,7 +51,9 @@ const BookingDetailModal = ({
               Passenger Information
             </h3>
             <div className="grid grid-cols-3 gap-2 text-sm">
-              <span className="text-gray-500 dark:text-gray-400">Full Name:</span>
+              <span className="text-gray-500 dark:text-gray-400">
+                Full Name:
+              </span>
               <span className="col-span-2 font-medium dark:text-white">
                 {booking.customerInfo.fullName}
               </span>
@@ -78,15 +80,21 @@ const BookingDetailModal = ({
                 <MapPin className="w-3 h-3" /> {booking.routeName}
               </span>
 
-              <span className="text-gray-500 dark:text-gray-400">Trip Name:</span>
-              <span className="col-span-2 dark:text-white">{booking.tripName}</span>
+              <span className="text-gray-500 dark:text-gray-400">
+                Trip Name:
+              </span>
+              <span className="col-span-2 dark:text-white">
+                {booking.tripName}
+              </span>
 
               <span className="text-gray-500 dark:text-gray-400">Seat:</span>
               <span className="col-span-2 font-bold text-blue-600 dark:text-blue-400">
                 {booking.seatNumber}
               </span>
 
-              <span className="text-gray-500 dark:text-gray-400">Booked At:</span>
+              <span className="text-gray-500 dark:text-gray-400">
+                Booked At:
+              </span>
               <span className="col-span-2 dark:text-white">
                 {formatDate(booking.createdAt)}
               </span>
@@ -101,7 +109,9 @@ const BookingDetailModal = ({
               <div className="flex items-center gap-3">
                 <CreditCard className="w-8 h-8 text-gray-400" />
                 <div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">Payment Status</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    Payment Status
+                  </div>
                   <div
                     className={`font-bold capitalize ${
                       booking.status === "confirmed"
@@ -114,13 +124,17 @@ const BookingDetailModal = ({
                 </div>
               </div>
               <div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Gateway</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Gateway
+                </div>
                 <div className="font-medium dark:text-white">
                   {booking.paymentGateway || "N/A"}
                 </div>
               </div>
               <div className="text-right w-full sm:w-auto border-t dark:border-gray-600 sm:border-t-0 pt-2 sm:pt-0">
-                <div className="text-sm text-gray-500 dark:text-gray-400">Total Amount</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Total Amount
+                </div>
                 <div className="font-bold text-xl text-blue-600 dark:text-blue-400">
                   {formatCurrency(booking.price)}
                 </div>

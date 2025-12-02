@@ -167,7 +167,9 @@ const BookingManagement = () => {
   return (
     <div className="p-6 space-y-6 min-h-screen font-sans text-gray-900 dark:text-white">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Booking Management</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          Booking Management
+        </h1>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

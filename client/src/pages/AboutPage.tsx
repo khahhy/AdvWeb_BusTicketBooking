@@ -35,7 +35,8 @@ export default function AboutPage() {
             About Us
           </h1>
           <p className="text-center mb-8 text-black/80 dark:text-white/80 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
-            Your trusted partner for safe and comfortable bus travel across Vietnam
+            Your trusted partner for safe and comfortable bus travel across
+            Vietnam
           </p>
         </div>
       </div>

@@ -192,7 +192,9 @@ export default function ProfilePage() {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Loading your profile...</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              Loading your profile...
+            </p>
           </div>
         </div>
       </div>
@@ -271,7 +273,9 @@ export default function ProfilePage() {
                     <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
                       {user.fullName || "Welcome!"}
                     </h1>
-                    <p className="text-lg text-gray-600 dark:text-gray-300 mb-3">{user.email}</p>
+                    <p className="text-lg text-gray-600 dark:text-gray-300 mb-3">
+                      {user.email}
+                    </p>
                     <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
                       {getStatusBadge(user.status, user.emailVerified)}
                       {getRoleBadge(user.role)}
@@ -281,20 +285,28 @@ export default function ProfilePage() {
                   {/* Quick Stats */}
                   <div className="grid grid-cols-3 gap-4 mt-6">
                     <div className="text-center p-3 bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/30 dark:to-rose-900/30 rounded-xl">
-                      <div className="text-2xl font-bold text-pink-600 dark:text-pink-400">0</div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">Bookings</div>
+                      <div className="text-2xl font-bold text-pink-600 dark:text-pink-400">
+                        0
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        Bookings
+                      </div>
                     </div>
                     <div className="text-center p-3 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl">
                       <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                         4.9
                       </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">Rating</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        Rating
+                      </div>
                     </div>
                     <div className="text-center p-3 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 rounded-xl">
                       <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                         {new Date(user.createdAt).getFullYear()}
                       </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">Since</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        Since
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -447,7 +459,9 @@ export default function ProfilePage() {
                         />
                         <Edit2
                           className={`absolute left-4 top-4 w-5 h-5 ${
-                            isEditing ? "text-rose-500 dark:text-rose-400" : "text-gray-400 dark:text-gray-500"
+                            isEditing
+                              ? "text-rose-500 dark:text-rose-400"
+                              : "text-gray-400 dark:text-gray-500"
                           }`}
                         />
                       </div>
@@ -479,7 +493,9 @@ export default function ProfilePage() {
                         />
                         <History
                           className={`absolute left-4 top-4 w-5 h-5 ${
-                            isEditing ? "text-blue-500 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"
+                            isEditing
+                              ? "text-blue-500 dark:text-blue-400"
+                              : "text-gray-400 dark:text-gray-500"
                           }`}
                         />
                       </div>

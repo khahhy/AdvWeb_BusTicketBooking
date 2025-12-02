@@ -3,21 +3,91 @@ import {
   NotFoundException,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { Prisma, Locations } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ActivityLogsService } from 'src/activity-logs/activity-logs.service';
+import { RedisCacheService } from 'src/cache/redis-cache.service';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
+import { QueryLocationDto } from './dto/query-location.dto';
 import { normalizeCity } from 'src/common/utils/normalizeCity';
 
 @Injectable()
 export class LocationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityLogService: ActivityLogsService,
+    private readonly cacheManager: RedisCacheService,
+  ) {}
 
-  async findAll() {
+  private async clearLocationCache(id?: string) {
+    await this.cacheManager.del('locations:cities');
+    await this.cacheManager.delByPattern('locations:all*');
+    if (id) await this.cacheManager.del(`locations:detail:${id}`);
+  }
+
+  async findAll(query: QueryLocationDto) {
     try {
+      const cacheKey = `locations:all:${JSON.stringify(query)}`;
+
+      const cachedData = await this.cacheManager.get<Locations[]>(cacheKey);
+      if (cachedData) {
+        return {
+          message: 'Fetched locations successfully',
+          data: cachedData,
+          count: cachedData.length,
+        };
+      }
+
+      const { city, search } = query;
+      let cityCondition = {};
+      if (city) {
+        const normalizedInput = normalizeCity(city);
+
+        const existingCities = await this.prisma.locations.findMany({
+          distinct: ['city'],
+          select: { city: true },
+        });
+
+        const matchedCity = existingCities.find(
+          (item) => normalizeCity(item.city) === normalizedInput,
+        );
+
+        if (matchedCity) {
+          cityCondition = { city: matchedCity.city };
+        } else {
+          cityCondition = {
+            city: { contains: city.trim(), mode: 'insensitive' },
+          };
+        }
+      }
+
+      const where: Prisma.LocationsWhereInput = {
+        AND: [
+          cityCondition,
+          search
+            ? {
+                name: {
+                  contains: search.trim(),
+                  mode: 'insensitive',
+                },
+              }
+            : {},
+        ],
+      };
+
       const locations = await this.prisma.locations.findMany({
+        where,
         orderBy: { createdAt: 'desc' },
       });
-      return { message: 'Fetched all locations successfully', data: locations };
+
+      await this.cacheManager.set(cacheKey, locations, 3600);
+
+      return {
+        message: 'Fetched locations successfully',
+        data: locations,
+        count: locations.length,
+      };
     } catch (err) {
       throw new InternalServerErrorException('Failed to fetch locations', {
         cause: err,
@@ -27,10 +97,17 @@ export class LocationsService {
 
   async findOne(id: string) {
     try {
+      const cacheKey = `locations:detail:${id}`;
+      const cachedData = await this.cacheManager.get<Locations>(cacheKey);
+      if (cachedData)
+        return { message: 'Fetched location successfully', data: cachedData };
+
       const location = await this.prisma.locations.findUnique({
         where: { id },
       });
       if (!location) throw new NotFoundException('Location not found');
+
+      await this.cacheManager.set(cacheKey, location, 86400);
       return { message: 'Fetched location successfully', data: location };
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
@@ -42,11 +119,24 @@ export class LocationsService {
 
   async getCities() {
     try {
+      const cacheKey = 'locations:cities';
+      const cachedCities = await this.cacheManager.get<string[]>(cacheKey);
+
+      if (cachedCities) {
+        return {
+          message: 'Fetched list of cities successfully',
+          data: cachedCities,
+        };
+      }
+
       const cities = await this.prisma.locations.findMany({
         distinct: ['city'],
         select: { city: true },
         orderBy: { city: 'asc' },
       });
+
+      const result = cities.map((c) => c.city);
+      await this.cacheManager.set(cacheKey, result, 86400);
 
       return {
         message: 'Fetched list of cities successfully',
@@ -59,45 +149,29 @@ export class LocationsService {
     }
   }
 
-  async getLocationsByCity(cityInput: string) {
-    try {
-      const normalizedInput = normalizeCity(cityInput);
-
-      const cities = await this.prisma.locations.findMany({
-        select: { city: true },
-        distinct: ['city'],
-      });
-
-      const matchedCity = cities.find(
-        (c) => normalizeCity(c.city) === normalizedInput,
-      )?.city;
-
-      if (!matchedCity) {
-        return { message: 'City not found', data: [] };
-      }
-
-      const locations = await this.prisma.locations.findMany({
-        where: { city: matchedCity },
-        orderBy: { name: 'asc' },
-      });
-
-      return {
-        message: 'Fetched locations by city successfully',
-        data: locations,
-      };
-    } catch (err) {
-      throw new InternalServerErrorException(
-        'Failed to fetch locations by city',
-        { cause: err },
-      );
-    }
-  }
-
-  async create(createLocationDto: CreateLocationDto) {
+  async create(
+    createLocationDto: CreateLocationDto,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     try {
       const newLocation = await this.prisma.locations.create({
         data: createLocationDto,
       });
+
+      await this.clearLocationCache();
+
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'CREATE_LOCATION',
+        entityId: newLocation.id,
+        entityType: 'Locations',
+        metadata: { locationId: newLocation.id },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return { message: 'Location created successfully', data: newLocation };
     } catch (err) {
       throw new InternalServerErrorException('Failed to create location', {
@@ -106,7 +180,13 @@ export class LocationsService {
     }
   }
 
-  async update(id: string, updateLocationDto: UpdateLocationDto) {
+  async update(
+    id: string,
+    updateLocationDto: UpdateLocationDto,
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
     try {
       const location = await this.prisma.locations.findUnique({
         where: { id },
@@ -117,6 +197,19 @@ export class LocationsService {
         where: { id },
         data: updateLocationDto,
       });
+
+      await this.clearLocationCache(id);
+
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'UPDATE_LOCATION',
+        entityId: updatedLocation.id,
+        entityType: 'Locations',
+        metadata: { locationId: updatedLocation.id },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return {
         message: 'Location updated successfully',
         data: updatedLocation,
@@ -129,7 +222,7 @@ export class LocationsService {
     }
   }
 
-  async remove(id: string) {
+  async remove(id: string, userId: string, ip: string, userAgent: string) {
     try {
       const location = await this.prisma.locations.findUnique({
         where: { id },
@@ -139,6 +232,18 @@ export class LocationsService {
       const deletedLocation = await this.prisma.locations.delete({
         where: { id },
       });
+
+      await this.clearLocationCache(id);
+      await this.activityLogService.logAction({
+        userId: userId,
+        action: 'DELETE_LOCATION',
+        entityId: deletedLocation.id,
+        entityType: 'Locations',
+        metadata: { locationId: deletedLocation.id },
+        ipAddress: ip,
+        userAgent: userAgent,
+      });
+
       return {
         message: 'Location deleted successfully',
         data: deletedLocation,

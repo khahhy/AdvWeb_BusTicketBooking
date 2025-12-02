@@ -2,21 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @layer base {
   :root {
     /* Global theme tokens */
     --color-primary: black; /* black used in dashboard charts */
-    --color-primary-rgb: 37,99,235;
-    --color-secondary: #8B5CF6; /* purple */
-    --color-secondary-rgb: 139,92,246;
-    --color-accent: #F59E0B; /* amber from dashboard */
-    --color-accent-rgb: 245,158,11;
-    --color-surface: #FFFFFF;
-    --color-surface-rgb: 255,255,255;
-    --color-error: #EF4444; /* red-500 */
-    --color-error-rgb: 239,68,68;
-    --color-success: #10B981; /* green */
-    --color-success-rgb: 16,185,129;
+    --color-primary-rgb: 37, 99, 235;
+    --color-secondary: #8b5cf6; /* purple */
+    --color-secondary-rgb: 139, 92, 246;
+    --color-accent: #f59e0b; /* amber from dashboard */
+    --color-accent-rgb: 245, 158, 11;
+    --color-surface: #ffffff;
+    --color-surface-rgb: 255, 255, 255;
+    --color-error: #ef4444; /* red-500 */
+    --color-error-rgb: 239, 68, 68;
+    --color-success: #10b981; /* green */
+    --color-success-rgb: 16, 185, 129;
 
     /* Typography scale */
     --font-h1: 2rem; /* 32px */
@@ -57,17 +68,17 @@
   .dark {
     /* Global theme tokens for dark mode */
     --color-primary: white;
-    --color-primary-rgb: 255,255,255;
-    --color-secondary: #8B5CF6;
-    --color-secondary-rgb: 139,92,246;
-    --color-accent: #F59E0B;
-    --color-accent-rgb: 245,158,11;
+    --color-primary-rgb: 255, 255, 255;
+    --color-secondary: #8b5cf6;
+    --color-secondary-rgb: 139, 92, 246;
+    --color-accent: #f59e0b;
+    --color-accent-rgb: 245, 158, 11;
     --color-surface: #000000;
-    --color-surface-rgb: 0,0,0;
-    --color-error: #EF4444;
-    --color-error-rgb: 239,68,68;
-    --color-success: #10B981;
-    --color-success-rgb: 16,185,129;
+    --color-surface-rgb: 0, 0, 0;
+    --color-error: #ef4444;
+    --color-error-rgb: 239, 68, 68;
+    --color-success: #10b981;
+    --color-success-rgb: 16, 185, 129;
 
     /* Shadcn UI dark variables */
     --background: 0 0% 0%;
@@ -130,35 +141,84 @@
 }
 
 .animate-scroll {
-  animation: scroll var(--animation-duration, 40s) var(--animation-direction, forwards) linear infinite;
+  animation: scroll var(--animation-duration, 40s)
+    var(--animation-direction, forwards) linear infinite;
 }
 
 /* Simple utility classes that reference theme tokens */
-.bg-primary { background-color: var(--color-primary); }
-.text-primary { color: var(--color-primary); }
-.border-surface { border-color: var(--color-surface); }
-.bg-surface { background-color: var(--color-surface); }
-.text-success { color: var(--color-success); }
-.bg-success { background-color: var(--color-success); }
-.bg-success-100 { background-color: rgba(var(--color-success-rgb), 0.12); }
-.bg-primary-50 { background-color: rgba(var(--color-primary-rgb), 0.08); }
-.text-error { color: var(--color-error); }
-.bg-error { background-color: var(--color-error); }
-.bg-error-50 { background-color: rgba(var(--color-error-rgb), 0.08); }
-.text-secondary { color: var(--color-secondary); }
-.bg-secondary-100 { background-color: rgba(var(--color-secondary-rgb), 0.12); }
+.bg-primary {
+  background-color: var(--color-primary);
+}
+.text-primary {
+  color: var(--color-primary);
+}
+.border-surface {
+  border-color: var(--color-surface);
+}
+.bg-surface {
+  background-color: var(--color-surface);
+}
+.text-success {
+  color: var(--color-success);
+}
+.bg-success {
+  background-color: var(--color-success);
+}
+.bg-success-100 {
+  background-color: rgba(var(--color-success-rgb), 0.12);
+}
+.bg-primary-50 {
+  background-color: rgba(var(--color-primary-rgb), 0.08);
+}
+.text-error {
+  color: var(--color-error);
+}
+.bg-error {
+  background-color: var(--color-error);
+}
+.bg-error-50 {
+  background-color: rgba(var(--color-error-rgb), 0.08);
+}
+.text-secondary {
+  color: var(--color-secondary);
+}
+.bg-secondary-100 {
+  background-color: rgba(var(--color-secondary-rgb), 0.12);
+}
 
 /* Typography helpers */
-.h1 { font-size: var(--font-h1); }
-.h2 { font-size: var(--font-h2); }
-.h3 { font-size: var(--font-h3); }
-.h4 { font-size: var(--font-h4); }
-.h5 { font-size: var(--font-h5); }
-.h6 { font-size: var(--font-h6); }
-.body { font-size: var(--font-body); }
-.caption { font-size: var(--font-caption); }
+.h1 {
+  font-size: var(--font-h1);
+}
+.h2 {
+  font-size: var(--font-h2);
+}
+.h3 {
+  font-size: var(--font-h3);
+}
+.h4 {
+  font-size: var(--font-h4);
+}
+.h5 {
+  font-size: var(--font-h5);
+}
+.h6 {
+  font-size: var(--font-h6);
+}
+.body {
+  font-size: var(--font-body);
+}
+.caption {
+  font-size: var(--font-caption);
+}
 
 /* Spacing helpers (single-direction minimal helpers) */
-.p-sm { padding: var(--space-sm); }
-.p-md { padding: var(--space-md); }
-.p-lg { padding: var(--space-lg); }
+.p-sm {
+  padding: var(--space-sm);
+}
+.p-md {
+  padding: var(--space-md);
+}
+.p-lg {
+  padding: var(--space-lg);
+}

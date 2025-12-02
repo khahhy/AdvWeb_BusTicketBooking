@@ -9,6 +9,8 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  Query,
+  Req,
 } from '@nestjs/common';
 import { LocationsService } from './location.service';
 import {
@@ -25,6 +27,8 @@ import { Roles } from 'src/common/decorators/role.decorator';
 import { UserRole } from '@prisma/client';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
+import { QueryLocationDto } from './dto/query-location.dto';
+import type { RequestWithUser } from 'src/common/type/request-with-user.interface';
 
 @ApiTags('locations')
 @Controller('locations')
@@ -39,18 +43,29 @@ export class LocationsController {
   @ApiResponse({ status: 201, description: 'Location created successfully.' })
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createLocationDto: CreateLocationDto) {
-    return this.locationsService.create(createLocationDto);
+  async create(
+    @Body() createLocationDto: CreateLocationDto,
+    @Req() req: RequestWithUser,
+  ) {
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.locationsService.create(
+      createLocationDto,
+      userId,
+      ip,
+      userAgent,
+    );
   }
 
+  @Get()
   @ApiOperation({ summary: 'Get all locations' })
   @ApiResponse({
     status: 200,
     description: 'Fetched all locations successfully.',
   })
-  @Get()
-  async findAll() {
-    return this.locationsService.findAll();
+  async findAll(@Query() query: QueryLocationDto) {
+    return this.locationsService.findAll(query);
   }
 
   @ApiOperation({
@@ -63,24 +78,6 @@ export class LocationsController {
   @Get('cities')
   getCities() {
     return this.locationsService.getCities();
-  }
-
-  @ApiOperation({
-    summary:
-      'Get locations (or bus stop) filtered by city, for example: Bến xe miền tây',
-  })
-  @ApiParam({
-    name: 'city',
-    description: 'City name to filter locations',
-    type: String,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Fetched locations by city successfully.',
-  })
-  @Get('city/:city')
-  getLocationsByCity(@Param('city') city: string) {
-    return this.locationsService.getLocationsByCity(city);
   }
 
   @ApiOperation({ summary: 'Get a location by ID' })
@@ -104,8 +101,18 @@ export class LocationsController {
   async update(
     @Param('id') id: string,
     @Body() updateLocationDto: UpdateLocationDto,
+    @Req() req: RequestWithUser,
   ) {
-    return this.locationsService.update(id, updateLocationDto);
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.locationsService.update(
+      id,
+      updateLocationDto,
+      userId,
+      ip,
+      userAgent,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -116,7 +123,10 @@ export class LocationsController {
   @ApiResponse({ status: 200, description: 'Location deleted successfully.' })
   @ApiResponse({ status: 404, description: 'Location not found.' })
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.locationsService.remove(id);
+  async remove(@Param('id') id: string, @Req() req: RequestWithUser) {
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.locationsService.remove(id, userId, ip, userAgent);
   }
 }

@@ -163,9 +163,16 @@ export default function LoginPage() {
           onClick={() => navigate("/dashboard")}
           className="hover:opacity-80 transition-opacity"
         >
-          <img src={logoImage} alt="Bus Booking Logo" className="w-32 dark:hidden" />
-          <img src={logoWhiteImage} alt="Bus Booking Logo White" className="w-32 hidden dark:block"
-    />
+          <img
+            src={logoImage}
+            alt="Bus Booking Logo"
+            className="w-32 dark:hidden"
+          />
+          <img
+            src={logoWhiteImage}
+            alt="Bus Booking Logo White"
+            className="w-32 hidden dark:block"
+          />
         </button>
       </div>
 

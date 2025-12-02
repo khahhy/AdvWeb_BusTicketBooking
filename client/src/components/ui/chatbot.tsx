@@ -307,7 +307,9 @@ export default function Chatbot() {
                       className="w-full bg-white/90 dark:bg-gray-800/95 text-gray-800 dark:text-gray-200 rounded-xl px-4 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400 placeholder-gray-500 dark:placeholder-gray-400 border border-rose-200 dark:border-gray-700"
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                      <span className="text-gray-500 dark:text-gray-400 text-xs">Auto</span>
+                      <span className="text-gray-500 dark:text-gray-400 text-xs">
+                        Auto
+                      </span>
                       <Globe className="w-3 h-3 text-gray-500 dark:text-gray-400" />
                     </div>
                   </div>

@@ -146,6 +146,53 @@ export const routesApi = createApi({
       providesTags: ["TripRoute"],
       transformResponse: (response: SearchTripResponse) => response.data,
     }),
+
+    getTripById: builder.query<SearchTripResult, string>({
+      query: (id) => `/trips/${id}?includeRoutes=true`,
+      providesTags: (_result, _error, id) => [{ type: "TripRoute", id }],
+      transformResponse: (trip: any) => {
+        // Transform the response to match SearchTripResult format
+        const originStop = trip.tripStops?.find(
+          (stop: any) => stop.sequence === 1,
+        );
+        const destinationStop = trip.tripStops?.find(
+          (stop: any) =>
+            stop.sequence ===
+            Math.max(...trip.tripStops.map((s: any) => s.sequence)),
+        );
+
+        return {
+          id: trip.id,
+          tripName: trip.tripName,
+          routeName: `${originStop?.location?.city || ""} - ${destinationStop?.location?.city || ""}`,
+          departureTime: trip.startTime,
+          arrivalTime: trip.endTime,
+          originStop: originStop || {
+            id: "",
+            sequence: 1,
+            locationId: "",
+            departureTime: trip.startTime,
+            location: { id: "", name: "", city: "" },
+          },
+          destinationStop: destinationStop || {
+            id: "",
+            sequence: 2,
+            locationId: "",
+            arrivalTime: trip.endTime,
+            location: { id: "", name: "", city: "" },
+          },
+          bus: trip.bus || {
+            id: "",
+            plate: "Unknown",
+            busType: "standard",
+            seatCapacity: "SEAT_32",
+            amenities: {},
+          },
+          tripStops: trip.tripStops || [],
+          tripRoutes: trip.tripRoutes || [],
+        };
+      },
+    }),
   }),
 });
 
@@ -155,4 +202,5 @@ export const {
   useGetTripRouteMapQuery,
   useGetLocationsQuery,
   useSearchTripsQuery,
+  useGetTripByIdQuery,
 } = routesApi;

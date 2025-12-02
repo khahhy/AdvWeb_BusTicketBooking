@@ -135,9 +135,18 @@ export class TripsController {
 
   @ApiOperation({ summary: 'Get a trip by ID with stops & segments' })
   @ApiParam({ name: 'id', type: String, required: true })
+  @ApiQuery({
+    name: 'includeRoutes',
+    required: false,
+    description: 'Include route and price information',
+    example: 'true',
+  })
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.tripsService.findOne(id);
+  async findOne(
+    @Param('id') id: string,
+    @Query('includeRoutes') includeRoutes?: string,
+  ) {
+    return this.tripsService.findOne(id, includeRoutes);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

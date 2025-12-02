@@ -100,13 +100,9 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
     return selectedSeats.length * trip.price;
   }, [selectedSeats, trip.price]);
 
-  const handleSelectTrip = () => {
-    const seat =
-      selectedSeats.length > 0
-        ? seats.find((s) => s.id === selectedSeats[0])?.number || "01"
-        : "01";
+  const handleViewDetail = () => {
     const date = dayjs().format("YYYY-MM-DD");
-    navigate(`/checkout?tripId=${trip.id}&seat=${seat}&date=${date}`);
+    navigate(`/trip-detail?tripId=${trip.id}&date=${date}`);
   };
 
   const tabs = [
@@ -314,10 +310,10 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
           </div>
 
           <button
-            onClick={handleSelectTrip}
+            onClick={handleViewDetail}
             className="px-8 py-2 bg-foreground text-white font-semibold rounded-2xl hover:bg-foreground/90 active:bg-foreground/80 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
           >
-            Select trip
+            View detail
           </button>
         </div>
       </div>

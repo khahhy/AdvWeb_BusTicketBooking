@@ -46,6 +46,7 @@ import ProfilePage from "./pages/ProfilePage";
 import AboutPage from "./pages/AboutPage";
 import SupportPage from "./pages/SupportPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import TripDetailPage from "./pages/TripDetailPage";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
 function AppContent() {
@@ -123,6 +124,14 @@ function AppContent() {
         element={
           <ProtectedRoute requiredRole="passenger">
             <SearchPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/trip-detail"
+        element={
+          <ProtectedRoute requiredRole="passenger">
+            <TripDetailPage />
           </ProtectedRoute>
         }
       />

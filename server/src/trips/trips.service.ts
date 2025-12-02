@@ -300,23 +300,39 @@ export class TripsService {
     return trips;
   }
 
-  async findOne(id: string) {
-    const cacheKey = `trips:detail:${id}`;
+  async findOne(id: string, includeRoutes?: string) {
+    const cacheKey = `trips:detail:${id}:routes:${includeRoutes || 'false'}`;
     const cachedData = await this.cacheManager.get<Trips>(cacheKey);
     if (cachedData) return cachedData;
 
+    const include: any = {
+      bus: true,
+      tripStops: {
+        orderBy: { sequence: 'asc' },
+        include: { location: true },
+      },
+      segments: {
+        orderBy: { segmentIndex: 'asc' },
+      },
+    };
+
+    // Include tripRoutes with route and price if requested
+    if (includeRoutes === 'true') {
+      include.tripRoutes = {
+        include: {
+          route: {
+            include: {
+              origin: true,
+              destination: true,
+            },
+          },
+        },
+      };
+    }
+
     const trip = await this.prisma.trips.findUnique({
       where: { id },
-      include: {
-        bus: true,
-        tripStops: {
-          orderBy: { sequence: 'asc' },
-          include: { location: true },
-        },
-        segments: {
-          orderBy: { segmentIndex: 'asc' },
-        },
-      },
+      include,
     });
 
     if (!trip) {

@@ -15,6 +15,8 @@ export class CreateLocationDto {
     description: 'Detail Address (Optional)',
     required: false,
   })
+  @IsOptional()
+  @IsString()
   address?: string;
 
   @ApiProperty({

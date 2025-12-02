@@ -30,124 +30,58 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TripDetailsDrawer } from "@/components/admin";
 import { Dayjs } from "dayjs";
-
-type TripStatus = "Scheduled" | "Ongoing" | "Completed" | "Cancelled";
-
-type Trip = {
-  id: string;
-  tripName: string;
-  busId: string;
-  busLicensePlate: string;
-  startTime: Date;
-  endTime: Date;
-  status: TripStatus;
-};
-
-// temporary to fix eslint
-export interface TripStopsView {
-  [tripId: string]: {
-    name: string;
-    time: string;
-  }[];
-}
-
-export interface RoutesView {
-  [tripId: string]: {
-    name: string;
-    price: string;
-  }[];
-}
-
-const mockTripStopsView: TripStopsView = {
-  "T-001": [
-    { name: "Bến xe Miền Đông", time: "08:00" },
-    { name: "Trạm Dầu Giây", time: "09:30" },
-    { name: "Bến xe Đà Lạt", time: "14:00" },
-  ],
-};
-const mockRoutesView: RoutesView = {
-  "T-001": [{ name: "Sài Gòn - Đà Lạt", price: "350,000" }],
-};
-
-const mockTrips: Trip[] = [
-  {
-    id: "T-001",
-    tripName: "SGN-DAL 08:00 17/11",
-    busId: "BUS-001",
-    busLicensePlate: "51B-123.45",
-    startTime: new Date("2025-11-17T08:00:00Z"),
-    endTime: new Date("2025-11-17T14:00:00Z"),
-    status: "Scheduled",
-  },
-  {
-    id: "T-002",
-    tripName: "SGN-DAL 13:00 17/11",
-    busId: "BUS-002",
-    busLicensePlate: "29A-678.90",
-    startTime: new Date("2025-11-17T13:00:00Z"),
-    endTime: new Date("2025-11-17T19:00:00Z"),
-    status: "Scheduled",
-  },
-  {
-    id: "T-003",
-    tripName: "SGN-DAN 10:00 16/11",
-    busId: "BUS-001",
-    busLicensePlate: "51B-123.45",
-    startTime: new Date("2025-11-16T10:00:00Z"),
-    endTime: new Date("2025-11-17T02:00:00Z"),
-    status: "Completed",
-  },
-  {
-    id: "T-004",
-    tripName: "SGN-DAL 22:00 16/11",
-    busId: "BUS-003",
-    busLicensePlate: "30E-555.55",
-    startTime: new Date("2025-11-16T22:00:00Z"),
-    endTime: new Date("2025-11-17T04:00:00Z"),
-    status: "Cancelled",
-  },
-];
-
-const getStatusBadgeVariant = (status: TripStatus) => {
-  switch (status) {
-    case "Scheduled":
-      return "default";
-    case "Ongoing":
-      return "secondary";
-    case "Completed":
-      return "outline";
-    case "Cancelled":
-      return "destructive";
-    default:
-      return "default";
-  }
-};
+import { useGetTripsQuery, TripStatus } from "@/store/api/tripsApi";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const TripManagement = () => {
   const navigate = useNavigate();
-  const [date, setDate] = useState<Dayjs | null>(null);
+  const [date, setDate] = useState<Dayjs | undefined>(undefined);
+  const [search] = useState("");
+  const [statusFilter] = useState<string>("all");
 
-  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const debouncedSearch = useDebounce(search, 500);
+
+  const { data: trips = [], isLoading } = useGetTripsQuery({
+    startTime: date ? date.toISOString() : undefined,
+    status: statusFilter !== "all" ? (statusFilter as TripStatus) : undefined,
+  });
 
   const handleCreateTrip = () => {
     navigate("/admin/bus-operations/trips/new");
   };
 
-  const handleViewDetails = (trip: Trip) => {
-    setSelectedTrip(trip);
+  const handleViewDetails = (tripId: string) => {
+    setSelectedTripId(tripId);
     setIsDrawerOpen(true);
   };
 
   const handleEditTrip = (id: string) => {
-    console.log("Navigating to edit:", id);
     navigate(`/admin/bus-operations/trips/edit/${id}`);
   };
 
-  const handleCancelTrip = (id: string) => {
-    console.log("Logic cancel trip:", id);
-    setIsDrawerOpen(false);
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case "scheduled":
+        return "default";
+      case "ongoing":
+        return "secondary";
+      case "completed":
+        return "outline";
+      case "cancelled":
+        return "destructive";
+      default:
+        return "default";
+    }
   };
+
+  const filteredTrips = trips.filter(
+    (t) =>
+      t.tripName?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      t.bus?.plate.toLowerCase().includes(debouncedSearch.toLowerCase()),
+  );
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-2 md:p-2 border-0 shadow-none">
@@ -187,11 +121,18 @@ const TripManagement = () => {
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? date.format("LL") : <span>Pick a date</span>}
+                    {date ? (
+                      date.format("DD/MM/YYYY")
+                    ) : (
+                      <span>Pick a date</span>
+                    )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar value={date} onChange={setDate} />
+                  <Calendar
+                    value={date}
+                    onChange={(val) => setDate(val || undefined)}
+                  />
                 </PopoverContent>
               </Popover>
             </div>
@@ -214,41 +155,56 @@ const TripManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockTrips.map((trip) => (
-                  <TableRow
-                    key={trip.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleViewDetails(trip)}
-                  >
-                    <TableCell className="font-medium">
-                      {trip.tripName}
-                    </TableCell>
-                    <TableCell>{trip.busLicensePlate}</TableCell>
-                    <TableCell>
-                      {format(trip.startTime, "dd/MM/yy HH:mm")}
-                    </TableCell>
-                    <TableCell>
-                      {format(trip.endTime, "dd/MM/yy HH:mm")}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusBadgeVariant(trip.status)}>
-                        {trip.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleViewDetails(trip);
-                        }}
-                      >
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      </Button>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center h-24">
+                      Loading...
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : filteredTrips.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center h-24">
+                      No trips found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredTrips.map((trip) => (
+                    <TableRow
+                      key={trip.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleViewDetails(trip.id)}
+                    >
+                      <TableCell className="font-medium">
+                        {trip.tripName}
+                      </TableCell>
+
+                      <TableCell>{trip.bus?.plate || "N/A"}</TableCell>
+                      <TableCell>
+                        {format(new Date(trip.startTime), "dd/MM/yy HH:mm")}
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(trip.endTime), "dd/MM/yy HH:mm")}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusBadgeVariant(trip.status)}>
+                          {trip.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewDetails(trip.id);
+                          }}
+                        >
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
@@ -256,11 +212,8 @@ const TripManagement = () => {
           <TripDetailsDrawer
             open={isDrawerOpen}
             onOpenChange={setIsDrawerOpen}
-            trip={selectedTrip}
-            stops={selectedTrip ? mockTripStopsView[selectedTrip.id] : []}
-            routes={selectedTrip ? mockRoutesView[selectedTrip.id] : []}
+            tripId={selectedTripId}
             onEdit={handleEditTrip}
-            onCancel={handleCancelTrip}
           />
         </CardContent>
       </Card>

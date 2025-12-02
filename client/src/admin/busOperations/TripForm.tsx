@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Bus, MapPin, Check, GripVertical } from "lucide-react";
+import {
+  ArrowLeft,
+  Bus,
+  MapPin,
+  Check,
+  GripVertical,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -41,16 +48,13 @@ import L from "leaflet";
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 
-// temporary to fix eslint
-export interface Location {
-  id: string;
-  name: string;
-  address: string;
-  city: string;
-  lat: number;
-  lng: number;
-}
+// IMPORT API
+import { useGetLocationsQuery } from "@/store/api/locationApi";
+import { useGetBusesQuery } from "@/store/api/busApi";
+import { useCreateTripMutation } from "@/store/api/tripsApi";
+import { toast } from "sonner";
 
+// --- Config Leaflet Icon ---
 const DefaultIcon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
@@ -59,58 +63,22 @@ const DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const mockBuses = [
-  { id: "BUS-001", name: "Xe 01 (51B-123.45)" },
-  { id: "BUS-002", name: "Xe 02 (29A-678.90)" },
-];
-
-const mockLocations = [
-  {
-    id: "LOC-001",
-    name: "Bến xe Miền Đông",
-    address: "292 Đinh Bộ Lĩnh, P.26, Q. Bình Thạnh, TPHCM",
-    city: "TPHCM",
-    lat: 10.8142,
-    lng: 106.7025,
-  },
-  {
-    id: "LOC-002",
-    name: "Trạm Dầu Giây (Đồng Nai)",
-    address: "QL1A, H. Thống Nhất, Đồng Nai",
-    city: "Đồng Nai",
-    lat: 10.9414,
-    lng: 107.1622,
-  },
-  {
-    id: "LOC-003",
-    name: "Bến xe Đà Lạt",
-    address: "01 Tô Hiến Thành, P.3, TP. Đà Lạt",
-    city: "TP. Đà Lạt",
-    lat: 11.9381,
-    lng: 108.4459,
-  },
-  {
-    id: "LOC-004",
-    name: "Trạm Bảo Lộc",
-    address: "QL20, TP. Bảo Lộc, Lâm Đồng",
-    city: "Lâm Đồng",
-    lat: 11.5473,
-    lng: 107.8061,
-  },
-];
-
-type TripStop = {
-  id: string;
+// --- Types ---
+// Type cho Stop trong Form state (Local state dùng cho UI & DragDrop)
+type TripStopState = {
+  id: string; // ID tạm thời để dùng cho thư viện Dnd-kit
   locationId: string;
   locationName: string;
   locationAddress: string;
-  arrivalTime: string;
-  departureTime: string;
+  arrivalTime: string; // ISO String
+  departureTime: string; // ISO String
 };
 
-const SortableTripStopItem = ({ stop }: { stop: TripStop }) => {
+// --- Component Sortable Item ---
+const SortableTripStopItem = ({ stop }: { stop: TripStopState }) => {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: stop.id });
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -126,7 +94,7 @@ const SortableTripStopItem = ({ stop }: { stop: TripStop }) => {
       <Button
         variant="ghost"
         size="icon"
-        className="cursor-grab"
+        className="cursor-grab active:cursor-grabbing"
         {...listeners}
       >
         <GripVertical className="h-5 w-5 text-muted-foreground" />
@@ -139,12 +107,20 @@ const SortableTripStopItem = ({ stop }: { stop: TripStop }) => {
         <div className="flex gap-4 mt-1 text-xs text-muted-foreground ml-6">
           <span>
             Đến:{" "}
-            {stop.arrivalTime ? stop.arrivalTime.replace("T", " ") : "--:--"}
+            {stop.arrivalTime
+              ? new Date(stop.arrivalTime).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "--:--"}
           </span>
           <span>
             Đi:{" "}
             {stop.departureTime
-              ? stop.departureTime.replace("T", " ")
+              ? new Date(stop.departureTime).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
               : "--:--"}
           </span>
         </div>
@@ -153,20 +129,31 @@ const SortableTripStopItem = ({ stop }: { stop: TripStop }) => {
   );
 };
 
+// --- Main Component ---
 const TripForm = () => {
   const navigate = useNavigate();
 
+  // 1. API Hooks
+  const [createTrip, { isLoading: isSubmitting }] = useCreateTripMutation();
+  const { data: locations = [], isLoading: isLoadingLocations } =
+    useGetLocationsQuery();
+  const { data: buses = [], isLoading: isLoadingBuses } = useGetBusesQuery();
+
+  // 2. Form State
   const [tripName, setTripName] = useState("");
   const [selectedBusId, setSelectedBusId] = useState<string>();
-  const [tripStops, setTripStops] = useState<TripStop[]>([]);
+  const [tripStops, setTripStops] = useState<TripStopState[]>([]);
 
+  // 3. Modal & Selection State
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<Location>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [selectedLocation, setSelectedLocation] = useState<any>(null); // Location từ API
   const [tempArrivalTime, setTempArrivalTime] = useState("");
   const [tempDepartureTime, setTempDepartureTime] = useState("");
 
   const sensors = useSensors(useSensor(PointerSensor));
 
+  // Tự động tạo tên Trip dựa trên điểm đi - điểm đến
   useEffect(() => {
     if (tripStops.length >= 2) {
       const startNode = tripStops[0];
@@ -179,31 +166,44 @@ const TripForm = () => {
     }
   }, [tripStops]);
 
-  const handleMapMarkerClick = (location: Location) => {
+  // Xử lý khi click vào Marker trên bản đồ
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleMapMarkerClick = (location: any) => {
     setSelectedLocation(location);
 
-    const now = new Date().toISOString().slice(0, 16);
-    setTempArrivalTime(now);
-    setTempDepartureTime(now);
+    // Set mặc định giờ hiện tại (Local time để hiển thị input type="datetime-local")
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    const localIsoString = now.toISOString().slice(0, 16);
+
+    setTempArrivalTime(localIsoString);
+    setTempDepartureTime(localIsoString);
     setIsMapModalOpen(true);
   };
 
+  // Confirm thêm điểm dừng
   const handleAddStop = () => {
     if (!selectedLocation) return;
+
+    // Convert từ Local Input Time sang ISO String chuẩn để lưu DB
+    const arrivalISO = new Date(tempArrivalTime).toISOString();
+    const departureISO = new Date(tempDepartureTime).toISOString();
+
     setTripStops((prev) => [
       ...prev,
       {
-        id: `stop-${Date.now()}`,
+        id: `stop-${Date.now()}`, // Tạo ID unique tạm thời cho DragDrop
         locationId: selectedLocation.id,
         locationName: selectedLocation.name,
-        locationAddress: selectedLocation.address,
-        arrivalTime: tempArrivalTime,
-        departureTime: tempDepartureTime,
+        locationAddress: selectedLocation.address || "",
+        arrivalTime: arrivalISO,
+        departureTime: departureISO,
       },
     ]);
     setIsMapModalOpen(false);
   };
 
+  // Xử lý kéo thả sắp xếp stops
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (active.id !== over?.id) {
@@ -215,18 +215,39 @@ const TripForm = () => {
     }
   };
 
-  const handleSaveTrip = () => {
-    console.log("Saving Trip...", { tripName, selectedBusId, tripStops });
-    navigate("/admin/bus-operations/trips");
+  // Submit Form gọi API
+  const handleSaveTrip = async () => {
+    if (!selectedBusId || tripStops.length < 2) {
+      toast.error("Please select a bus and at least 2 stops.");
+      return;
+    }
+
+    try {
+      const payload = {
+        busId: selectedBusId,
+        stops: tripStops.map((s) => ({
+          locationId: s.locationId,
+          arrivalTime: s.arrivalTime,
+          departureTime: s.departureTime,
+        })),
+      };
+
+      await createTrip(payload).unwrap();
+      toast.success("Trip created successfully!");
+      navigate("/admin/bus-operations/trips");
+    } catch (error) {
+      console.error("Create trip failed:", error);
+      toast.error("Failed to create trip. Please try again.");
+    }
   };
 
   const isStep1Done = !!tripName && !!selectedBusId;
   const isStep2Done = tripStops.length >= 2;
-
-  const defaultCenter = [11.3, 107.5];
+  const defaultCenter = [10.7769, 106.7009]; // TP.HCM
 
   return (
     <div className="flex flex-1 flex-col p-2 h-screen overflow-hidden">
+      {/* HEADER */}
       <div className="flex items-center justify-between mb-4 shrink-0">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
@@ -238,31 +259,42 @@ const TripForm = () => {
         </div>
         <Button
           onClick={handleSaveTrip}
-          disabled={!isStep1Done || !isStep2Done}
+          disabled={!isStep1Done || !isStep2Done || isSubmitting}
         >
-          <Check className="mr-2 h-4 w-4" /> Save & Activate
+          {isSubmitting ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Check className="mr-2 h-4 w-4" />
+          )}
+          {isSubmitting ? "Saving..." : "Save & Activate"}
         </Button>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-3 h-full overflow-hidden ">
+      <div className="grid md:grid-cols-3 gap-3 h-full overflow-hidden">
+        {/* LEFT PANEL: CONFIG */}
         <div className="md:col-span-1 flex flex-col gap-3 overflow-y-auto">
+          {/* Card: Bus Info */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bus className="h-5 w-5" /> General Info
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="bus">Bus</Label>
                 <Select value={selectedBusId} onValueChange={setSelectedBusId}>
                   <SelectTrigger id="bus">
-                    <SelectValue placeholder="Select a bus..." />
+                    <SelectValue
+                      placeholder={
+                        isLoadingBuses ? "Loading buses..." : "Select a bus..."
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockBuses.map((bus) => (
+                    {buses.map((bus) => (
                       <SelectItem key={bus.id} value={bus.id}>
-                        {bus.name}
+                        {bus.plateNumber} ({bus.seatCapacity} seats)
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -282,6 +314,7 @@ const TripForm = () => {
             </CardContent>
           </Card>
 
+          {/* Card: Stops List (Draggable) */}
           <Card className="flex-1 flex flex-col">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 justify-between">
@@ -309,7 +342,7 @@ const TripForm = () => {
               </DndContext>
 
               {tripStops.length === 0 && (
-                <div className="h-full flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed rounded-lg p-4">
+                <div className="h-full flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed rounded-lg p-4 mt-2">
                   <MapPin className="h-8 w-8 mb-2 opacity-50" />
                   <p className="text-center text-sm">
                     No stops selected.
@@ -322,14 +355,15 @@ const TripForm = () => {
           </Card>
         </div>
 
+        {/* RIGHT PANEL: MAP */}
         <Card className="md:col-span-2 flex flex-col overflow-hidden h-[600px] md:h-auto">
           <CardHeader className="py-3 px-6 shrink-0">
-            <CardTitle>Stop Map</CardTitle>
+            <CardTitle>Select Stops</CardTitle>
           </CardHeader>
           <CardContent className="p-0 flex-1 relative">
             <MapContainer
               center={defaultCenter as [number, number]}
-              zoom={8}
+              zoom={10}
               scrollWheelZoom={true}
               className="h-full w-full z-0"
             >
@@ -337,36 +371,43 @@ const TripForm = () => {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              {mockLocations.map((loc) => (
-                <Marker
-                  key={loc.id}
-                  position={[loc.lat, loc.lng]}
-                  eventHandlers={{
-                    click: () => handleMapMarkerClick(loc),
-                  }}
-                >
-                  <Popup>
-                    <div className="text-sm">
-                      <strong>{loc.name}</strong>
-                      <br />
-                      {loc.address}
-                      <br />
-                      <span className="text-primary cursor-pointer font-semibold">
-                        Click marker to add
-                      </span>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
+
+              {/* Render Locations from API */}
+              {!isLoadingLocations &&
+                locations.map((loc) => {
+                  if (!loc.latitude || !loc.longitude) return null;
+                  return (
+                    <Marker
+                      key={loc.id}
+                      position={[loc.latitude, loc.longitude]}
+                      eventHandlers={{
+                        click: () => handleMapMarkerClick(loc),
+                      }}
+                    >
+                      <Popup>
+                        <div className="text-sm">
+                          <strong>{loc.name}</strong>
+                          <br />
+                          {loc.address}
+                          <br />
+                          <span className="text-primary cursor-pointer font-semibold hover:underline">
+                            Click marker to add stop
+                          </span>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  );
+                })}
             </MapContainer>
 
-            <div className="absolute top-4 right-4 bg-background/90 backdrop-blur p-2 rounded-md shadow text-xs z-[400]">
+            <div className="absolute top-4 right-4 bg-background/90 backdrop-blur p-2 rounded-md shadow text-xs z-[400] border">
               Click on markers to add them to the schedule
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* DIALOG ADD STOP */}
       <Dialog open={isMapModalOpen} onOpenChange={setIsMapModalOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>

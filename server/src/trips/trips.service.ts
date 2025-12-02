@@ -9,8 +9,10 @@ import { ActivityLogsService } from 'src/activity-logs/activity-logs.service';
 import { RedisCacheService } from 'src/cache/redis-cache.service';
 import { CreateTripDto } from 'src/trips/dto/create-trip.dto';
 import { TripQueryDto } from 'src/trips/dto/trip-query.dto';
+import { SearchTripDto } from 'src/trips/dto/search-trip.dto';
 import { UpdateTripDto } from 'src/trips/dto/update-trip.dto';
 import { Prisma, TripStatus, Trips } from '@prisma/client';
+import { normalizeCity } from 'src/common/utils/normalizeCity';
 
 @Injectable()
 export class TripsService {
@@ -680,6 +682,291 @@ export class TripsService {
       }
       throw new InternalServerErrorException('Failed to fetch seat status', {
         cause: err,
+      });
+    }
+  }
+
+  /**
+   * Search trips by city names and departure date.
+   * This method allows searching by city name (e.g., "HCMC") and will find all locations in that city.
+   * Time is taken from trip stops instead of trip start/end times.
+   */
+  async searchTrips(searchDto: SearchTripDto) {
+    try {
+      const cacheKey = `trips:city-search:${JSON.stringify(searchDto)}`;
+      const cachedData = await this.cacheManager.get(cacheKey);
+      if (cachedData) {
+        return cachedData;
+      }
+
+      const {
+        originCity,
+        destinationCity,
+        departureDate,
+        includeStops,
+        includeRoutes,
+      } = searchDto;
+
+      let originLocationIds: string[] = [];
+      let destinationLocationIds: string[] = [];
+
+      // Get all locations for origin city
+      if (originCity) {
+        const normalizedOrigin = normalizeCity(originCity);
+
+        // First try to find exact match
+        let originLocations = await this.prisma.locations.findMany({
+          where: {
+            city: {
+              equals: normalizedOrigin,
+              mode: 'insensitive',
+            },
+          },
+          select: { id: true, city: true },
+        });
+
+        // If no exact match, try fuzzy search
+        if (originLocations.length === 0) {
+          const allCities = await this.prisma.locations.findMany({
+            distinct: ['city'],
+            select: { city: true },
+          });
+
+          const matchedCity = allCities.find(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+            (item: any) => normalizeCity(item.city) === normalizedOrigin,
+          );
+
+          if (matchedCity) {
+            originLocations = await this.prisma.locations.findMany({
+              where: { city: matchedCity.city },
+              select: { id: true, city: true },
+            });
+          } else {
+            // Try partial match
+            originLocations = await this.prisma.locations.findMany({
+              where: {
+                city: {
+                  contains: originCity.trim(),
+                  mode: 'insensitive',
+                },
+              },
+              select: { id: true, city: true },
+            });
+          }
+        }
+
+        originLocationIds = originLocations.map((loc) => loc.id);
+      }
+
+      // Get all locations for destination city
+      if (destinationCity) {
+        const normalizedDestination = normalizeCity(destinationCity);
+
+        // First try to find exact match
+        let destinationLocations = await this.prisma.locations.findMany({
+          where: {
+            city: {
+              equals: normalizedDestination,
+              mode: 'insensitive',
+            },
+          },
+          select: { id: true, city: true },
+        });
+
+        // If no exact match, try fuzzy search
+        if (destinationLocations.length === 0) {
+          const allCities = await this.prisma.locations.findMany({
+            distinct: ['city'],
+            select: { city: true },
+          });
+
+          const matchedCity = allCities.find(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+            (item: any) => normalizeCity(item.city) === normalizedDestination,
+          );
+
+          if (matchedCity) {
+            destinationLocations = await this.prisma.locations.findMany({
+              where: { city: matchedCity.city },
+              select: { id: true, city: true },
+            });
+          } else {
+            // Try partial match
+            destinationLocations = await this.prisma.locations.findMany({
+              where: {
+                city: {
+                  contains: destinationCity.trim(),
+                  mode: 'insensitive',
+                },
+              },
+              select: { id: true, city: true },
+            });
+          }
+        }
+
+        destinationLocationIds = destinationLocations.map((loc) => loc.id);
+      }
+
+      // Build where condition for trips
+      const where: Prisma.TripsWhereInput = {
+        status: 'scheduled', // Only show scheduled trips
+        AND: [],
+      };
+
+      // Add date filter based on trip stops departure time
+      if (departureDate) {
+        const startOfDay = new Date(departureDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(departureDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        where.AND!.push({
+          tripStops: {
+            some: {
+              departureTime: {
+                gte: startOfDay,
+                lte: endOfDay,
+              },
+            },
+          },
+        });
+      }
+
+      // Add origin filter
+      if (originLocationIds.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        where.AND!.push({
+          tripStops: {
+            some: {
+              locationId: {
+                in: originLocationIds,
+              },
+            },
+          },
+        });
+      }
+
+      // Add destination filter
+      if (destinationLocationIds.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        where.AND!.push({
+          tripStops: {
+            some: {
+              locationId: {
+                in: destinationLocationIds,
+              },
+            },
+          },
+        });
+      }
+
+      // Build include condition
+      const include: Prisma.TripsInclude = {
+        bus: true,
+        tripStops: {
+          orderBy: { sequence: 'asc' },
+          include: {
+            location: true,
+          },
+        },
+      };
+
+      if (includeRoutes === 'true') {
+        include.tripRoutes = {
+          include: {
+            route: {
+              include: {
+                origin: true,
+                destination: true,
+              },
+            },
+          },
+        };
+      }
+
+      // Query trips
+      const trips = await this.prisma.trips.findMany({
+        where,
+        include,
+        orderBy: { startTime: 'asc' },
+      });
+
+      // Filter trips to ensure origin comes before destination in the route
+      let filteredTrips = trips;
+      if (originLocationIds.length > 0 && destinationLocationIds.length > 0) {
+        filteredTrips = trips.filter((trip) => {
+          const stops = trip.tripStops;
+
+          const originStop = stops.find((s) =>
+            originLocationIds.includes(s.locationId),
+          );
+          const destinationStop = stops.find((s) =>
+            destinationLocationIds.includes(s.locationId),
+          );
+
+          return (
+            originStop &&
+            destinationStop &&
+            originStop.sequence < destinationStop.sequence
+          );
+        });
+      }
+
+      // Transform response to include route information based on trip stops
+      const response = filteredTrips.map((trip) => {
+        const stops = trip.tripStops;
+        const firstStop = stops[0];
+        const lastStop = stops[stops.length - 1];
+
+        // Find relevant origin and destination stops for this search
+        let relevantOriginStop = firstStop;
+        let relevantDestinationStop = lastStop;
+
+        if (originLocationIds.length > 0) {
+          relevantOriginStop =
+            stops.find((s) => originLocationIds.includes(s.locationId)) ||
+            firstStop;
+        }
+
+        if (destinationLocationIds.length > 0) {
+          relevantDestinationStop =
+            stops.find((s) => destinationLocationIds.includes(s.locationId)) ||
+            lastStop;
+        }
+
+        return {
+          ...trip,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          routeName: `${(relevantOriginStop as any).location?.city || 'Unknown'} - ${(relevantDestinationStop as any).location?.city || 'Unknown'}`,
+          departureTime: relevantOriginStop.departureTime,
+          arrivalTime: relevantDestinationStop.arrivalTime,
+          originStop: relevantOriginStop,
+          destinationStop: relevantDestinationStop,
+          // Remove detailed stops if not requested
+          ...(includeStops !== 'true' && { tripStops: undefined }),
+        };
+      });
+
+      // Cache for 5 minutes
+      await this.cacheManager.set(cacheKey, response, 300);
+
+      return {
+        message: 'Search trips successfully',
+        data: response,
+        count: response.length,
+        searchCriteria: {
+          originCity,
+          destinationCity,
+          departureDate,
+          foundOriginLocations: originLocationIds.length,
+          foundDestinationLocations: destinationLocationIds.length,
+        },
+      };
+    } catch (error: unknown) {
+      throw new InternalServerErrorException('Failed to search trips', {
+        cause: error,
       });
     }
   }

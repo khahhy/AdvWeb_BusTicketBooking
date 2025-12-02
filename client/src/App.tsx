@@ -61,17 +61,6 @@ function AppContent() {
     "/404",
   ].includes(location.pathname);
 
-  // Check if current page is authentication page
-  const isAuthPage = [
-    "/signup",
-    "/login",
-    "/forgot-password",
-    "/reset-password",
-    "/verify-email",
-    "/email-verified",
-    "/auth-success",
-  ].includes(location.pathname);
-
   const routeContent = (
     <Routes>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />

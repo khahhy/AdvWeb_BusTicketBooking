@@ -4,14 +4,11 @@ import dayjs, { Dayjs } from "dayjs";
 import Navbar from "@/components/common/Navbar";
 import backgroundImage from "@/assets/images/background.png";
 import TripCard from "@/components/search/TripCard";
-import FilterPanel, { FilterState } from "@/components/search/FilterPanel";
+// import FilterPanel, { FilterState } from "@/components/search/FilterPanel";
 import Footer from "@/components/dashboard/Footer";
-import { mockTrips } from "@/data/mockTrips";
-import {
-  useGetTripRouteMapQuery,
-  useGetLocationsQuery,
-} from "@/store/api/routesApi";
-import { QueryTripRouteParams } from "@/store/type/tripRoutesType";
+import { mockTrips, Trip } from "@/data/mockTrips";
+import { useSearchTripsQuery, SearchTripResult } from "@/store/api/routesApi";
+// import { QueryTripRouteParams } from "@/store/type/tripRoutesType";
 import TripSearchBar from "@/components/common/TripSearchBar";
 
 export default function SearchPage() {
@@ -27,13 +24,13 @@ export default function SearchPage() {
     return dateParam ? dayjs(dateParam) : dayjs();
   });
   const [openTripId, setOpenTripId] = useState<string | null>(null);
-  const [filters, setFilters] = useState<FilterState>({
-    departureTime: [],
-    arrivalTime: [],
-    priceRange: [0, 1328000],
-    busType: [],
-    amenities: [],
-  });
+  // const [filters, setFilters] = useState<FilterState>({
+  //   departureTime: [],
+  //   arrivalTime: [],
+  //   priceRange: [0, 1328000],
+  //   busType: [],
+  //   amenities: [],
+  // });
 
   // Update locations and date when search params change
   useEffect(() => {
@@ -47,98 +44,143 @@ export default function SearchPage() {
   }, [searchParams]);
 
   // Convert frontend filters to API parameters
-  const convertFiltersToApiParams = (
-    filterState: FilterState,
-  ): QueryTripRouteParams => {
-    const params: QueryTripRouteParams = {
-      page: 1,
-      limit: 20,
-    };
+  // const convertFiltersToApiParams = (
+  //   filterState: FilterState,
+  // ): QueryTripRouteParams => {
+  //   const params: QueryTripRouteParams = {
+  //     page: 1,
+  //     limit: 20,
+  //   };
 
-    // Add location filtering - find location ID from city name
-    if (locationsResponse && (fromLocation || toLocation)) {
-      const originLocation = locationsResponse.find(
-        (loc) => loc.city === fromLocation || loc.name === fromLocation,
-      );
-      const destLocation = locationsResponse.find(
-        (loc) => loc.city === toLocation || loc.name === toLocation,
-      );
+  //   // Add location filtering - find location ID from city name
+  //   if (locationsResponse && (fromLocation || toLocation)) {
+  //     const originLocation = locationsResponse.find(
+  //       (loc) => loc.city === fromLocation || loc.name === fromLocation,
+  //     );
+  //     const destLocation = locationsResponse.find(
+  //       (loc) => loc.city === toLocation || loc.name === toLocation,
+  //     );
 
-      // Use specific origin and destination location IDs for precise filtering
-      if (originLocation) {
-        params.originLocationId = originLocation.id;
-      }
-      if (destLocation) {
-        params.destinationLocationId = destLocation.id;
-      }
-    }
+  //     // Use specific origin and destination location IDs for precise filtering
+  //     if (originLocation) {
+  //       params.originLocationId = originLocation.id;
+  //     }
+  //     if (destLocation) {
+  //       params.destinationLocationId = destLocation.id;
+  //     }
+  //   }
 
-    // Add departure date if selected
-    if (selectedDate) {
-      params.departureDate = selectedDate.format("YYYY-MM-DD");
-    }
+  //   // Add departure date if selected
+  //   if (selectedDate) {
+  //     params.departureDate = selectedDate.format("YYYY-MM-DD");
+  //   }
 
-    // Convert time slots to time ranges
-    if (filterState.departureTime.length > 0) {
-      const timeRanges = filterState.departureTime
-        .map((slot) => {
-          switch (slot) {
-            case "early-morning":
-              return { start: "00:00", end: "06:00" };
-            case "morning":
-              return { start: "06:01", end: "12:00" };
-            case "afternoon":
-              return { start: "12:01", end: "18:00" };
-            case "evening":
-              return { start: "18:01", end: "23:59" };
-            default:
-              return null;
-          }
-        })
-        .filter(Boolean);
+  //   // Convert time slots to time ranges
+  //   if (filterState.departureTime.length > 0) {
+  //     const timeRanges = filterState.departureTime
+  //       .map((slot) => {
+  //         switch (slot) {
+  //           case "early-morning":
+  //             return { start: "00:00", end: "06:00" };
+  //           case "morning":
+  //             return { start: "06:01", end: "12:00" };
+  //           case "afternoon":
+  //             return { start: "12:01", end: "18:00" };
+  //           case "evening":
+  //             return { start: "18:01", end: "23:59" };
+  //           default:
+  //             return null;
+  //         }
+  //       })
+  //       .filter(Boolean);
 
-      if (timeRanges.length > 0) {
-        // Use the earliest start and latest end
-        const starts = timeRanges.map((r) => r!.start);
-        const ends = timeRanges.map((r) => r!.end);
-        params.departureTimeStart = starts.sort()[0];
-        params.departureTimeEnd = ends.sort().reverse()[0];
-      }
-    }
+  //     if (timeRanges.length > 0) {
+  //       // Use the earliest start and latest end
+  //       const starts = timeRanges.map((r) => r!.start);
+  //       const ends = timeRanges.map((r) => r!.end);
+  //       params.departureTimeStart = starts.sort()[0];
+  //       params.departureTimeEnd = ends.sort().reverse()[0];
+  //     }
+  //   }
 
-    // Add price range
-    if (filterState.priceRange[0] > 0 || filterState.priceRange[1] < 1328000) {
-      params.minPrice = filterState.priceRange[0];
-      params.maxPrice = filterState.priceRange[1];
-    }
+  //   // Add price filtering
+  //   if (filterState.priceRange[0] > 0 || filterState.priceRange[1] < 1328000) {
+  //     params.minPrice = filterState.priceRange[0];
+  //     params.maxPrice = filterState.priceRange[1];
+  //   }
 
-    // Add bus types
-    if (filterState.busType.length > 0) {
-      params.busType = filterState.busType;
-    }
+  //   // Add bus types
+  //   if (filterState.busType.length > 0) {
+  //     params.busType = filterState.busType;
+  //   }
 
-    // Add amenities
-    if (filterState.amenities.length > 0) {
-      params.amenities = filterState.amenities;
-    }
+  //   // Add amenities
+  //   if (filterState.amenities.length > 0) {
+  //     params.amenities = filterState.amenities;
+  //   }
 
-    return params;
-  };
+  //   // Seat capacity filtering will be handled on frontend
+
+  //   return params;
+  // };
 
   // Get locations data for filtering
-  const { data: locationsResponse = [] } = useGetLocationsQuery();
+  // const { data: locationsResponse = [] } = useGetLocationsQuery();
 
-  // Get trip route maps with current filters
-  const apiParams = convertFiltersToApiParams(filters);
+  // Use new search API instead of old trip route map API
+  const searchApiParams = {
+    originCity: fromLocation,
+    destinationCity: toLocation,
+    departureDate: selectedDate?.format("YYYY-MM-DD"),
+    includeStops: "true",
+    includeRoutes: "true",
+  };
+
   const {
-    data: tripRouteData,
+    data: searchTripsData,
     isLoading,
     error,
-  } = useGetTripRouteMapQuery(apiParams);
+  } = useSearchTripsQuery(searchApiParams);
 
-  const handleFilterChange = (newFilters: FilterState) => {
-    setFilters(newFilters);
-  };
+  // For backward compatibility, transform search results to old format
+  const tripRouteData =
+    searchTripsData?.map((trip: SearchTripResult) => ({
+      id: trip.id,
+      trip: {
+        id: trip.id,
+        tripName: trip.tripName,
+        startTime: trip.departureTime,
+        endTime: trip.arrivalTime,
+        bus: trip.bus || {
+          id: "",
+          plate: "Unknown",
+          busType: "standard",
+          seatCapacity: "SEAT_32",
+          amenities: {},
+        },
+      },
+      route: {
+        id: trip.id, // Use trip id as route id for now
+        name:
+          trip.routeName ||
+          `${trip.originStop?.location?.city} - ${trip.destinationStop?.location?.city}`,
+        origin: trip.originStop?.location || {
+          id: "",
+          name: "Unknown",
+          city: fromLocation || "",
+        },
+        destination: trip.destinationStop?.location || {
+          id: "",
+          name: "Unknown",
+          city: toLocation || "",
+        },
+      },
+      price: trip.tripRoutes?.[0]?.price || 200000, // Default price
+    })) || [];
+
+  // const handleFilterChange = (newFilters: FilterState) => {
+  //   setFilters(newFilters);
+  // };
 
   const handleSearch = (params: {
     from: string;
@@ -216,10 +258,9 @@ export default function SearchPage() {
                 {(() => {
                   if (isLoading) return "Loading...";
 
-                  const hasApiData =
-                    tripRouteData?.items && tripRouteData.items.length > 0;
+                  const hasApiData = tripRouteData && tripRouteData.length > 0;
                   const trips = hasApiData
-                    ? tripRouteData.items
+                    ? tripRouteData
                     : error
                       ? mockTrips
                       : [];
@@ -261,27 +302,66 @@ export default function SearchPage() {
                 return null; // Loading will be handled below
               }
 
-              if (tripRouteData?.items && tripRouteData.items.length > 0) {
+              if (tripRouteData && tripRouteData.length > 0) {
                 // Convert TripRoute data to Trip format for TripCard component
-                return tripRouteData.items.map((tripRoute) => ({
-                  id: tripRoute.tripId,
-                  departureTime: dayjs(tripRoute.trip.startTime).format(
-                    "HH:mm",
-                  ),
-                  arrivalTime: dayjs(tripRoute.trip.endTime).format("HH:mm"),
-                  duration:
-                    dayjs(tripRoute.trip.endTime).diff(
-                      dayjs(tripRoute.trip.startTime),
-                      "hour",
-                    ) + "h",
-                  from: tripRoute.route.origin.city,
-                  to: tripRoute.route.destination.city,
-                  price: Number(tripRoute.price),
-                  availableSeats: 20, // This would need to come from backend
-                  totalSeats: 32, // Default total seats
-                  busType: tripRoute.trip.bus.busType || "standard",
-                  amenities: tripRoute.trip.bus.amenities || {},
-                }));
+                return tripRouteData.map(
+                  (tripRoute: {
+                    id: string;
+                    trip: {
+                      id: string;
+                      tripName: string;
+                      startTime: string;
+                      endTime: string;
+                      bus: {
+                        id: string;
+                        plate: string;
+                        busType: string;
+                        seatCapacity: string;
+                        amenities?: unknown;
+                      };
+                    };
+                    route: {
+                      id: string;
+                      name: string;
+                      origin: { id: string; name: string; city: string };
+                      destination: { id: string; name: string; city: string };
+                    };
+                    price: number;
+                  }) => {
+                    const startTime = dayjs(tripRoute.trip.startTime);
+                    const endTime = dayjs(tripRoute.trip.endTime);
+                    const durationHours = endTime.diff(startTime, "hour", true);
+                    const durationText =
+                      durationHours >= 1
+                        ? `${Math.floor(durationHours)}h ${Math.round((durationHours % 1) * 60)}m`
+                        : `${Math.round(durationHours * 60)}m`;
+
+                    // Map seat capacity to total seats number
+                    const seatCapacityMap: { [key: string]: number } = {
+                      SEAT_16: 16,
+                      SEAT_28: 28,
+                      SEAT_32: 32,
+                    };
+
+                    const totalSeats =
+                      seatCapacityMap[tripRoute.trip.bus.seatCapacity] || 32;
+
+                    return {
+                      id: tripRoute.tripId,
+                      departureTime: startTime.format("HH:mm"),
+                      arrivalTime: endTime.format("HH:mm"),
+                      duration: durationText,
+                      from: tripRoute.route.origin.city,
+                      to: tripRoute.route.destination.city,
+                      price: Number(tripRoute.price),
+                      availableSeats: Math.floor(totalSeats * 0.6), // Estimate 60% availability
+                      totalSeats,
+                      busType:
+                        tripRoute.trip.bus.busType?.toLowerCase() || "standard",
+                      amenities: tripRoute.trip.bus.amenities || {},
+                    };
+                  },
+                );
               } else if (error) {
                 // Only use mock data as fallback when there's an error
                 console.warn("API error, falling back to mock data:", error);
@@ -290,7 +370,7 @@ export default function SearchPage() {
                 // No data available
                 return [];
               }
-            })()?.map((trip) => (
+            })()?.map((trip: Trip) => (
               <TripCard
                 key={trip.id}
                 trip={trip}
@@ -305,13 +385,8 @@ export default function SearchPage() {
             {(() => {
               if (isLoading) return false;
 
-              const hasApiData =
-                tripRouteData?.items && tripRouteData.items.length > 0;
-              const trips = hasApiData
-                ? tripRouteData.items
-                : error
-                  ? mockTrips
-                  : [];
+              const hasApiData = tripRouteData && tripRouteData.length > 0;
+              const trips = hasApiData ? tripRouteData : error ? mockTrips : [];
               return trips.length === 0;
             })() && (
               <div className="text-center py-16">

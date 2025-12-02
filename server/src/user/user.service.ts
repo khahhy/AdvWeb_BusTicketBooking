@@ -15,12 +15,12 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { QueryUserDto } from './dto/query-user.dto';
 
-interface StatItem {
+export interface StatItem {
   value: number;
   growth: number;
 }
 
-interface UserStatsData {
+export interface UserStatsData {
   total: StatItem;
   newThisMonth: StatItem;
   active: StatItem;

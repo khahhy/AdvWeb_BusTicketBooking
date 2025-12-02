@@ -30,6 +30,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { QueryUserDto } from './dto/query-user.dto';
+import { UserStatsData } from './user.service';
 import type { RequestWithUser } from 'src/common/type/request-with-user.interface';
 
 @ApiTags('users')
@@ -43,7 +44,7 @@ export class UserController {
   @ApiOperation({ summary: 'Admin: Get user statistics (Total, New, Active)' })
   @ApiResponse({ status: 200, description: 'Fetched stats successfully.' })
   @Get('stats')
-  async getStats() {
+  async getStats(): Promise<UserStatsData> {
     return this.userService.getStats();
   }
 

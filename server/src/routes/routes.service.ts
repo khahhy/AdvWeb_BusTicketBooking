@@ -721,16 +721,6 @@ export class RoutesService {
           mode: 'insensitive',
         };
       }
-      // Specific origin and destination filtering
-      if (originLocationId || destinationLocationId) {
-        where.route = where.route || {};
-        if (originLocationId) {
-          where.route.originLocationId = originLocationId;
-        }
-        if (destinationLocationId) {
-          where.route.destinationLocationId = destinationLocationId;
-        }
-      }
 
       if (minPrice !== undefined || maxPrice !== undefined) {
         where.price = {};
@@ -740,6 +730,51 @@ export class RoutesService {
 
       // Advanced filtering conditions
       const tripConditions: Prisma.TripsWhereInput = {};
+
+      // Specific origin and destination filtering based on trip stops
+      if (originLocationId || destinationLocationId) {
+        const locationFilters: Prisma.TripsWhereInput = {};
+
+        // If both origin and destination are specified, find trips with both locations in correct order
+        if (originLocationId && destinationLocationId) {
+          locationFilters.AND = [
+            {
+              tripStops: {
+                some: {
+                  locationId: originLocationId,
+                },
+              },
+            },
+            {
+              tripStops: {
+                some: {
+                  locationId: destinationLocationId,
+                },
+              },
+            },
+          ];
+        } else if (originLocationId) {
+          // Only origin specified
+          locationFilters.tripStops = {
+            some: {
+              locationId: originLocationId,
+            },
+          };
+        } else if (destinationLocationId) {
+          // Only destination specified
+          locationFilters.tripStops = {
+            some: {
+              locationId: destinationLocationId,
+            },
+          };
+        }
+
+        // Merge with existing trip conditions
+        where.trip = {
+          ...tripConditions,
+          ...locationFilters,
+        };
+      }
 
       // Filter by departure date
       if (departureDate) {
@@ -804,21 +839,33 @@ export class RoutesService {
         busWhere.seatCapacity = { in: seatCapacity };
       }
 
-      // Filter by Amenities
+      // Filter by Amenities - Enhanced to handle both object and array formats
       if (amenities && amenities.length > 0) {
-        busWhere.AND = amenities.map((amenity) => ({
-          amenities: {
-            path: [amenity],
-            equals: true,
+        busWhere.OR = [
+          // Handle object format: { wifi: true, airCondition: true, ... }
+          {
+            AND: amenities.map((amenity) => ({
+              amenities: {
+                path: [amenity],
+                equals: true,
+              },
+            })),
           },
-        }));
+          // Handle array format: ["wifi", "airCondition", ...]
+          {
+            amenities: {
+              array_contains: amenities,
+            },
+          },
+        ];
       }
 
       if (Object.keys(busWhere).length > 0) {
         tripConditions.bus = busWhere;
       }
 
-      if (Object.keys(tripConditions).length > 0) {
+      // Only set trip conditions if origin/destination filtering wasn't already applied
+      if (Object.keys(tripConditions).length > 0 && !where.trip) {
         where.trip = tripConditions;
       }
 
@@ -845,9 +892,18 @@ export class RoutesService {
             },
             trip: {
               select: {
+                id: true,
                 startTime: true,
                 endTime: true,
                 status: true,
+                tripStops: {
+                  include: {
+                    location: true,
+                  },
+                  orderBy: {
+                    sequence: 'asc',
+                  },
+                },
                 bus: {
                   select: {
                     plate: true,
@@ -865,7 +921,29 @@ export class RoutesService {
 
       type RawItem = (typeof rawTripData)[number];
       type ProcessedItem = RawItem & { durationMinutes?: number };
-      let finalData: ProcessedItem[] = rawTripData;
+
+      // Filter trips based on origin/destination sequence order
+      let filteredTripData = rawTripData;
+      if (originLocationId && destinationLocationId) {
+        filteredTripData = rawTripData.filter((item) => {
+          const tripStops = item.trip.tripStops;
+          const originStop = tripStops.find(
+            (stop) => stop.locationId === originLocationId,
+          );
+          const destinationStop = tripStops.find(
+            (stop) => stop.locationId === destinationLocationId,
+          );
+
+          // Both stops must exist and origin must come before destination
+          return (
+            originStop &&
+            destinationStop &&
+            originStop.sequence < destinationStop.sequence
+          );
+        });
+      }
+
+      let finalData: ProcessedItem[] = filteredTripData;
 
       if (minDuration || maxDuration || sortByDuration) {
         finalData = rawTripData.map((item) => {
@@ -898,9 +976,20 @@ export class RoutesService {
         }
       }
 
+      // Update total count if we filtered by sequence order
+      const actualTotal =
+        originLocationId && destinationLocationId
+          ? filteredTripData.length
+          : total;
+
       const resultData = {
         items: finalData,
-        meta: { total, page, limit, lastPage: Math.ceil(total / limit) },
+        meta: {
+          total: actualTotal,
+          page,
+          limit,
+          lastPage: Math.ceil(actualTotal / limit),
+        },
       };
       await this.cacheManager.set(cacheKey, resultData, 300);
 

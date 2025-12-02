@@ -30,13 +30,14 @@ export interface QueryTripRouteParams {
   destinationLocationId?: string;
   minPrice?: number;
   maxPrice?: number;
-  sortByPrice?: 'asc' | 'desc';
+  sortByPrice?: "asc" | "desc";
   // Advanced filtering
   departureDate?: string;
   departureTimeStart?: string;
   departureTimeEnd?: string;
   busType?: BusType[];
   amenities?: string[];
+  seatCapacity?: string[];
 }
 
 export interface TripRouteResponse {

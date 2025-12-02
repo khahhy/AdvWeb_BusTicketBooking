@@ -29,6 +29,7 @@ import { UserRole } from '@prisma/client';
 import type { RequestWithUser } from 'src/common/type/request-with-user.interface';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { TripQueryDto } from './dto/trip-query.dto';
+import { SearchTripDto } from './dto/search-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
 import { UpdateTripStatusDto } from './dto/update-trip-status.dto';
 
@@ -82,6 +83,54 @@ export class TripsController {
   @Get()
   async findAll(@Query() query: TripQueryDto) {
     return this.tripsService.findAll(query);
+  }
+
+  @ApiOperation({
+    summary: 'Search trips by city names and departure date',
+    description:
+      'Enhanced search that allows searching by city name (e.g., "HCMC") instead of location IDs. Time is taken from trip stops. When searching "HCMC", it will find all bus stations in Ho Chi Minh City.',
+  })
+  @ApiQuery({
+    name: 'originCity',
+    required: false,
+    description:
+      'Origin city name (e.g., "HCMC", "Hà Nội"). Will find all locations in this city.',
+    example: 'HCMC',
+  })
+  @ApiQuery({
+    name: 'destinationCity',
+    required: false,
+    description:
+      'Destination city name (e.g., "Đà Nẵng", "Cần Thơ"). Will find all locations in this city.',
+    example: 'Đà Nẵng',
+  })
+  @ApiQuery({
+    name: 'departureDate',
+    required: false,
+    description:
+      'Departure date (YYYY-MM-DD format). Will search trips that depart on this date.',
+    example: '2024-12-15',
+  })
+  @ApiQuery({
+    name: 'includeStops',
+    required: false,
+    description: 'Include detailed trip stops information',
+    example: 'true',
+  })
+  @ApiQuery({
+    name: 'includeRoutes',
+    required: false,
+    description: 'Include route information',
+    example: 'true',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Trips found successfully with route information based on trip stops',
+  })
+  @Get('search')
+  async searchTrips(@Query() searchDto: SearchTripDto) {
+    return this.tripsService.searchTrips(searchDto);
   }
 
   @ApiOperation({ summary: 'Get a trip by ID with stops & segments' })

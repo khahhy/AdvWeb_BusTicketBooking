@@ -8,20 +8,26 @@ import Footer from "@/components/dashboard/Footer";
 export default function UserDashboard() {
   return (
     <div className="min-h-screen bg-background dark:bg-black text-foreground">
-      {/* Resizable Navbar */}
+      {/* Responsive Navbar */}
       <Navbar />
 
-      {/* Hero Section with Search */}
+      {/* Hero Section with Responsive Search Form */}
       <HeroSection />
 
-      {/* Popular Routes */}
-      <PopularRoutes />
+      {/* Popular Routes Section */}
+      <section className="py-12 sm:py-16 md:py-20">
+        <PopularRoutes />
+      </section>
 
-      {/* Customer Feedback */}
-      <CustomerFeedback />
+      {/* Customer Feedback Section */}
+      <section className="py-12 sm:py-16 md:py-20">
+        <CustomerFeedback />
+      </section>
 
-      {/* Features */}
-      <Features />
+      {/* Features Section */}
+      <section className="py-12 sm:py-16 md:py-20">
+        <Features />
+      </section>
 
       {/* Footer */}
       <Footer />

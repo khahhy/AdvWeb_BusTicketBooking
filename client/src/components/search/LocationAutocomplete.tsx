@@ -124,7 +124,7 @@ export default function LocationAutocomplete({
   const displayValue = searchTerm || value;
 
   return (
-    <div className="relative flex-1 px-6 py-4">
+    <div className="relative flex-1 px-4 sm:px-6 py-3 sm:py-4">
       <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
         {label}
       </div>
@@ -138,7 +138,7 @@ export default function LocationAutocomplete({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled}
-          className="w-full text-lg font-medium border-0 focus:ring-0 bg-transparent p-0 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none"
+          className="w-full text-base sm:text-lg font-medium border-0 focus:ring-0 bg-transparent p-0 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none"
           autoComplete="off"
         />
         {displayValue && !disabled && (

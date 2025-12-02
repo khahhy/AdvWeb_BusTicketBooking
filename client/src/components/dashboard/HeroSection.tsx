@@ -18,27 +18,30 @@ export default function HeroSection() {
       {/* Dark mode background */}
       <div className="absolute inset-0 bg-black hidden dark:block" />
 
-      <div className="container mx-auto px-4 py-20 relative z-10">
-        <div className="text-center mb-16">
-          <h2 className="text-6xl md:text-7xl font-bold mb-6 leading-tight">
-            <span className="inline-flex items-center gap-3">
-              Effortless{" "}
-              <img
-                src={busLogoImage}
-                alt="Bus logo"
-                className="w-20 h-20 object-contain dark:hidden"
-              />
-              <img
-                src={busLogoWhite}
-                alt="Bus logo"
-                className="w-20 h-20 object-contain hidden dark:block"
-              />
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 relative z-10">
+        <div className="text-center mb-8 md:mb-16">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-6 leading-tight">
+            <span className="flex flex-col sm:inline-flex sm:items-center gap-2 sm:gap-3">
+              <span className="flex items-center justify-center gap-2 sm:gap-3">
+                Effortless{" "}
+                <img
+                  src={busLogoImage}
+                  alt="Bus logo"
+                  className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain dark:hidden"
+                />
+                <img
+                  src={busLogoWhite}
+                  alt="Bus logo"
+                  className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain hidden dark:block"
+                />
+              </span>
               <span className="italic font-light"> Booking</span>
             </span>
-            ,<br />
+            <span className="block sm:inline">,</span>
+            <br className="hidden sm:block" />
             <span className="font-black">Smarter Journeys</span>
           </h2>
-          <p className="text-xl md:text-2xl opacity-90 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl md:text-2xl opacity-90 max-w-2xl mx-auto px-4">
             Discover seamless travel experiences with our booking platform
           </p>
         </div>

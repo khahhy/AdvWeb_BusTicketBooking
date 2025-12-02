@@ -91,7 +91,10 @@ const ReviewTable = ({ reviews, onViewDetail }: ReviewTableProps) => {
             ))}
             {reviews.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-center py-12 text-gray-500 dark:text-gray-400">
+                <td
+                  colSpan={6}
+                  className="text-center py-12 text-gray-500 dark:text-gray-400"
+                >
                   No reviews found.
                 </td>
               </tr>

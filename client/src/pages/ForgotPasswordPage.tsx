@@ -78,8 +78,16 @@ export default function ForgotPasswordPage() {
             onClick={() => navigate("/dashboard")}
             className="hover:opacity-80 transition-opacity"
           >
-            <img src={logoImage} alt="Bus Booking Logo" className="w-32 dark:hidden" />
-            <img src={logoWhiteImage} alt="Bus Booking Logo White" className="w-32 hidden dark:block" />
+            <img
+              src={logoImage}
+              alt="Bus Booking Logo"
+              className="w-32 dark:hidden"
+            />
+            <img
+              src={logoWhiteImage}
+              alt="Bus Booking Logo White"
+              className="w-32 hidden dark:block"
+            />
           </button>
         </div>{" "}
         <div className="max-w-xl w-full mx-auto px-6 py-6 relative z-10">
@@ -154,8 +162,16 @@ export default function ForgotPasswordPage() {
           onClick={() => navigate("/dashboard")}
           className="hover:opacity-80 transition-opacity"
         >
-          <img src={logoImage} alt="Bus Booking Logo" className="w-32 dark:hidden" />
-          <img src={logoWhiteImage} alt="Bus Booking Logo White" className="w-32 hidden dark:block" />
+          <img
+            src={logoImage}
+            alt="Bus Booking Logo"
+            className="w-32 dark:hidden"
+          />
+          <img
+            src={logoWhiteImage}
+            alt="Bus Booking Logo White"
+            className="w-32 hidden dark:block"
+          />
         </button>
       </div>
 

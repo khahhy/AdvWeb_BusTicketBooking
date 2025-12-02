@@ -60,7 +60,9 @@ const NotificationDetailModal = ({
               <span className="block text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">
                 Recipient
               </span>
-              <span className="font-medium text-gray-900 dark:text-white">{log.userName}</span>
+              <span className="font-medium text-gray-900 dark:text-white">
+                {log.userName}
+              </span>
             </div>
             <div>
               <span className="block text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">

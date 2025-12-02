@@ -22,7 +22,9 @@ export default function PaymentMethodsCard({
 }: PaymentMethodsCardProps) {
   return (
     <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Payment methods</h2>
+      <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+        Payment methods
+      </h2>
 
       <div className="space-y-4">
         {paymentMethods.map((method) => (
@@ -52,7 +54,9 @@ export default function PaymentMethodsCard({
                 )}
               </div>
               <div className="flex items-center gap-3 flex-1">
-                <div className="text-blue-600 dark:text-blue-400">{method.icon}</div>
+                <div className="text-blue-600 dark:text-blue-400">
+                  {method.icon}
+                </div>
                 <div>
                   <div className="font-semibold text-gray-900 dark:text-white">
                     {method.name}
@@ -67,7 +71,9 @@ export default function PaymentMethodsCard({
         ))}
       </div>
 
-      {error && <p className="text-red-500 dark:text-red-400 text-xs mt-4">{error}</p>}
+      {error && (
+        <p className="text-red-500 dark:text-red-400 text-xs mt-4">{error}</p>
+      )}
     </div>
   );
 }

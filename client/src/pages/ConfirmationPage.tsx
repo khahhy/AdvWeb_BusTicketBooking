@@ -81,7 +81,9 @@ export default function ConfirmationPage() {
         {/* Booking Code Card */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
           <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-6 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Booking Code</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              Booking Code
+            </p>
             <p className="text-4xl font-bold text-primary dark:text-blue-400 tracking-wider">
               {bookingCode}
             </p>
@@ -119,7 +121,9 @@ export default function ConfirmationPage() {
                   <div className="h-0.5 w-16 md:w-40 border-t-2 border-dashed border-gray-300 dark:border-gray-600"></div>
                   <MapPin className="w-4 h-4 md:w-5 md:h-5 text-gray-400 dark:text-gray-500" />
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">{trip.duration}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  {trip.duration}
+                </div>
               </div>
 
               <div className="text-right w-32 flex-shrink-0">
@@ -134,13 +138,17 @@ export default function ConfirmationPage() {
 
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Date</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                  Date
+                </p>
                 <p className="text-base font-semibold text-gray-900 dark:text-white">
                   {formatDate()}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Seat Number</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                  Seat Number
+                </p>
                 <p className="text-base font-semibold text-gray-900 dark:text-white">
                   {selectedSeat}
                 </p>
@@ -157,20 +165,28 @@ export default function ConfirmationPage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Full Name</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                  Full Name
+                </p>
                 <p className="text-base font-semibold text-gray-900 dark:text-white">
                   {passengerName}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">ID Number</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                  ID Number
+                </p>
                 <p className="text-base font-semibold text-gray-900 dark:text-white">
                   {passengerId}
                 </p>
               </div>
               <div className="md:col-span-2">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Email</p>
-                <p className="text-base font-semibold text-gray-900 dark:text-white">{email}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                  Email
+                </p>
+                <p className="text-base font-semibold text-gray-900 dark:text-white">
+                  {email}
+                </p>
               </div>
             </div>
           </div>

@@ -81,21 +81,28 @@ const PaymentDetailModal = ({
               </h3>
               <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Amount</span>
+                  <span className="text-gray-500 dark:text-gray-400">
+                    Amount
+                  </span>
                   <span className="font-bold text-lg text-gray-900 dark:text-white">
                     {formatCurrency(payment.amount)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Gateway</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{payment.gateway}</span>
+                  <span className="text-gray-500 dark:text-gray-400">
+                    Gateway
+                  </span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {payment.gateway}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500 dark:text-gray-400">Type</span>
                   <span className="flex items-center gap-1 text-gray-900 dark:text-white">
                     {payment.status === "refunded" ? (
                       <>
-                        <ArrowUpRight className="w-3 h-3 text-red-500 dark:text-red-400" /> Refund
+                        <ArrowUpRight className="w-3 h-3 text-red-500 dark:text-red-400" />{" "}
+                        Refund
                       </>
                     ) : (
                       <>

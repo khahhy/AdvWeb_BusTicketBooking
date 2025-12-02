@@ -106,7 +106,9 @@ const ReviewManagement = () => {
   return (
     <div className="p-6 space-y-6 min-h-screen font-sans text-gray-900 dark:text-white">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Customer Reviews</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          Customer Reviews
+        </h1>
       </div>
 
       <ReviewStats reviews={filteredReviews} />

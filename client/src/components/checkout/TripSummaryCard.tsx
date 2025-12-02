@@ -28,7 +28,9 @@ export default function TripSummaryCard({
 
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">{trip.from}</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+            {trip.from}
+          </div>
           <div className="text-xl font-semibold text-gray-900 dark:text-white mt-1">
             {trip.departureTime}
           </div>
@@ -40,18 +42,24 @@ export default function TripSummaryCard({
             <div className="h-0.5 w-16 md:w-40 border-t-2 border-dashed border-gray-300 dark:border-gray-600"></div>
             <MapPin className="w-4 h-4 md:w-5 md:h-5 text-gray-400 dark:text-gray-500" />
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">{trip.duration}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {trip.duration}
+          </div>
         </div>
 
         <div className="text-right">
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">{trip.to}</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+            {trip.to}
+          </div>
           <div className="text-xl font-semibold text-gray-900 dark:text-white mt-1">
             {trip.arrivalTime}
           </div>
         </div>
       </div>
 
-      <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">{formatDate()}</div>
+      <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+        {formatDate()}
+      </div>
     </div>
   );
 }

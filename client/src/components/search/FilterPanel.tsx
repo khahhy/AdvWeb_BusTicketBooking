@@ -159,7 +159,9 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
     <div className="bg-white dark:bg-black rounded-2xl shadow-md p-6 sticky top-32 z-10">
       {/* Filter Header */}
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Filters</h3>
+        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+          Filters
+        </h3>
         <button
           onClick={handleClearAll}
           className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 font-medium text-sm"
@@ -187,7 +189,9 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
               <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
                 {slot.label}
               </div>
-              <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">{slot.time}</div>
+              <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                {slot.time}
+              </div>
             </button>
           ))}
         </div>
@@ -195,7 +199,9 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
 
       {/* Arrival Time */}
       <div className="mb-8">
-        <h4 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-4">Arrival time</h4>
+        <h4 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-4">
+          Arrival time
+        </h4>
         <div className="grid grid-cols-2 gap-3">
           {arrivalTimeSlots.map((slot) => (
             <button
@@ -210,7 +216,9 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
               <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
                 {slot.label}
               </div>
-              <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">{slot.time}</div>
+              <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                {slot.time}
+              </div>
             </button>
           ))}
         </div>
@@ -272,7 +280,9 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
 
       {/* Price Range */}
       <div>
-        <h4 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-4">Price</h4>
+        <h4 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-4">
+          Price
+        </h4>
         <div className="flex items-center justify-between text-sm text-gray-700 dark:text-gray-300 font-medium mb-3">
           <span>{formatPrice(priceRange[0])}</span>
           <span>-</span>

@@ -25,12 +25,16 @@ export default function PaymentTripSummaryCard({
         <span className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-xs font-semibold px-3 py-1 rounded-full">
           DEPARTING
         </span>
-        <span className="text-sm text-gray-600 dark:text-gray-400">{formatDate()}</span>
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          {formatDate()}
+        </span>
       </div>
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">{trip.from}</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+            {trip.from}
+          </div>
           <div className="text-xl font-semibold text-gray-900 dark:text-white mt-1">
             {trip.departureTime}
           </div>
@@ -42,11 +46,15 @@ export default function PaymentTripSummaryCard({
             <div className="h-0.5 w-16 md:w-40 border-t-2 border-dashed border-gray-300 dark:border-gray-600"></div>
             <MapPin className="w-4 h-4 md:w-5 md:h-5 text-gray-400 dark:text-gray-500" />
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">{trip.duration}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {trip.duration}
+          </div>
         </div>
 
         <div className="text-right">
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">{trip.to}</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+            {trip.to}
+          </div>
           <div className="text-xl font-semibold text-gray-900 dark:text-white mt-1">
             {trip.arrivalTime}
           </div>
@@ -72,8 +80,12 @@ export default function PaymentTripSummaryCard({
 
         {showPassengerDetails && (
           <div className="mt-4 space-y-2 text-sm">
-            <div className="text-gray-900 dark:text-white font-medium">{passengerName}</div>
-            <div className="text-gray-600 dark:text-gray-400">{passengerId}</div>
+            <div className="text-gray-900 dark:text-white font-medium">
+              {passengerName}
+            </div>
+            <div className="text-gray-600 dark:text-gray-400">
+              {passengerId}
+            </div>
           </div>
         )}
 
@@ -81,7 +93,9 @@ export default function PaymentTripSummaryCard({
           <Mail className="w-4 h-4" />
           <span>Tickets will be sent via email</span>
         </div>
-        <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 ml-6">{email}</div>
+        <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 ml-6">
+          {email}
+        </div>
       </div>
     </div>
   );

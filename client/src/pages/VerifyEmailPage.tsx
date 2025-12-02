@@ -67,8 +67,16 @@ export default function VerifyEmailPage() {
           onClick={() => navigate("/dashboard")}
           className="hover:opacity-80 transition-opacity"
         >
-          <img src={logoImage} alt="Bus Booking Logo" className="w-32 dark:hidden" />
-          <img src={logoWhiteImage} alt="Bus Booking Logo White" className="w-32 hidden dark:block" />
+          <img
+            src={logoImage}
+            alt="Bus Booking Logo"
+            className="w-32 dark:hidden"
+          />
+          <img
+            src={logoWhiteImage}
+            alt="Bus Booking Logo White"
+            className="w-32 hidden dark:block"
+          />
         </button>
       </div>
 
@@ -90,7 +98,9 @@ export default function VerifyEmailPage() {
                 We've sent a verification link to
               </p>
 
-              <p className="text-lg font-semibold text-primary dark:text-blue-400 mb-6">{email}</p>
+              <p className="text-lg font-semibold text-primary dark:text-blue-400 mb-6">
+                {email}
+              </p>
 
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
                 Please check your inbox and click the verification link to

@@ -135,7 +135,9 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
               <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                 {trip.duration}
               </div>
-              <div className="text-xs text-gray-400 dark:text-gray-500">(Asian/Ho Chi Minh)</div>
+              <div className="text-xs text-gray-400 dark:text-gray-500">
+                (Asian/Ho Chi Minh)
+              </div>
             </div>
 
             {/* Arrival */}
@@ -143,7 +145,9 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
               <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">
                 {trip.arrivalTime}
               </div>
-              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">{trip.to}</div>
+              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {trip.to}
+              </div>
             </div>
           </div>
 

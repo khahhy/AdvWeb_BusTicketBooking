@@ -1,8 +1,8 @@
 export enum BusType {
-  STANDARD = 'standard',
-  VIP = 'vip',
-  SLEEPER = 'sleeper',
-  LIMOUSINE = 'limousine',
+  STANDARD = "standard",
+  VIP = "vip",
+  SLEEPER = "sleeper",
+  LIMOUSINE = "limousine",
 }
 
 export interface Bus {

@@ -280,21 +280,27 @@ export default function BookingHistoryPage() {
                 {/* Details */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700 mb-6">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Travel Date</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                      Travel Date
+                    </p>
                     <p className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
                       {formatDate(booking.date)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Seat</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                      Seat
+                    </p>
                     <p className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-1">
                       <Ticket className="w-4 h-4" />
                       {booking.seat}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Price</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                      Price
+                    </p>
                     <p className="text-base font-semibold text-green-600">
                       {formatCurrency(booking.price)}
                     </p>

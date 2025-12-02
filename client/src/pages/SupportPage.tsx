@@ -35,7 +35,8 @@ export default function SupportPage() {
             Customer Support
           </h1>
           <p className="text-center mb-8 text-black/80 dark:text-white/80 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
-            We're here to help you 24/7. Get instant support for all your travel needs.
+            We're here to help you 24/7. Get instant support for all your travel
+            needs.
           </p>
         </div>
       </div>
@@ -49,21 +50,27 @@ export default function SupportPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center p-6 bg-background dark:bg-black dark:border dark:border-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer">
               <Search className="w-12 h-12 mx-auto mb-4 text-pink-400" />
-              <h3 className="text-xl font-semibold mb-2 dark:text-white">Find My Booking</h3>
+              <h3 className="text-xl font-semibold mb-2 dark:text-white">
+                Find My Booking
+              </h3>
               <p className="text-muted-foreground dark:text-gray-300">
                 Track your ticket or modify your reservation
               </p>
             </div>
             <div className="text-center p-6 bg-background dark:bg-black dark:border dark:border-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer">
               <FileText className="w-12 h-12 mx-auto mb-4 text-pink-400" />
-              <h3 className="text-xl font-semibold mb-2 dark:text-white">Booking Issues</h3>
+              <h3 className="text-xl font-semibold mb-2 dark:text-white">
+                Booking Issues
+              </h3>
               <p className="text-muted-foreground dark:text-gray-300">
                 Problems with payment, cancellation or refunds
               </p>
             </div>
             <div className="text-center p-6 bg-background dark:bg-black dark:border dark:border-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer">
               <HelpCircle className="w-12 h-12 mx-auto mb-4 text-pink-400" />
-              <h3 className="text-xl font-semibold mb-2 dark:text-white">General Questions</h3>
+              <h3 className="text-xl font-semibold mb-2 dark:text-white">
+                General Questions
+              </h3>
               <p className="text-muted-foreground dark:text-gray-300">
                 FAQs, policies, and travel information
               </p>
@@ -75,7 +82,9 @@ export default function SupportPage() {
       {/* Contact Options */}
       <section className="py-16 dark:bg-black">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12 dark:text-white">Get in Touch</h2>
+          <h2 className="text-3xl font-bold text-center mb-12 dark:text-white">
+            Get in Touch
+          </h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div className="space-y-6">
               <div className="flex items-start gap-4 p-6 bg-background dark:bg-black dark:border dark:border-gray-800 rounded-lg shadow-sm">
@@ -83,7 +92,9 @@ export default function SupportPage() {
                   <Phone className="w-6 h-6 text-pink-500 dark:text-pink-400" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2 dark:text-white">Call Us</h3>
+                  <h3 className="text-xl font-semibold mb-2 dark:text-white">
+                    Call Us
+                  </h3>
                   <p className="text-2xl font-bold text-pink-600 dark:text-pink-400 mb-2">
                     1900 6067
                   </p>
@@ -101,7 +112,9 @@ export default function SupportPage() {
                   <Mail className="w-6 h-6 text-pink-500 dark:text-pink-400" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2 dark:text-white">Email Support</h3>
+                  <h3 className="text-xl font-semibold mb-2 dark:text-white">
+                    Email Support
+                  </h3>
                   <p className="text-lg font-medium text-pink-600 dark:text-pink-400 mb-2">
                     support@busticket.vn
                   </p>
@@ -119,7 +132,9 @@ export default function SupportPage() {
                   <MessageCircle className="w-6 h-6 text-pink-500 dark:text-pink-400" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2 dark:text-white">Live Chat</h3>
+                  <h3 className="text-xl font-semibold mb-2 dark:text-white">
+                    Live Chat
+                  </h3>
                   <p className="text-muted-foreground dark:text-gray-300 mb-3">
                     Chat with our support team instantly
                   </p>
@@ -131,7 +146,9 @@ export default function SupportPage() {
             </div>
 
             <div className="bg-background dark:bg-black dark:border dark:border-gray-800 rounded-lg shadow-sm p-8">
-              <h3 className="text-2xl font-bold mb-6 dark:text-white">Send us a Message</h3>
+              <h3 className="text-2xl font-bold mb-6 dark:text-white">
+                Send us a Message
+              </h3>
               <form className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2 dark:text-gray-300">
@@ -279,23 +296,33 @@ export default function SupportPage() {
         <div className="container mx-auto px-4">
           <div className="bg-background dark:bg-black dark:border dark:border-gray-800 rounded-lg shadow-sm p-8 max-w-2xl mx-auto text-center">
             <Clock className="w-16 h-16 mx-auto mb-6 text-pink-400" />
-            <h3 className="text-2xl font-bold mb-4 dark:text-white">Support Hours</h3>
+            <h3 className="text-2xl font-bold mb-4 dark:text-white">
+              Support Hours
+            </h3>
             <div className="grid md:grid-cols-2 gap-4 text-left">
               <div>
                 <h4 className="font-semibold dark:text-white">Phone Support</h4>
-                <p className="text-muted-foreground dark:text-gray-300">24/7 Available</p>
+                <p className="text-muted-foreground dark:text-gray-300">
+                  24/7 Available
+                </p>
               </div>
               <div>
                 <h4 className="font-semibold dark:text-white">Email Support</h4>
-                <p className="text-muted-foreground dark:text-gray-300">Monday - Sunday</p>
+                <p className="text-muted-foreground dark:text-gray-300">
+                  Monday - Sunday
+                </p>
               </div>
               <div>
                 <h4 className="font-semibold dark:text-white">Live Chat</h4>
-                <p className="text-muted-foreground dark:text-gray-300">6:00 AM - 10:00 PM</p>
+                <p className="text-muted-foreground dark:text-gray-300">
+                  6:00 AM - 10:00 PM
+                </p>
               </div>
               <div>
                 <h4 className="font-semibold dark:text-white">Office Visits</h4>
-                <p className="text-muted-foreground dark:text-gray-300">9:00 AM - 6:00 PM</p>
+                <p className="text-muted-foreground dark:text-gray-300">
+                  9:00 AM - 6:00 PM
+                </p>
               </div>
             </div>
           </div>

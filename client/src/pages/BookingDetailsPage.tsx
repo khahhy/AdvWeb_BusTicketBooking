@@ -181,7 +181,9 @@ export default function BookingDetailsPage() {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Loading booking details...</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              Loading booking details...
+            </p>
           </div>
         </div>
       </div>
@@ -313,7 +315,9 @@ export default function BookingDetailsPage() {
                     <div className="flex items-center gap-3">
                       <Calendar className="w-5 h-5 text-gray-400" />
                       <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Travel Date</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Travel Date
+                        </p>
                         <p className="text-base font-semibold text-gray-900 dark:text-white">
                           {formatDate(booking.date)}
                         </p>
@@ -323,7 +327,9 @@ export default function BookingDetailsPage() {
                     <div className="flex items-center gap-3">
                       <Ticket className="w-5 h-5 text-gray-400" />
                       <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Seat Number</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Seat Number
+                        </p>
                         <p className="text-base font-semibold text-gray-900 dark:text-white">
                           {booking.seat}
                         </p>
@@ -337,7 +343,9 @@ export default function BookingDetailsPage() {
                         <span className="text-white text-xs font-bold">B</span>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Bus Number</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Bus Number
+                        </p>
                         <p className="text-base font-semibold text-gray-900 dark:text-white">
                           {booking.busNumber}
                         </p>
@@ -349,7 +357,9 @@ export default function BookingDetailsPage() {
                         <span className="text-white text-xs font-bold">T</span>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Bus Type</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Bus Type
+                        </p>
                         <p className="text-base font-semibold text-gray-900 dark:text-white">
                           {booking.busType}
                         </p>
@@ -371,7 +381,9 @@ export default function BookingDetailsPage() {
                   <div className="flex items-center gap-3">
                     <User className="w-5 h-5 text-gray-400" />
                     <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Full Name</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Full Name
+                      </p>
                       <p className="text-base font-semibold text-gray-900 dark:text-white">
                         {booking.passengerName}
                       </p>
@@ -381,7 +393,9 @@ export default function BookingDetailsPage() {
                   <div className="flex items-center gap-3">
                     <Phone className="w-5 h-5 text-gray-400" />
                     <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Phone Number</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Phone Number
+                      </p>
                       <p className="text-base font-semibold text-gray-900 dark:text-white">
                         {booking.contactPhone}
                       </p>
@@ -391,7 +405,9 @@ export default function BookingDetailsPage() {
                   <div className="flex items-center gap-3 md:col-span-2">
                     <Mail className="w-5 h-5 text-gray-400" />
                     <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Email</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Email
+                      </p>
                       <p className="text-base font-semibold text-gray-900 dark:text-white">
                         {booking.contactEmail}
                       </p>
@@ -414,7 +430,9 @@ export default function BookingDetailsPage() {
                       <div className="w-2 h-2 bg-white rounded-full"></div>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Pickup Location</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Pickup Location
+                      </p>
                       <p className="text-base font-semibold text-gray-900 dark:text-white">
                         {booking.pickupLocation}
                       </p>
@@ -426,7 +444,9 @@ export default function BookingDetailsPage() {
                       <div className="w-2 h-2 bg-white rounded-full"></div>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Dropoff Location</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Dropoff Location
+                      </p>
                       <p className="text-base font-semibold text-gray-900 dark:text-white">
                         {booking.dropoffLocation}
                       </p>
@@ -473,7 +493,9 @@ export default function BookingDetailsPage() {
                     <div className="flex items-center gap-3">
                       <CreditCard className="w-5 h-5 text-gray-400" />
                       <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Payment Method</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Payment Method
+                        </p>
                         <p className="text-base font-semibold text-gray-900 dark:text-white">
                           {booking.paymentMethod}
                         </p>

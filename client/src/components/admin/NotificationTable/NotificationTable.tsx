@@ -48,12 +48,17 @@ const NotificationTable = ({ logs, onViewDetail }: NotificationTableProps) => {
           </thead>
           <tbody className="divide-y dark:divide-gray-700">
             {logs.map((log) => (
-              <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <tr
+                key={log.id}
+                className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
                 <td className="px-6 py-4">
                   <div className="font-medium text-gray-900 dark:text-white">
                     {log.userName}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{log.contactInfo}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {log.contactInfo}
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
@@ -62,7 +67,9 @@ const NotificationTable = ({ logs, onViewDetail }: NotificationTableProps) => {
                     ) : (
                       <MessageSquare className="w-4 h-4 text-purple-500" />
                     )}
-                    <span className="capitalize text-gray-700 dark:text-gray-300">{log.type}</span>
+                    <span className="capitalize text-gray-700 dark:text-gray-300">
+                      {log.type}
+                    </span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
@@ -120,7 +127,10 @@ const NotificationTable = ({ logs, onViewDetail }: NotificationTableProps) => {
             ))}
             {logs.length === 0 && (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-gray-500 dark:text-gray-400">
+                <td
+                  colSpan={7}
+                  className="text-center py-12 text-gray-500 dark:text-gray-400"
+                >
                   No logs found.
                 </td>
               </tr>

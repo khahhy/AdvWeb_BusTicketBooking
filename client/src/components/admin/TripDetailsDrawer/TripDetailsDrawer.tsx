@@ -16,6 +16,7 @@ import {
   useGetTripByIdQuery,
   useUpdateTripStatusMutation,
 } from "@/store/api/tripsApi";
+import { TripStatus } from "@/store/type/tripsType";
 
 interface TripDetailsDrawerProps {
   open: boolean;
@@ -39,8 +40,7 @@ const TripDetailsDrawer = ({
   const handleCancelTrip = async () => {
     if (!tripId) return;
     if (confirm("Are you sure you want to cancel this trip?")) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await updateStatus({ id: tripId, status: "cancelled" as any });
+      await updateStatus({ id: tripId, status: "cancelled" as TripStatus });
       onOpenChange(false);
     }
   };

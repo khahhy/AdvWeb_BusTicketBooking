@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { MapPin, X } from "lucide-react";
-import { useGetLocationsQuery } from "@/store/api/routesApi";
+import { useGetLocationsQuery } from "@/store/api/locationApi";
 
 interface LocationAutocompleteProps {
   value: string;

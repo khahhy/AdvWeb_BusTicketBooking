@@ -1,147 +1,28 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "./baseQuery";
-import { type Route } from "@/store/type/routesType";
+import { ApiResponse } from "@/store/type/shared";
+
 import {
-  type QueryTripRouteParams,
-  type TripRouteResponse,
+  TripRouteMap,
+  CreateTripRouteMapDto,
+  QueryTripRouteMapParams,
+  TripRouteMapResponse,
 } from "@/store/type/tripRoutesType";
 
-interface ApiResponse<T> {
-  message: string;
-  data: T;
-}
-
-export interface Location {
-  id: string;
-  name: string;
-  city: string;
-  address?: string;
-  latitude?: number;
-  longitude?: number;
-}
-
-interface CreateRouteDto {
-  originLocationId: string;
-  destinationLocationId: string;
-  description?: string;
-}
-
-interface UpdateRouteDto extends Partial<CreateRouteDto> {
-  isActive?: boolean;
-}
-
-interface CreateTripRouteMapDto {
-  tripId: string;
-  routeId: string;
-  manualPrice?: number;
-}
-
-interface TripRouteMap {
-  tripId: string;
-  routeId: string;
-  price: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-interface TopPerformingRoute {
-  routeId: string;
-  routeName: string;
-  origin: string;
-  destination: string;
-  totalBookings: number;
-  totalRevenue: number;
-}
-
-interface TripRouteMapDetail {
-  tripId: string;
-  routeId: string;
-  price: number;
-  tripName: string;
-  startTime?: string;
-  endTime?: string;
-  bus: {
-    plate: string;
-    amenities: string[];
-  };
-  routeName: string;
-  origin: string;
-  destination: string;
-}
-
-interface SearchTripParams {
-  originCity?: string;
-  destinationCity?: string;
-  departureDate?: string;
-  includeStops?: boolean;
-  includeRoutes?: boolean;
-  page?: number;
-  limit?: number;
-  [key: string]: string | number | boolean | undefined;
-}
-
-interface TripStop {
-  id: string;
-  sequence: number;
-  locationId: string;
-  arrivalTime?: string;
-  departureTime?: string;
-  location: Location;
-}
-
-interface TripResponse {
-  id: string;
-  tripName: string;
-  startTime: string;
-  endTime: string;
-  tripStops?: TripStop[];
-  bus?: {
-    id: string;
-    plate: string;
-    busType: string;
-    seatCapacity: string;
-    amenities: Record<string, unknown>;
-  };
-}
-
-interface SearchTripResult {
-  tripId: string;
-  startTime: string;
-  endTime: string;
-  price: number;
-  busName: string;
-  amenities: string[];
-  pickupLocation: string;
-  dropoffLocation: string;
-  availableSeats?: number;
-}
-
-interface GetRouteTripsDto {
-  startDate?: string;
-  endDate?: string;
-}
-
-interface RouteTripAvailable {
-  tripId: string;
-  startTime: string;
-  endTime: string;
-  busName: string;
-  amenities: string[];
-  pickupLocation: string;
-  dropoffLocation: string;
-  pricing: {
-    basePrice: number;
-    surcharge: string;
-    surchargeReason: string;
-    finalPrice: number;
-    currency: string;
-  };
-}
+import {
+  Route,
+  CreateRouteDto,
+  UpdateRouteDto,
+  RouteTripAvailable,
+  GetRouteTripsDto,
+  TripRouteMapDetail,
+  TopPerformingRoute,
+} from "@/store/type/routesType";
 
 export const routesApi = createApi({
   reducerPath: "routesApi",
   baseQuery: baseQuery,
-  tagTypes: ["Route", "TripRoute", "Location", "Dashboard"],
+  tagTypes: ["Route", "TripRouteMap", "Location", "Dashboard"],
 
   endpoints: (builder) => ({
     getRoutes: builder.query<
@@ -192,7 +73,7 @@ export const routesApi = createApi({
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Route", id },
         { type: "Route", id: "LIST" },
-        { type: "TripRoute", id: "LIST" },
+        "TripRouteMap",
       ],
       transformResponse: (response: ApiResponse<Route>) => response.data,
     }),
@@ -205,6 +86,7 @@ export const routesApi = createApi({
       invalidatesTags: [{ type: "Route", id: "LIST" }],
     }),
 
+    // just for admin
     getTripsForRoute: builder.query<
       RouteTripAvailable[],
       { routeId: string; params: GetRouteTripsDto }
@@ -218,19 +100,22 @@ export const routesApi = createApi({
         response.data,
     }),
 
+    // get trip route map (sold)
     getTripRouteMap: builder.query<
-      TripRouteResponse["data"],
-      QueryTripRouteParams
+      TripRouteMapResponse, // type response for pagination
+      QueryTripRouteMapParams
     >({
       query: (params) => ({
         url: "/routes/trip-maps",
         method: "GET",
         params: params,
       }),
-      providesTags: ["TripRoute"],
-      transformResponse: (response: TripRouteResponse) => response.data,
+      providesTags: ["TripRouteMap"],
+      transformResponse: (response: ApiResponse<TripRouteMapResponse>) =>
+        response.data,
     }),
 
+    // Returns pricing, schedule, and bus info for a specific trip on a specific route.
     getTripRouteMapDetail: builder.query<
       TripRouteMapDetail,
       { tripId: string; routeId: string }
@@ -249,7 +134,7 @@ export const routesApi = createApi({
         method: "POST",
         body,
       }),
-      invalidatesTags: ["TripRoute", { type: "Route", id: "LIST" }],
+      invalidatesTags: ["TripRouteMap", { type: "Route", id: "LIST" }],
       transformResponse: (response: ApiResponse<TripRouteMap>) => response.data,
     }),
 
@@ -262,9 +147,10 @@ export const routesApi = createApi({
         method: "DELETE",
         params,
       }),
-      invalidatesTags: ["TripRoute"],
+      invalidatesTags: ["TripRouteMap"],
     }),
 
+    // Dashboard
     getTopPerformingRoutes: builder.query<TopPerformingRoute[], number | void>({
       query: (limit) => ({
         url: "/routes/top-performing",
@@ -273,71 +159,6 @@ export const routesApi = createApi({
       providesTags: ["Dashboard"],
       transformResponse: (response: ApiResponse<TopPerformingRoute[]>) =>
         response.data,
-    }),
-
-    getLocations: builder.query<
-      Location[],
-      { search?: string; city?: string } | void
-    >({
-      query: (params) => ({
-        url: "/locations",
-        params: params || undefined,
-      }),
-      providesTags: ["Location"],
-      transformResponse: (response: ApiResponse<Location[]>) => response.data,
-    }),
-
-    searchTrips: builder.query<SearchTripResult[], SearchTripParams>({
-      query: (params) => ({
-        url: "/trips/search",
-        params: params,
-      }),
-      transformResponse: (response: ApiResponse<SearchTripResult[]>) =>
-        response.data,
-    }),
-
-    getTripById: builder.query<SearchTripResult, string>({
-      query: (id) => `/trips/${id}?includeRoutes=true`,
-      providesTags: (_result, _error, id) => [{ type: "TripRoute", id }],
-      transformResponse: (trip: TripResponse) => {
-        // Transform the response to match SearchTripResult format
-        const originStop = trip.tripStops?.find((stop) => stop.sequence === 1);
-        const destinationStop = trip.tripStops?.find(
-          (stop) =>
-            stop.sequence ===
-            Math.max(...(trip.tripStops?.map((s) => s.sequence) || [0])),
-        );
-
-        return {
-          id: trip.id,
-          tripName: trip.tripName,
-          routeName: `${originStop?.location?.city || ""} - ${destinationStop?.location?.city || ""}`,
-          departureTime: trip.startTime,
-          arrivalTime: trip.endTime,
-          originStop: originStop || {
-            id: "",
-            sequence: 1,
-            locationId: "",
-            departureTime: trip.startTime,
-            location: { id: "", name: "", city: "" },
-          },
-          destinationStop: destinationStop || {
-            id: "",
-            sequence: 2,
-            locationId: "",
-            arrivalTime: trip.endTime,
-            location: { id: "", name: "", city: "" },
-          },
-          bus: trip.bus || {
-            id: "",
-            plate: "Unknown",
-            busType: "standard",
-            seatCapacity: "SEAT_32",
-            amenities: {},
-          },
-          tripStops: trip.tripStops || [],
-        };
-      },
     }),
   }),
 });
@@ -348,13 +169,10 @@ export const {
   useCreateRouteMutation,
   useUpdateRouteMutation,
   useDeleteRouteMutation,
-  useGetTripsForRouteQuery,
-  useGetTripRouteMapQuery,
-  useGetTripRouteMapDetailQuery,
+  useGetTripsForRouteQuery, // just for admin
+  useGetTripRouteMapQuery, // for buyer search
+  useGetTripRouteMapDetailQuery, // for buyer
   useCreateTripRouteMapMutation,
   useRemoveTripRouteMapMutation,
-  useGetTopPerformingRoutesQuery,
-  useGetLocationsQuery,
-  useSearchTripsQuery,
-  useGetTripByIdQuery,
+  useGetTopPerformingRoutesQuery, // dashboard
 } = routesApi;

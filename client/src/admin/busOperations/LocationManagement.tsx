@@ -18,7 +18,10 @@ import {
   AddLocationDialog,
   LocationMap,
 } from "@/components/admin";
-import type { Location } from "@/store/type/locationsType";
+import type {
+  Location,
+  CreateLocationRequest,
+} from "@/store/type/locationsType";
 import type { RouteTime } from "@/store/type/routesType";
 import {
   useGetLocationsQuery,
@@ -53,15 +56,14 @@ const LocationManagement = () => {
   const [updateLocation] = useUpdateLocationMutation();
   const [deleteLocation] = useDeleteLocationMutation();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleCreateLocation = async (data: any) => {
+  const handleCreateLocation = async (data: CreateLocationRequest) => {
     try {
       const payload = {
         name: data.name,
         city: data.city,
         address: data.address,
-        latitude: data.lat,
-        longitude: data.lng,
+        latitude: data.latitude,
+        longitude: data.longitude,
       };
 
       await createLocation(payload).unwrap();

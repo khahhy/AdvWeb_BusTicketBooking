@@ -6,7 +6,8 @@ import backgroundImage from "@/assets/images/background.png";
 import TripCard from "@/components/search/TripCard";
 import Footer from "@/components/dashboard/Footer";
 import { mockTrips, Trip } from "@/data/mockTrips";
-import { useSearchTripsQuery, SearchTripResult } from "@/store/api/routesApi";
+import { useGetTripRouteMapQuery } from "@/store/api/routesApi";
+import { QueryTripRouteMapParams } from "@/store/type/tripRoutesType";
 import TripSearchBar from "@/components/common/TripSearchBar";
 import FilterPanel, { FilterState } from "@/components/search/FilterPanel";
 
@@ -44,64 +45,46 @@ export default function SearchPage() {
     if (date) setSelectedDate(dayjs(date));
   }, [searchParams]);
 
-  const searchApiParams = {
-    originCity: fromLocation,
-    destinationCity: toLocation,
+  const routeNameQuery = `${fromLocation} - ${toLocation}`;
+
+  const searchApiParams: QueryTripRouteMapParams = {
+    page: 1,
+    limit: 100, // Lấy nhiều để Client tự paginate
+    routeName: routeNameQuery,
     departureDate: selectedDate?.format("YYYY-MM-DD"),
-    includeStops: "true",
-    includeRoutes: "true",
+    minPrice: filters.priceRange[0],
+    maxPrice: filters.priceRange[1],
+    busType: filters.busType.length > 0 ? filters.busType : undefined,
+    amenities: filters.amenities.length > 0 ? filters.amenities : undefined,
   };
 
   const {
     data: searchTripsData,
     isLoading,
     error,
-  } = useSearchTripsQuery(searchApiParams);
+  } = useGetTripRouteMapQuery(searchApiParams);
 
-  // For backward compatibility, transform search results to old format
   const tripRouteData =
-    searchTripsData?.map((trip: SearchTripResult) => ({
-      id: trip.id,
-      departureTime: trip.originStop?.departureTime || trip.departureTime,
-      arrivalTime: trip.destinationStop?.arrivalTime || trip.arrivalTime,
-      busType: trip.bus?.busType,
-      amenities: trip.bus?.amenities,
+    searchTripsData?.items?.map((item) => ({
+      id: item.id,
+      departureTime: item.trip.startTime,
+      arrivalTime: item.trip.endTime,
+      busType: item.trip.bus?.busType,
+      amenities: item.trip.bus?.amenities,
+      price: item.price,
       trip: {
-        id: trip.id,
-        tripName: trip.tripName,
-        startTime: trip.originStop?.departureTime || trip.departureTime,
-        endTime: trip.destinationStop?.arrivalTime || trip.arrivalTime,
-        bus: trip.bus || {
-          id: "",
-          plate: "Unknown",
-          busType: "standard",
-          seatCapacity: "SEAT_32",
-          amenities: {},
-        },
+        ...item.trip,
+        tripName: item.trip.tripName || "Bus Trip",
       },
       route: {
-        id: trip.id, // Use trip id as route id for now
-        name:
-          trip.routeName ||
-          `${trip.originStop?.location?.city} - ${trip.destinationStop?.location?.city}`,
-        origin: trip.originStop?.location || {
-          id: "",
-          name: "Unknown",
-          city: fromLocation || "",
-        },
-        destination: trip.destinationStop?.location || {
-          id: "",
-          name: "Unknown",
-          city: toLocation || "",
-        },
+        ...item.route,
+        origin: item.route.origin,
+        destination: item.route.destination,
       },
-      price: trip.tripRoutes?.[0]?.price || 200000, // Default price
     })) || [];
 
-  // Filter function to apply filters to trips
   const applyFilters = (trips: (Trip | (typeof tripRouteData)[0])[]) => {
     return trips.filter((trip) => {
-      // Price filter
       if (
         trip.price < filters.priceRange[0] ||
         trip.price > filters.priceRange[1]
@@ -109,7 +92,6 @@ export default function SearchPage() {
         return false;
       }
 
-      // Departure time filter (using origin stop departure time)
       if (filters.departureTime.length > 0) {
         let departureHour = 0;
         if (trip.departureTime) {
@@ -400,23 +382,26 @@ export default function SearchPage() {
                       };
 
                       const totalSeats =
-                        seatCapacityMap[tripRoute.trip.bus.seatCapacity] || 32;
+                        seatCapacityMap[
+                          tripRoute?.trip?.bus?.seatCapacity ?? "SEAT_32"
+                        ] || 32;
 
                       const tripData = {
                         id: tripRoute.id,
+                        route: tripRoute.route,
                         departureTime: startTime.format("HH:mm"),
                         arrivalTime: endTime.format("HH:mm"),
                         duration: durationText,
                         from: tripRoute.route.origin.city,
                         to: tripRoute.route.destination.city,
                         price: Number(tripRoute.price),
-                        availableSeats: Math.floor(totalSeats * 0.6), // Estimate 60% availability
+                        availableSeats: Math.floor(totalSeats * 0.6),
                         totalSeats,
                         busType:
-                          tripRoute.trip.bus.busType?.toLowerCase() ||
+                          tripRoute.trip.bus?.busType?.toLowerCase() ||
                           "standard",
                         amenities:
-                          (tripRoute.trip.bus.amenities as {
+                          (tripRoute.trip.bus?.amenities as unknown as {
                             [key: string]: boolean;
                           }) || {},
                       };

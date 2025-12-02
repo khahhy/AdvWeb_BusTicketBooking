@@ -1,4 +1,5 @@
-import { BusType, SeatCapacity, SEAT_LAYOUTS } from "@/store/api/busApi";
+import { SEAT_LAYOUTS } from "@/store/api/busApi";
+import { BusType, SeatCapacity } from "@/store/type/busType";
 import SeatLayoutPreview from "./SeatLayoutPreview";
 
 interface BusLayoutSelectorProps {

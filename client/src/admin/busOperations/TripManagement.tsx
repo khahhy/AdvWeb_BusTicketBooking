@@ -30,7 +30,8 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TripDetailsDrawer } from "@/components/admin";
 import { Dayjs } from "dayjs";
-import { useGetTripsQuery, TripStatus } from "@/store/api/tripsApi";
+import { useGetTripsQuery } from "@/store/api/tripsApi";
+import { TripStatus } from "@/store/type/tripsType";
 import { useDebounce } from "@/hooks/useDebounce";
 
 const TripManagement = () => {

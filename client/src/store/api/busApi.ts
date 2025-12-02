@@ -1,50 +1,14 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "./baseQuery";
-
-export enum BusType {
-  STANDARD = "standard",
-  VIP = "vip",
-  SLEEPER = "sleeper",
-  LIMOUSINE = "limousine",
-}
-
-export enum SeatCapacity {
-  SEAT_16 = "SEAT_16",
-  SEAT_28 = "SEAT_28",
-  SEAT_32 = "SEAT_32",
-}
-
-export interface BusAmenities {
-  tv: boolean;
-  wifi: boolean;
-  snack: boolean;
-  water: boolean;
-  toilet: boolean;
-  blanket: boolean;
-  charger: boolean;
-  airCondition: boolean;
-}
-
-export interface Bus {
-  id: string;
-  plate: string;
-  busType: BusType;
-  seatCapacity: SeatCapacity;
-  amenities: BusAmenities;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface SeatLayout {
-  busType: BusType;
-  seatCapacity: SeatCapacity;
-  layout: {
-    columns: number[];
-    rows: number;
-    aisles: number[];
-  };
-  description: string;
-}
+import {
+  BusType,
+  SeatCapacity,
+  Bus,
+  SeatLayout,
+  CreateBusRequest,
+  UpdateBusRequest,
+} from "../type/busType";
+import { ApiResponse } from "@/store/type/shared";
 
 export const SEAT_LAYOUTS: Record<BusType, SeatLayout[]> = {
   [BusType.STANDARD]: [
@@ -92,22 +56,6 @@ export const SEAT_LAYOUTS: Record<BusType, SeatLayout[]> = {
     },
   ],
 };
-
-interface CreateBusRequest {
-  plate: string;
-  busType: BusType;
-  seatCapacity: SeatCapacity;
-  amenities: BusAmenities;
-}
-
-interface UpdateBusRequest extends CreateBusRequest {
-  id: string;
-}
-
-interface ApiResponse<T> {
-  message: string;
-  data: T;
-}
 
 export const busApi = createApi({
   reducerPath: "busApi",

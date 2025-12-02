@@ -1,6 +1,6 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "./baseQuery";
-import { ApiResponse } from "@/store/type/apiResponse";
+import { ApiResponse } from "@/store/type/shared";
 import {
   Location,
   CreateLocationRequest,

@@ -16,8 +16,15 @@ import { Trip, Seat, generateSeats } from "@/data/mockTrips";
 import SeatMap from "./SeatMap";
 import dayjs from "dayjs";
 
+type TripData = Trip & {
+  routeId?: string;
+  busType?: string;
+  amenities?: Record<string, boolean>;
+  note?: string;
+};
+
 interface TripCardProps {
-  trip: Trip;
+  trip: TripData;
   isOpen: boolean;
   onToggle: (tripId: string) => void;
 }
@@ -102,7 +109,8 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
 
   const handleViewDetail = () => {
     const date = dayjs().format("YYYY-MM-DD");
-    navigate(`/trip-detail?tripId=${trip.id}&date=${date}`);
+    const routeParam = trip.routeId ? `&routeId=${trip.routeId}` : "";
+    navigate(`/trip-detail?tripId=${trip.id}${routeParam}&date=${date}`);
   };
 
   const tabs = [

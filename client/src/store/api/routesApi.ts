@@ -36,6 +36,21 @@ interface TripRoute {
   // Add other route properties as needed
 }
 
+interface TripResponse {
+  id: string;
+  tripName: string;
+  startTime: string;
+  endTime: string;
+  tripStops?: TripStop[];
+  bus?: {
+    id: string;
+    plate: string;
+    busType: string;
+    seatCapacity: string;
+    amenities: Record<string, unknown>;
+  };
+}
+
 export interface SearchTripResult {
   id: string;
   tripName: string;
@@ -150,15 +165,13 @@ export const routesApi = createApi({
     getTripById: builder.query<SearchTripResult, string>({
       query: (id) => `/trips/${id}?includeRoutes=true`,
       providesTags: (_result, _error, id) => [{ type: "TripRoute", id }],
-      transformResponse: (trip: any) => {
+      transformResponse: (trip: TripResponse) => {
         // Transform the response to match SearchTripResult format
-        const originStop = trip.tripStops?.find(
-          (stop: any) => stop.sequence === 1,
-        );
+        const originStop = trip.tripStops?.find((stop) => stop.sequence === 1);
         const destinationStop = trip.tripStops?.find(
-          (stop: any) =>
+          (stop) =>
             stop.sequence ===
-            Math.max(...trip.tripStops.map((s: any) => s.sequence)),
+            Math.max(...(trip.tripStops?.map((s) => s.sequence) || [0])),
         );
 
         return {

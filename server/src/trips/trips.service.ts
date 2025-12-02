@@ -821,8 +821,7 @@ export class TripsService {
         const endOfDay = new Date(departureDate);
         endOfDay.setHours(23, 59, 59, 999);
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        where.AND!.push({
+        (where.AND as any[]).push({
           tripStops: {
             some: {
               departureTime: {
@@ -836,8 +835,7 @@ export class TripsService {
 
       // Add origin filter
       if (originLocationIds.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        where.AND!.push({
+        (where.AND as any[]).push({
           tripStops: {
             some: {
               locationId: {
@@ -850,8 +848,7 @@ export class TripsService {
 
       // Add destination filter
       if (destinationLocationIds.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        where.AND!.push({
+        (where.AND as any[]).push({
           tripStops: {
             some: {
               locationId: {

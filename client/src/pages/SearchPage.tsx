@@ -8,6 +8,7 @@ import Footer from "@/components/dashboard/Footer";
 import { mockTrips, Trip } from "@/data/mockTrips";
 import { useSearchTripsQuery, SearchTripResult } from "@/store/api/routesApi";
 import TripSearchBar from "@/components/common/TripSearchBar";
+import FilterPanel, { FilterState } from "@/components/search/FilterPanel";
 
 export default function SearchPage() {
   const [searchParams] = useSearchParams();
@@ -24,6 +25,13 @@ export default function SearchPage() {
   const [openTripId, setOpenTripId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5); // Number of trips per page
+  const [filters, setFilters] = useState<FilterState>({
+    departureTime: [],
+    arrivalTime: [],
+    priceRange: [0, 1328000],
+    busType: [],
+    amenities: [],
+  });
 
   // Update locations and date when search params change
   useEffect(() => {
@@ -54,11 +62,15 @@ export default function SearchPage() {
   const tripRouteData =
     searchTripsData?.map((trip: SearchTripResult) => ({
       id: trip.id,
+      departureTime: trip.originStop?.departureTime || trip.departureTime,
+      arrivalTime: trip.destinationStop?.arrivalTime || trip.arrivalTime,
+      busType: trip.bus?.busType,
+      amenities: trip.bus?.amenities,
       trip: {
         id: trip.id,
         tripName: trip.tripName,
-        startTime: trip.departureTime,
-        endTime: trip.arrivalTime,
+        startTime: trip.originStop?.departureTime || trip.departureTime,
+        endTime: trip.destinationStop?.arrivalTime || trip.arrivalTime,
         bus: trip.bus || {
           id: "",
           plate: "Unknown",
@@ -86,15 +98,114 @@ export default function SearchPage() {
       price: trip.tripRoutes?.[0]?.price || 200000, // Default price
     })) || [];
 
-  // Pagination logic
+  // Filter function to apply filters to trips
+  const applyFilters = (trips: (Trip | (typeof tripRouteData)[0])[]) => {
+    return trips.filter((trip) => {
+      // Price filter
+      if (
+        trip.price < filters.priceRange[0] ||
+        trip.price > filters.priceRange[1]
+      ) {
+        return false;
+      }
+
+      // Departure time filter (using origin stop departure time)
+      if (filters.departureTime.length > 0) {
+        let departureHour = 0;
+        if (trip.departureTime) {
+          const date = new Date(trip.departureTime);
+          departureHour = date.getHours();
+        }
+
+        let matchesTimeSlot = false;
+
+        for (const timeSlot of filters.departureTime) {
+          switch (timeSlot) {
+            case "early-morning":
+              if (departureHour >= 0 && departureHour <= 6)
+                matchesTimeSlot = true;
+              break;
+            case "morning":
+              if (departureHour > 6 && departureHour <= 12)
+                matchesTimeSlot = true;
+              break;
+            case "afternoon":
+              if (departureHour > 12 && departureHour <= 18)
+                matchesTimeSlot = true;
+              break;
+            case "evening":
+              if (departureHour > 18 && departureHour <= 23)
+                matchesTimeSlot = true;
+              break;
+          }
+        }
+
+        if (!matchesTimeSlot) return false;
+      }
+
+      // Arrival time filter (using destination stop arrival time)
+      if (filters.arrivalTime.length > 0) {
+        let arrivalHour = 0;
+        if (trip.arrivalTime) {
+          const date = new Date(trip.arrivalTime);
+          arrivalHour = date.getHours();
+        }
+
+        let matchesTimeSlot = false;
+
+        for (const timeSlot of filters.arrivalTime) {
+          switch (timeSlot) {
+            case "early-morning":
+              if (arrivalHour >= 0 && arrivalHour <= 6) matchesTimeSlot = true;
+              break;
+            case "morning":
+              if (arrivalHour > 6 && arrivalHour <= 12) matchesTimeSlot = true;
+              break;
+            case "afternoon":
+              if (arrivalHour > 12 && arrivalHour <= 18) matchesTimeSlot = true;
+              break;
+            case "evening":
+              if (arrivalHour > 18 && arrivalHour <= 23) matchesTimeSlot = true;
+              break;
+          }
+        }
+
+        if (!matchesTimeSlot) return false;
+      }
+
+      // Bus type filter
+      if (filters.busType.length > 0) {
+        const tripBusType = trip.busType?.toLowerCase() || "standard";
+        const matchesBusType = filters.busType.some(
+          (filterType) => filterType.toLowerCase() === tripBusType,
+        );
+        if (!matchesBusType) return false;
+      }
+
+      // Amenities filter
+      if (filters.amenities.length > 0) {
+        const tripAmenities = trip.amenities || {};
+        const hasAllAmenities = filters.amenities.every((amenity) => {
+          return tripAmenities[amenity] === true;
+        });
+        if (!hasAllAmenities) return false;
+      }
+
+      return true;
+    });
+  };
+
+  // Pagination logic with filters applied
   const getAllTrips = () => {
+    let trips: (Trip | (typeof tripRouteData)[0])[] = [];
     if (tripRouteData && tripRouteData.length > 0) {
-      return tripRouteData;
+      trips = tripRouteData;
     } else if (error) {
-      return mockTrips;
-    } else {
-      return [];
+      trips = mockTrips;
     }
+
+    // Apply filters to the trips
+    return applyFilters(trips);
   };
 
   const allTrips = getAllTrips();
@@ -117,9 +228,15 @@ export default function SearchPage() {
     setCurrentPage(1);
   }, [fromLocation, toLocation, selectedDate]);
 
-  // const handleFilterChange = (newFilters: FilterState) => {
-  //   setFilters(newFilters);
-  // };
+  const handleFilterChange = (newFilters: FilterState) => {
+    setFilters(newFilters);
+    setCurrentPage(1); // Reset to first page when filters change
+  };
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
 
   const handleSearch = (params: {
     from: string;
@@ -129,7 +246,6 @@ export default function SearchPage() {
     setFromLocation(params.from);
     setToLocation(params.to);
     setSelectedDate(params.date);
-    console.log("Searching...", params);
   };
 
   const formatDate = () => {
@@ -197,10 +313,29 @@ export default function SearchPage() {
                 {(() => {
                   if (isLoading) return "Loading...";
                   const totalTrips = allTrips.length;
-                  if (totalTrips === 0) return "No trips found";
+                  const originalTrips =
+                    tripRouteData?.length || (error ? mockTrips.length : 0);
+
+                  if (totalTrips === 0) {
+                    return originalTrips > 0
+                      ? "No trips match your filters"
+                      : "No trips found";
+                  }
 
                   const displayStart = startIndex + 1;
                   const displayEnd = Math.min(endIndex, totalTrips);
+                  const hasFilters =
+                    filters.departureTime.length > 0 ||
+                    filters.arrivalTime.length > 0 ||
+                    filters.busType.length > 0 ||
+                    filters.amenities.length > 0 ||
+                    filters.priceRange[0] > 0 ||
+                    filters.priceRange[1] < 1328000;
+
+                  if (hasFilters && totalTrips < originalTrips) {
+                    return `Showing ${displayStart}-${displayEnd} of ${totalTrips} trips (${originalTrips - totalTrips} filtered out)`;
+                  }
+
                   return `Showing ${displayStart}-${displayEnd} of ${totalTrips} trips`;
                 })()}
               </div>
@@ -212,15 +347,7 @@ export default function SearchPage() {
         <div className="flex gap-6">
           {/* Filter Panel - Left Side */}
           <div className="w-80 flex-shrink-0">
-            {/* <FilterPanel onFilterChange={handleFilterChange} /> */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Filters
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Filter functionality coming soon...
-              </p>
-            </div>
+            <FilterPanel onFilterChange={handleFilterChange} />
           </div>
 
           {/* Trip Cards - Right Side */}

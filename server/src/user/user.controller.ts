@@ -44,7 +44,7 @@ export class UserController {
   @ApiOperation({ summary: 'Admin: Get user statistics (Total, New, Active)' })
   @ApiResponse({ status: 200, description: 'Fetched stats successfully.' })
   @Get('stats')
-  async getStats(): Promise<UserStatsData> {
+  async getStats(): Promise<{ message: string; data: UserStatsData }> {
     return this.userService.getStats();
   }
 

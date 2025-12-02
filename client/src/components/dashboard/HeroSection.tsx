@@ -21,21 +21,19 @@ export default function HeroSection() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 relative z-10">
         <div className="text-center mb-8 md:mb-16">
           <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-6 leading-tight">
-            <span className="flex flex-col sm:inline-flex sm:items-center gap-2 sm:gap-3">
-              <span className="flex items-center justify-center gap-2 sm:gap-3">
-                Effortless{" "}
-                <img
-                  src={busLogoImage}
-                  alt="Bus logo"
-                  className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain dark:hidden"
-                />
-                <img
-                  src={busLogoWhite}
-                  alt="Bus logo"
-                  className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain hidden dark:block"
-                />
-              </span>
-              <span className="italic font-light"> Booking</span>
+            <span className="inline-flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
+              Effortless{" "}
+              <img
+                src={busLogoImage}
+                alt="Bus logo"
+                className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain dark:hidden"
+              />
+              <img
+                src={busLogoWhite}
+                alt="Bus logo"
+                className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain hidden dark:block"
+              />
+              <span className="italic font-light">Booking</span>
             </span>
             <span className="block sm:inline">,</span>
             <br className="hidden sm:block" />

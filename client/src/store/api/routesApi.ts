@@ -80,6 +80,30 @@ interface SearchTripParams {
   [key: string]: string | number | boolean | undefined;
 }
 
+interface TripStop {
+  id: string;
+  sequence: number;
+  locationId: string;
+  arrivalTime?: string;
+  departureTime?: string;
+  location: Location;
+}
+
+interface TripResponse {
+  id: string;
+  tripName: string;
+  startTime: string;
+  endTime: string;
+  tripStops?: TripStop[];
+  bus?: {
+    id: string;
+    plate: string;
+    busType: string;
+    seatCapacity: string;
+    amenities: Record<string, unknown>;
+  };
+}
+
 interface SearchTripResult {
   tripId: string;
   startTime: string;
@@ -275,19 +299,13 @@ export const routesApi = createApi({
     getTripById: builder.query<SearchTripResult, string>({
       query: (id) => `/trips/${id}?includeRoutes=true`,
       providesTags: (_result, _error, id) => [{ type: "TripRoute", id }],
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      transformResponse: (trip: any) => {
+      transformResponse: (trip: TripResponse) => {
         // Transform the response to match SearchTripResult format
-        const originStop = trip.tripStops?.find(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (stop: any) => stop.sequence === 1,
-        );
+        const originStop = trip.tripStops?.find((stop) => stop.sequence === 1);
         const destinationStop = trip.tripStops?.find(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (stop: any) =>
+          (stop) =>
             stop.sequence ===
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            Math.max(...trip.tripStops.map((s: any) => s.sequence)),
+            Math.max(...(trip.tripStops?.map((s) => s.sequence) || [0])),
         );
 
         return {
@@ -318,7 +336,6 @@ export const routesApi = createApi({
             amenities: {},
           },
           tripStops: trip.tripStops || [],
-          tripRoutes: trip.tripRoutes || [],
         };
       },
     }),

@@ -1,0 +1,95 @@
+import { BusType, SeatCapacity, SEAT_LAYOUTS } from "@/store/api/busApi";
+
+interface SeatLayoutPreviewProps {
+  busType: BusType;
+  seatCapacity: SeatCapacity;
+  className?: string;
+}
+
+export default function SeatLayoutPreview({
+  busType,
+  seatCapacity,
+  className = "",
+}: SeatLayoutPreviewProps) {
+  const layout = SEAT_LAYOUTS[busType]?.find(
+    (l) => l.seatCapacity === seatCapacity,
+  );
+
+  if (!layout) return null;
+
+  const { columns, rows } = layout.layout;
+  const totalSeats = parseInt(seatCapacity.replace("SEAT_", ""));
+
+  const renderSeatGrid = () => {
+    const seats = [];
+    let seatNumber = 1;
+
+    for (let row = 0; row < rows; row++) {
+      const seatRow = [];
+
+      for (
+        let sectionIndex = 0;
+        sectionIndex < columns.length;
+        sectionIndex++
+      ) {
+        const columnCount = columns[sectionIndex];
+
+        // Add seats for this section
+        for (let col = 0; col < columnCount; col++) {
+          if (seatNumber <= totalSeats) {
+            seatRow.push(
+              <div
+                key={`seat-${seatNumber}`}
+                className="w-4 h-4 bg-blue-200 border border-blue-300 rounded text-[8px] flex items-center justify-center"
+                title={`Seat ${seatNumber}`}
+              >
+                {busType === BusType.SLEEPER ? "🛏️" : seatNumber}
+              </div>,
+            );
+            seatNumber++;
+          }
+        }
+
+        // Add aisle after section (except last section)
+        if (sectionIndex < columns.length - 1) {
+          seatRow.push(
+            <div key={`aisle-${row}-${sectionIndex}`} className="w-2"></div>,
+          );
+        }
+      }
+
+      seats.push(
+        <div key={`row-${row}`} className="flex gap-0.5 justify-center">
+          {seatRow}
+        </div>,
+      );
+    }
+
+    return seats;
+  };
+
+  return (
+    <div className={`bg-white p-3 rounded border ${className}`}>
+      {/* Bus Type Label */}
+      <div className="text-center mb-2">
+        <span className="text-xs font-medium text-gray-600 capitalize">
+          {busType}
+        </span>
+        <div className="text-[10px] text-gray-400">{layout.description}</div>
+      </div>
+
+      {/* Driver area */}
+      <div className="flex justify-center mb-1">
+        <div className="w-6 h-3 bg-gray-300 rounded-sm"></div>
+      </div>
+
+      {/* Seat Layout */}
+      <div className="space-y-0.5">{renderSeatGrid()}</div>
+
+      {/* Bus info */}
+      <div className="text-center mt-2 text-[10px] text-gray-500">
+        {totalSeats} {busType === BusType.SLEEPER ? "beds" : "seats"}
+      </div>
+    </div>
+  );
+}

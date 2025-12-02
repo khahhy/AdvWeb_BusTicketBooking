@@ -30,6 +30,12 @@ interface TripStop {
   location: Location;
 }
 
+interface TripRoute {
+  id: string;
+  price: number;
+  // Add other route properties as needed
+}
+
 export interface SearchTripResult {
   id: string;
   tripName: string;
@@ -46,7 +52,7 @@ export interface SearchTripResult {
     amenities?: unknown;
   };
   tripStops?: TripStop[];
-  tripRoutes?: unknown[];
+  tripRoutes?: TripRoute[];
 }
 
 interface SearchTripResponse {

@@ -4,11 +4,9 @@ import dayjs, { Dayjs } from "dayjs";
 import Navbar from "@/components/common/Navbar";
 import backgroundImage from "@/assets/images/background.png";
 import TripCard from "@/components/search/TripCard";
-// import FilterPanel, { FilterState } from "@/components/search/FilterPanel";
 import Footer from "@/components/dashboard/Footer";
 import { mockTrips, Trip } from "@/data/mockTrips";
 import { useSearchTripsQuery, SearchTripResult } from "@/store/api/routesApi";
-// import { QueryTripRouteParams } from "@/store/type/tripRoutesType";
 import TripSearchBar from "@/components/common/TripSearchBar";
 
 export default function SearchPage() {
@@ -24,13 +22,8 @@ export default function SearchPage() {
     return dateParam ? dayjs(dateParam) : dayjs();
   });
   const [openTripId, setOpenTripId] = useState<string | null>(null);
-  // const [filters, setFilters] = useState<FilterState>({
-  //   departureTime: [],
-  //   arrivalTime: [],
-  //   priceRange: [0, 1328000],
-  //   busType: [],
-  //   amenities: [],
-  // });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5); // Number of trips per page
 
   // Update locations and date when search params change
   useEffect(() => {
@@ -43,91 +36,6 @@ export default function SearchPage() {
     if (date) setSelectedDate(dayjs(date));
   }, [searchParams]);
 
-  // Convert frontend filters to API parameters
-  // const convertFiltersToApiParams = (
-  //   filterState: FilterState,
-  // ): QueryTripRouteParams => {
-  //   const params: QueryTripRouteParams = {
-  //     page: 1,
-  //     limit: 20,
-  //   };
-
-  //   // Add location filtering - find location ID from city name
-  //   if (locationsResponse && (fromLocation || toLocation)) {
-  //     const originLocation = locationsResponse.find(
-  //       (loc) => loc.city === fromLocation || loc.name === fromLocation,
-  //     );
-  //     const destLocation = locationsResponse.find(
-  //       (loc) => loc.city === toLocation || loc.name === toLocation,
-  //     );
-
-  //     // Use specific origin and destination location IDs for precise filtering
-  //     if (originLocation) {
-  //       params.originLocationId = originLocation.id;
-  //     }
-  //     if (destLocation) {
-  //       params.destinationLocationId = destLocation.id;
-  //     }
-  //   }
-
-  //   // Add departure date if selected
-  //   if (selectedDate) {
-  //     params.departureDate = selectedDate.format("YYYY-MM-DD");
-  //   }
-
-  //   // Convert time slots to time ranges
-  //   if (filterState.departureTime.length > 0) {
-  //     const timeRanges = filterState.departureTime
-  //       .map((slot) => {
-  //         switch (slot) {
-  //           case "early-morning":
-  //             return { start: "00:00", end: "06:00" };
-  //           case "morning":
-  //             return { start: "06:01", end: "12:00" };
-  //           case "afternoon":
-  //             return { start: "12:01", end: "18:00" };
-  //           case "evening":
-  //             return { start: "18:01", end: "23:59" };
-  //           default:
-  //             return null;
-  //         }
-  //       })
-  //       .filter(Boolean);
-
-  //     if (timeRanges.length > 0) {
-  //       // Use the earliest start and latest end
-  //       const starts = timeRanges.map((r) => r!.start);
-  //       const ends = timeRanges.map((r) => r!.end);
-  //       params.departureTimeStart = starts.sort()[0];
-  //       params.departureTimeEnd = ends.sort().reverse()[0];
-  //     }
-  //   }
-
-  //   // Add price filtering
-  //   if (filterState.priceRange[0] > 0 || filterState.priceRange[1] < 1328000) {
-  //     params.minPrice = filterState.priceRange[0];
-  //     params.maxPrice = filterState.priceRange[1];
-  //   }
-
-  //   // Add bus types
-  //   if (filterState.busType.length > 0) {
-  //     params.busType = filterState.busType;
-  //   }
-
-  //   // Add amenities
-  //   if (filterState.amenities.length > 0) {
-  //     params.amenities = filterState.amenities;
-  //   }
-
-  //   // Seat capacity filtering will be handled on frontend
-
-  //   return params;
-  // };
-
-  // Get locations data for filtering
-  // const { data: locationsResponse = [] } = useGetLocationsQuery();
-
-  // Use new search API instead of old trip route map API
   const searchApiParams = {
     originCity: fromLocation,
     destinationCity: toLocation,
@@ -177,6 +85,37 @@ export default function SearchPage() {
       },
       price: trip.tripRoutes?.[0]?.price || 200000, // Default price
     })) || [];
+
+  // Pagination logic
+  const getAllTrips = () => {
+    if (tripRouteData && tripRouteData.length > 0) {
+      return tripRouteData;
+    } else if (error) {
+      return mockTrips;
+    } else {
+      return [];
+    }
+  };
+
+  const allTrips = getAllTrips();
+  const totalPages = Math.ceil(allTrips.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentTrips = allTrips.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of results
+    const resultsSection = document.querySelector(".trips-results");
+    if (resultsSection) {
+      resultsSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  // Reset to first page when search parameters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [fromLocation, toLocation, selectedDate]);
 
   // const handleFilterChange = (newFilters: FilterState) => {
   //   setFilters(newFilters);
@@ -257,14 +196,12 @@ export default function SearchPage() {
               <div className="text-sm text-gray-500 dark:text-gray-300">
                 {(() => {
                   if (isLoading) return "Loading...";
+                  const totalTrips = allTrips.length;
+                  if (totalTrips === 0) return "No trips found";
 
-                  const hasApiData = tripRouteData && tripRouteData.length > 0;
-                  const trips = hasApiData
-                    ? tripRouteData
-                    : error
-                      ? mockTrips
-                      : [];
-                  return `${trips.length} trips found`;
+                  const displayStart = startIndex + 1;
+                  const displayEnd = Math.min(endIndex, totalTrips);
+                  return `Showing ${displayStart}-${displayEnd} of ${totalTrips} trips`;
                 })()}
               </div>
             </div>
@@ -275,128 +212,197 @@ export default function SearchPage() {
         <div className="flex gap-6">
           {/* Filter Panel - Left Side */}
           <div className="w-80 flex-shrink-0">
-            <FilterPanel onFilterChange={handleFilterChange} />
+            {/* <FilterPanel onFilterChange={handleFilterChange} /> */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Filters
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Filter functionality coming soon...
+              </p>
+            </div>
           </div>
 
           {/* Trip Cards - Right Side */}
-          <div className="flex-1 space-y-6">
-            {isLoading && (
-              <div className="flex justify-center items-center py-8">
-                <div className="text-gray-600 dark:text-gray-400">
-                  Loading trips...
+          <div className="flex-1 trips-results">
+            <div className="space-y-6">
+              {isLoading && (
+                <div className="flex justify-center items-center py-8">
+                  <div className="text-gray-600 dark:text-gray-400">
+                    Loading trips...
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {error && (
-              <div className="flex justify-center items-center py-8">
-                <div className="text-red-600 dark:text-red-400">
-                  Error loading trips. Using mock data.
+              {error && (
+                <div className="flex justify-center items-center py-8">
+                  <div className="text-red-600 dark:text-red-400">
+                    Error loading trips. Using mock data.
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Use API data primarily, fallback to mock data only when loading/error */}
-            {(() => {
-              if (isLoading) {
-                return null; // Loading will be handled below
-              }
+              {/* Use paginated trips data */}
+              {!isLoading && currentTrips.length > 0 && (
+                <>
+                  {currentTrips.map((tripRoute) => {
+                    // Check if this is API data or mock data
+                    const isApiData = "trip" in tripRoute;
 
-              if (tripRouteData && tripRouteData.length > 0) {
-                // Convert TripRoute data to Trip format for TripCard component
-                return tripRouteData.map(
-                  (tripRoute: {
-                    id: string;
-                    trip: {
-                      id: string;
-                      tripName: string;
-                      startTime: string;
-                      endTime: string;
-                      bus: {
-                        id: string;
-                        plate: string;
-                        busType: string;
-                        seatCapacity: string;
-                        amenities?: unknown;
+                    if (isApiData) {
+                      // Convert TripRoute data to Trip format for TripCard component
+                      const startTime = dayjs(tripRoute.trip.startTime);
+                      const endTime = dayjs(tripRoute.trip.endTime);
+                      const durationHours = endTime.diff(
+                        startTime,
+                        "hour",
+                        true,
+                      );
+                      const durationText =
+                        durationHours >= 1
+                          ? `${Math.floor(durationHours)}h ${Math.round((durationHours % 1) * 60)}m`
+                          : `${Math.round(durationHours * 60)}m`;
+
+                      // Map seat capacity to total seats number
+                      const seatCapacityMap: { [key: string]: number } = {
+                        SEAT_16: 16,
+                        SEAT_28: 28,
+                        SEAT_32: 32,
                       };
-                    };
-                    route: {
-                      id: string;
-                      name: string;
-                      origin: { id: string; name: string; city: string };
-                      destination: { id: string; name: string; city: string };
-                    };
-                    price: number;
-                  }) => {
-                    const startTime = dayjs(tripRoute.trip.startTime);
-                    const endTime = dayjs(tripRoute.trip.endTime);
-                    const durationHours = endTime.diff(startTime, "hour", true);
-                    const durationText =
-                      durationHours >= 1
-                        ? `${Math.floor(durationHours)}h ${Math.round((durationHours % 1) * 60)}m`
-                        : `${Math.round(durationHours * 60)}m`;
 
-                    // Map seat capacity to total seats number
-                    const seatCapacityMap: { [key: string]: number } = {
-                      SEAT_16: 16,
-                      SEAT_28: 28,
-                      SEAT_32: 32,
-                    };
+                      const totalSeats =
+                        seatCapacityMap[tripRoute.trip.bus.seatCapacity] || 32;
 
-                    const totalSeats =
-                      seatCapacityMap[tripRoute.trip.bus.seatCapacity] || 32;
+                      const tripData = {
+                        id: tripRoute.id,
+                        departureTime: startTime.format("HH:mm"),
+                        arrivalTime: endTime.format("HH:mm"),
+                        duration: durationText,
+                        from: tripRoute.route.origin.city,
+                        to: tripRoute.route.destination.city,
+                        price: Number(tripRoute.price),
+                        availableSeats: Math.floor(totalSeats * 0.6), // Estimate 60% availability
+                        totalSeats,
+                        busType:
+                          tripRoute.trip.bus.busType?.toLowerCase() ||
+                          "standard",
+                        amenities: tripRoute.trip.bus.amenities || {},
+                      };
 
-                    return {
-                      id: tripRoute.tripId,
-                      departureTime: startTime.format("HH:mm"),
-                      arrivalTime: endTime.format("HH:mm"),
-                      duration: durationText,
-                      from: tripRoute.route.origin.city,
-                      to: tripRoute.route.destination.city,
-                      price: Number(tripRoute.price),
-                      availableSeats: Math.floor(totalSeats * 0.6), // Estimate 60% availability
-                      totalSeats,
-                      busType:
-                        tripRoute.trip.bus.busType?.toLowerCase() || "standard",
-                      amenities: tripRoute.trip.bus.amenities || {},
-                    };
+                      return (
+                        <TripCard
+                          key={tripData.id}
+                          trip={tripData}
+                          isOpen={openTripId === tripData.id}
+                          onToggle={(tripId) =>
+                            setOpenTripId(openTripId === tripId ? null : tripId)
+                          }
+                        />
+                      );
+                    } else {
+                      // This is mock data
+                      return (
+                        <TripCard
+                          key={tripRoute.id}
+                          trip={tripRoute as Trip}
+                          isOpen={openTripId === tripRoute.id}
+                          onToggle={(tripId) =>
+                            setOpenTripId(openTripId === tripId ? null : tripId)
+                          }
+                        />
+                      );
+                    }
+                  })}
+                </>
+              )}
+
+              {/* No results message */}
+              {!isLoading && currentTrips.length === 0 && (
+                <div className="flex justify-center items-center py-8">
+                  <div className="text-gray-600 dark:text-gray-400">
+                    No trips found for your search criteria.
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Pagination Controls */}
+            {!isLoading && totalPages > 1 && (
+              <div className="mt-8 flex justify-center items-center space-x-2">
+                {/* Previous Button */}
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    currentPage === 1
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600"
+                      : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:border-gray-600"
+                  }`}
+                >
+                  Previous
+                </button>
+
+                {/* Page Numbers */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => {
+                    // Show first page, last page, current page, and pages around current page
+                    const showPage =
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1);
+
+                    if (!showPage && page === currentPage - 2) {
+                      return (
+                        <span
+                          key="dots-before"
+                          className="px-2 py-2 text-gray-400"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+
+                    if (!showPage && page === currentPage + 2) {
+                      return (
+                        <span
+                          key="dots-after"
+                          className="px-2 py-2 text-gray-400"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+
+                    if (!showPage) return null;
+
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`px-3 py-2 rounded-md text-sm font-medium ${
+                          currentPage === page
+                            ? "bg-blue-600 text-white dark:bg-blue-700"
+                            : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:border-gray-600"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
                   },
-                );
-              } else if (error) {
-                // Only use mock data as fallback when there's an error
-                console.warn("API error, falling back to mock data:", error);
-                return mockTrips;
-              } else {
-                // No data available
-                return [];
-              }
-            })()?.map((trip: Trip) => (
-              <TripCard
-                key={trip.id}
-                trip={trip}
-                isOpen={openTripId === trip.id}
-                onToggle={(tripId) =>
-                  setOpenTripId(openTripId === tripId ? null : tripId)
-                }
-              />
-            ))}
+                )}
 
-            {/* No Results */}
-            {(() => {
-              if (isLoading) return false;
-
-              const hasApiData = tripRouteData && tripRouteData.length > 0;
-              const trips = hasApiData ? tripRouteData : error ? mockTrips : [];
-              return trips.length === 0;
-            })() && (
-              <div className="text-center py-16">
-                <div className="text-6xl mb-4">🚌</div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                  No trips found
-                </h3>
-                <p className="text-gray-600 dark:text-gray-300">
-                  Try adjusting your search criteria
-                </p>
+                {/* Next Button */}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    currentPage === totalPages
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600"
+                      : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:border-gray-600"
+                  }`}
+                >
+                  Next
+                </button>
               </div>
             )}
           </div>

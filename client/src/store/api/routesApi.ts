@@ -49,7 +49,7 @@ export interface SearchTripResult {
     plate: string;
     busType: string;
     seatCapacity: string;
-    amenities?: unknown;
+    amenities?: { [key: string]: boolean };
   };
   tripStops?: TripStop[];
   tripRoutes?: TripRoute[];

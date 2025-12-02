@@ -1,6 +1,17 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Clock, MapPin } from "lucide-react";
+import {
+  Clock,
+  MapPin,
+  Wifi,
+  Tv,
+  Coffee,
+  Droplets,
+  Bath,
+  ShirtIcon,
+  Zap,
+  Snowflake,
+} from "lucide-react";
 import { Trip, Seat, generateSeats } from "@/data/mockTrips";
 import SeatMap from "./SeatMap";
 import dayjs from "dayjs";
@@ -183,6 +194,94 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
             </p>
           </div>
         )}
+
+        {/* Bus Type and Amenities */}
+        <div className="mt-4 flex items-center gap-4">
+          {/* Bus Type */}
+          {trip.busType && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">
+                {trip.busType}
+              </span>
+              <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs font-medium">
+                {trip.busType === "standard"
+                  ? "Standard"
+                  : trip.busType === "vip"
+                    ? "VIP"
+                    : trip.busType === "sleeper"
+                      ? "Sleeper"
+                      : trip.busType === "limousine"
+                        ? "Limousine"
+                        : trip.busType}
+              </span>
+            </div>
+          )}
+
+          {/* Amenities */}
+          {trip.amenities && Object.keys(trip.amenities).length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              {Object.entries(trip.amenities).map(([amenity, available]) => {
+                if (!available) return null;
+
+                const getAmenityIcon = (amenity: string) => {
+                  switch (amenity.toLowerCase()) {
+                    case "wifi":
+                      return <Wifi className="w-3 h-3" />;
+                    case "tv":
+                      return <Tv className="w-3 h-3" />;
+                    case "snack":
+                      return <Coffee className="w-3 h-3" />;
+                    case "water":
+                      return <Droplets className="w-3 h-3" />;
+                    case "toilet":
+                      return <Bath className="w-3 h-3" />;
+                    case "blanket":
+                      return <ShirtIcon className="w-3 h-3" />;
+                    case "charger":
+                      return <Zap className="w-3 h-3" />;
+                    case "aircondition":
+                      return <Snowflake className="w-3 h-3" />;
+                    default:
+                      return null;
+                  }
+                };
+
+                const getAmenityLabel = (amenity: string) => {
+                  switch (amenity.toLowerCase()) {
+                    case "wifi":
+                      return "WiFi";
+                    case "tv":
+                      return "TV";
+                    case "snack":
+                      return "Snack";
+                    case "water":
+                      return "Water";
+                    case "toilet":
+                      return "Toilet";
+                    case "blanket":
+                      return "Blanket";
+                    case "charger":
+                      return "Charger";
+                    case "aircondition":
+                      return "A/C";
+                    default:
+                      return amenity;
+                  }
+                };
+
+                return (
+                  <div
+                    key={amenity}
+                    className="flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-xs font-medium"
+                  >
+                    {getAmenityIcon(amenity)}
+                    <span>{getAmenityLabel(amenity)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}

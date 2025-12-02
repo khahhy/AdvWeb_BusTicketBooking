@@ -9,6 +9,10 @@ export interface Trip {
   totalSeats: number;
   price: number;
   note?: string;
+  busType?: string;
+  amenities?: {
+    [key: string]: boolean;
+  };
 }
 
 export const mockTrips: Trip[] = [

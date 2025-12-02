@@ -186,7 +186,9 @@ export default function SearchPage() {
       if (filters.amenities.length > 0) {
         const tripAmenities = trip.amenities || {};
         const hasAllAmenities = filters.amenities.every((amenity) => {
-          return tripAmenities[amenity] === true;
+          return (
+            (tripAmenities as { [key: string]: boolean })[amenity] === true
+          );
         });
         if (!hasAllAmenities) return false;
       }
@@ -413,7 +415,10 @@ export default function SearchPage() {
                         busType:
                           tripRoute.trip.bus.busType?.toLowerCase() ||
                           "standard",
-                        amenities: tripRoute.trip.bus.amenities || {},
+                        amenities:
+                          (tripRoute.trip.bus.amenities as {
+                            [key: string]: boolean;
+                          }) || {},
                       };
 
                       return (

@@ -125,10 +125,11 @@ export class UserService {
           throw new BadRequestException('Phone number already exists');
       }
 
-      let hashedPassword: string | null = null;
-      if (dto.password) {
-        hashedPassword = await hash(dto.password, 10);
+      if (!dto.password) {
+        throw new BadRequestException('Password is required for Admin account');
       }
+
+      const hashedPassword = await hash(dto.password, 10);
 
       const newUser = await this.prisma.users.create({
         data: {
@@ -139,6 +140,7 @@ export class UserService {
           authProvider: 'local',
           role: 'admin',
           status: 'active',
+          emailVerified: true,
         },
       });
 
@@ -327,18 +329,32 @@ export class UserService {
         1,
       );
 
-      // Total Users
-      const totalUsers = await this.prisma.users.count();
+      const userFilter: Prisma.UsersWhereInput = {
+        role: { not: 'admin' },
+      };
+
+      const totalUsers = await this.prisma.users.count({
+        where: userFilter,
+      });
+
       const totalUsersLastMonth = await this.prisma.users.count({
-        where: { createdAt: { lt: startOfThisMonth } },
+        where: {
+          ...userFilter,
+          createdAt: { lt: startOfThisMonth },
+        },
       });
 
       // New Users
       const newUsersThisMonth = await this.prisma.users.count({
-        where: { createdAt: { gte: startOfThisMonth } },
+        where: {
+          ...userFilter,
+          createdAt: { gte: startOfThisMonth },
+        },
       });
+
       const newUsersLastMonth = await this.prisma.users.count({
         where: {
+          ...userFilter,
           createdAt: {
             gte: startOfLastMonth,
             lt: startOfThisMonth,
@@ -349,6 +365,7 @@ export class UserService {
       // Active Users (made a booking)
       const activeUsersThisMonth = await this.prisma.users.count({
         where: {
+          ...userFilter,
           bookings: {
             some: {
               createdAt: { gte: startOfThisMonth },
@@ -359,6 +376,7 @@ export class UserService {
 
       const activeUsersLastMonth = await this.prisma.users.count({
         where: {
+          ...userFilter,
           bookings: {
             some: {
               createdAt: {

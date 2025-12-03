@@ -40,13 +40,9 @@ export class RedisCacheService {
   }
 
   async delByPattern(pattern: string): Promise<void> {
-    const stream = this.redis.client.scanIterator({
-      MATCH: pattern,
-      COUNT: 100,
-    });
-
-    for await (const key of stream as AsyncIterable<string>) {
-      await this.redis.client.del(key);
+    const keys = await this.redis.client.keys(pattern);
+    if (keys.length > 0) {
+      await this.redis.client.del(keys);
     }
   }
 }

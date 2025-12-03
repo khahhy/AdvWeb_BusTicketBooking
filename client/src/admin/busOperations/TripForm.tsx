@@ -41,20 +41,17 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
-
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 
-// IMPORT API
 import { useGetLocationsQuery } from "@/store/api/locationApi";
 import { useGetBusesQuery } from "@/store/api/busApi";
 import { useCreateTripMutation } from "@/store/api/tripsApi";
+import type { Location } from "@/store/type/locationsType";
 import { toast } from "sonner";
 
-// --- Config Leaflet Icon ---
 const DefaultIcon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
@@ -63,18 +60,15 @@ const DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// --- Types ---
-// Type cho Stop trong Form state (Local state dùng cho UI & DragDrop)
 type TripStopState = {
-  id: string; // ID tạm thời để dùng cho thư viện Dnd-kit
+  id: string;
   locationId: string;
   locationName: string;
   locationAddress: string;
-  arrivalTime: string; // ISO String
-  departureTime: string; // ISO String
+  arrivalTime: string;
+  departureTime: string;
 };
 
-// --- Component Sortable Item ---
 const SortableTripStopItem = ({ stop }: { stop: TripStopState }) => {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: stop.id });
@@ -129,31 +123,25 @@ const SortableTripStopItem = ({ stop }: { stop: TripStopState }) => {
   );
 };
 
-// --- Main Component ---
 const TripForm = () => {
   const navigate = useNavigate();
 
-  // 1. API Hooks
   const [createTrip, { isLoading: isSubmitting }] = useCreateTripMutation();
   const { data: locations = [], isLoading: isLoadingLocations } =
     useGetLocationsQuery();
   const { data: buses = [], isLoading: isLoadingBuses } = useGetBusesQuery();
 
-  // 2. Form State
   const [tripName, setTripName] = useState("");
   const [selectedBusId, setSelectedBusId] = useState<string>();
   const [tripStops, setTripStops] = useState<TripStopState[]>([]);
 
-  // 3. Modal & Selection State
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedLocation, setSelectedLocation] = useState<any>(null); // Location từ API
+  const [selectedLocation, setSelectedLocation] = useState<Location>();
   const [tempArrivalTime, setTempArrivalTime] = useState("");
   const [tempDepartureTime, setTempDepartureTime] = useState("");
 
   const sensors = useSensors(useSensor(PointerSensor));
 
-  // Tự động tạo tên Trip dựa trên điểm đi - điểm đến
   useEffect(() => {
     if (tripStops.length >= 2) {
       const startNode = tripStops[0];
@@ -166,12 +154,9 @@ const TripForm = () => {
     }
   }, [tripStops]);
 
-  // Xử lý khi click vào Marker trên bản đồ
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleMapMarkerClick = (location: any) => {
+  const handleMapMarkerClick = (location: Location) => {
     setSelectedLocation(location);
 
-    // Set mặc định giờ hiện tại (Local time để hiển thị input type="datetime-local")
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     const localIsoString = now.toISOString().slice(0, 16);
@@ -181,18 +166,16 @@ const TripForm = () => {
     setIsMapModalOpen(true);
   };
 
-  // Confirm thêm điểm dừng
   const handleAddStop = () => {
     if (!selectedLocation) return;
 
-    // Convert từ Local Input Time sang ISO String chuẩn để lưu DB
     const arrivalISO = new Date(tempArrivalTime).toISOString();
     const departureISO = new Date(tempDepartureTime).toISOString();
 
     setTripStops((prev) => [
       ...prev,
       {
-        id: `stop-${Date.now()}`, // Tạo ID unique tạm thời cho DragDrop
+        id: `stop-${Date.now()}`,
         locationId: selectedLocation.id,
         locationName: selectedLocation.name,
         locationAddress: selectedLocation.address || "",
@@ -203,7 +186,6 @@ const TripForm = () => {
     setIsMapModalOpen(false);
   };
 
-  // Xử lý kéo thả sắp xếp stops
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (active.id !== over?.id) {
@@ -215,7 +197,6 @@ const TripForm = () => {
     }
   };
 
-  // Submit Form gọi API
   const handleSaveTrip = async () => {
     if (!selectedBusId || tripStops.length < 2) {
       toast.error("Please select a bus and at least 2 stops.");
@@ -247,7 +228,6 @@ const TripForm = () => {
 
   return (
     <div className="flex flex-1 flex-col p-2 h-screen overflow-hidden">
-      {/* HEADER */}
       <div className="flex items-center justify-between mb-4 shrink-0">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
@@ -271,9 +251,7 @@ const TripForm = () => {
       </div>
 
       <div className="grid md:grid-cols-3 gap-3 h-full overflow-hidden">
-        {/* LEFT PANEL: CONFIG */}
         <div className="md:col-span-1 flex flex-col gap-3 overflow-y-auto">
-          {/* Card: Bus Info */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -314,7 +292,6 @@ const TripForm = () => {
             </CardContent>
           </Card>
 
-          {/* Card: Stops List (Draggable) */}
           <Card className="flex-1 flex flex-col">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 justify-between">
@@ -355,7 +332,6 @@ const TripForm = () => {
           </Card>
         </div>
 
-        {/* RIGHT PANEL: MAP */}
         <Card className="md:col-span-2 flex flex-col overflow-hidden h-[600px] md:h-auto">
           <CardHeader className="py-3 px-6 shrink-0">
             <CardTitle>Select Stops</CardTitle>
@@ -372,7 +348,6 @@ const TripForm = () => {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
 
-              {/* Render Locations from API */}
               {!isLoadingLocations &&
                 locations.map((loc) => {
                   if (!loc.latitude || !loc.longitude) return null;
@@ -382,9 +357,11 @@ const TripForm = () => {
                       position={[loc.latitude, loc.longitude]}
                       eventHandlers={{
                         click: () => handleMapMarkerClick(loc),
+                        mouseover: (event) => event.target.openPopup(),
+                        mouseout: (event) => event.target.closePopup(),
                       }}
                     >
-                      <Popup>
+                      <Popup closeButton={false} offset={[0, -30]}>
                         <div className="text-sm">
                           <strong>{loc.name}</strong>
                           <br />
@@ -407,7 +384,6 @@ const TripForm = () => {
         </Card>
       </div>
 
-      {/* DIALOG ADD STOP */}
       <Dialog open={isMapModalOpen} onOpenChange={setIsMapModalOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>

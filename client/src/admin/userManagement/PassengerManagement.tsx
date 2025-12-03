@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Users,
   UserPlus,
@@ -7,6 +7,7 @@ import {
   Filter,
   ArrowUpDown,
   Eye,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,103 +38,55 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PassengerDetailDrawer, StatCard } from "@/components/admin";
-import { type Passenger } from "@/store/type/usersType";
-
-const mockPassengers: Passenger[] = [
-  {
-    id: "CUST-001",
-    name: "Nguyễn Văn A",
-    email: "vana@example.com",
-    phone: "0901234567",
-    status: "Active",
-    joinDate: "2024-10-01T10:00:00Z",
-    bookings: [
-      {
-        id: "B-001",
-        trip: "Sài Gòn - Đà Lạt",
-        date: "2024-10-20",
-        status: "Completed",
-      },
-    ],
-  },
-  {
-    id: "CUST-002",
-    name: "Trần Thị B",
-    email: "thib@example.com",
-    phone: "0901234568",
-    status: "Active",
-    joinDate: "2024-09-15T14:30:00Z",
-    bookings: [
-      {
-        id: "B-002",
-        trip: "Hà Nội - Hải Phòng",
-        date: "2024-09-30",
-        status: "Completed",
-      },
-    ],
-  },
-  {
-    id: "CUST-003",
-    name: "Phạm Văn C",
-    email: "vanc@example.com",
-    phone: "0901234569",
-    status: "Banned",
-    joinDate: "2024-08-05T08:00:00Z",
-    bookings: [
-      {
-        id: "B-003",
-        trip: "Đà Nẵng - Huế",
-        date: "2024-08-10",
-        status: "Cancelled",
-      },
-    ],
-  },
-];
+import { useGetUsersQuery, useGetUserStatsQuery } from "@/store/api/usersApi";
+import { User, UserRole, UserStatus } from "@/store/type/usersType";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const PassengerManagement = () => {
-  const [selectedPassenger, setSelectedPassenger] = useState<Passenger | null>(
-    null,
-  );
+  const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 500);
+  const [selectedPassenger, setSelectedPassenger] = useState<User | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-  const [editableName, setEditableName] = useState("");
-  const [editableEmail, setEditableEmail] = useState("");
-  const [editablePhone, setEditablePhone] = useState("");
+  const { data: statsData } = useGetUserStatsQuery();
 
-  useEffect(() => {
-    if (selectedPassenger) {
-      setEditableName(selectedPassenger.name);
-      setEditableEmail(selectedPassenger.email);
-      setEditablePhone(selectedPassenger.phone);
-    }
-  }, [selectedPassenger]);
+  const {
+    data: usersData,
+    isLoading,
+    isFetching,
+  } = useGetUsersQuery({
+    page: page,
+    limit: 10,
+    search: debouncedSearch,
+    role: UserRole.passenger,
+  });
 
-  const handleViewClick = (passenger: Passenger) => {
+  const users = usersData?.data || [];
+  const meta = usersData?.meta;
+
+  const handleViewClick = (passenger: User) => {
     setSelectedPassenger(passenger);
     setIsSheetOpen(true);
   };
 
-  const handleSaveUser = () => {
-    if (!selectedPassenger) return;
-    console.log("Saving user...", selectedPassenger.id, {
-      name: editableName,
-      email: editableEmail,
-      phone: editablePhone,
-    });
-
-    setIsSheetOpen(false);
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= (meta?.totalPages || 1)) {
+      setPage(newPage);
+    }
   };
 
-  const handleBanUser = () => {
-    if (!selectedPassenger) return;
-    console.log("Banning user...", selectedPassenger.id);
-    setIsSheetOpen(false);
-  };
-
-  const handleUnbanUser = () => {
-    if (!selectedPassenger) return;
-    console.log("Unbanning user...", selectedPassenger.id);
-    setIsSheetOpen(false);
+  const getStatusBadgeVariant = (status: UserStatus) => {
+    switch (status) {
+      case UserStatus.active:
+        return "secondary";
+      case UserStatus.banned:
+        return "destructive";
+      case UserStatus.unverified:
+        return "outline";
+      default:
+        return "outline";
+    }
   };
 
   return (
@@ -141,21 +94,21 @@ const PassengerManagement = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatCard
           title="Total Users"
-          value="1,250"
+          value={statsData?.data.total.value.toLocaleString() || "..."}
           icon={Users}
-          description="+20.1% from last month"
+          description={`${statsData?.data.total.growth || 0}% from last month`}
         />
         <StatCard
-          title="New Users"
-          value="+180"
+          title="New Users (Month)"
+          value={statsData?.data.newThisMonth.value.toLocaleString() || "..."}
           icon={UserPlus}
-          description="+15.2% from last month"
+          description={`${statsData?.data.newThisMonth.growth || 0}% growth`}
         />
         <StatCard
           title="Active Users"
-          value="890"
+          value={statsData?.data.active.value.toLocaleString() || "..."}
           icon={UserCheck}
-          description="+5.1% from last month"
+          description={`${statsData?.data.active.growth || 0}% active rate`}
         />
       </div>
 
@@ -171,6 +124,11 @@ const PassengerManagement = () => {
                 type="search"
                 placeholder="Search by name, email, or phone..."
                 className="w-full pl-8 md:w-1/2 lg:w-1/3"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setPage(1);
+                }}
               />
             </div>
             <DropdownMenu>
@@ -201,40 +159,55 @@ const PassengerManagement = () => {
                   </TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
+                  <TableHead>Joined</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockPassengers.map((passenger) => (
-                  <TableRow key={passenger.id}>
-                    <TableCell className="font-medium">
-                      {passenger.name}
-                    </TableCell>
-                    <TableCell>{passenger.email}</TableCell>
-                    <TableCell>{passenger.phone}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          passenger.status === "Active"
-                            ? "secondary"
-                            : "destructive"
-                        }
-                      >
-                        {passenger.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewClick(passenger)}
-                      >
-                        <Eye className="mr-2 h-4 w-4" /> View
-                      </Button>
+                {isLoading || isFetching ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      <Loader2 className="mr-2 h-6 w-6 animate-spin inline" />{" "}
+                      Loading...
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : users.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      No passengers found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  users.map((passenger) => (
+                    <TableRow key={passenger.id}>
+                      <TableCell className="font-medium">
+                        {passenger.fullName || "—"}
+                      </TableCell>
+                      <TableCell>{passenger.email}</TableCell>
+                      <TableCell>{passenger.phoneNumber || "—"}</TableCell>
+                      <TableCell>
+                        {new Date(passenger.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={getStatusBadgeVariant(passenger.status)}
+                        >
+                          {passenger.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewClick(passenger)}
+                        >
+                          <Eye className="mr-2 h-4 w-4" /> View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
@@ -243,21 +216,28 @@ const PassengerManagement = () => {
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
-                  <PaginationPrevious href="#" />
+                  <PaginationPrevious
+                    onClick={() => handlePageChange(page - 1)}
+                    className={
+                      page <= 1
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
+                  />
                 </PaginationItem>
                 <PaginationItem>
-                  <PaginationLink href="#">1</PaginationLink>
+                  <PaginationLink isActive>{page}</PaginationLink>
                 </PaginationItem>
+
                 <PaginationItem>
-                  <PaginationLink href="#" isActive>
-                    2
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">3</PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationNext href="#" />
+                  <PaginationNext
+                    onClick={() => handlePageChange(page + 1)}
+                    className={
+                      page >= (meta?.totalPages || 1)
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
+                  />
                 </PaginationItem>
               </PaginationContent>
             </Pagination>
@@ -269,9 +249,6 @@ const PassengerManagement = () => {
         open={isSheetOpen}
         onOpenChange={setIsSheetOpen}
         passenger={selectedPassenger}
-        onSave={handleSaveUser}
-        onBan={handleBanUser}
-        onUnban={handleUnbanUser}
       />
     </div>
   );

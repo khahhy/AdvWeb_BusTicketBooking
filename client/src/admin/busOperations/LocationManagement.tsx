@@ -100,7 +100,6 @@ const LocationManagement = () => {
 
   const handleSelectLocation = (location: Location) => {
     setSelectedLocation(location);
-    setIsSheetOpen(true);
   };
 
   return (
@@ -195,8 +194,9 @@ const LocationManagement = () => {
       <div className="flex-1 border rounded-xl overflow-hidden shadow-sm bg-gray-100 relative">
         <LocationMap
           locations={locations}
-          selectedId={selectedLocation?.id}
+          selectedLocation={selectedLocation}
           onSelect={handleSelectLocation}
+          onOpenChange={setIsSheetOpen}
         />
       </div>
 

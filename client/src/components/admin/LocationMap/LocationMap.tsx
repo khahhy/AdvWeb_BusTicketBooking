@@ -1,5 +1,11 @@
 import { useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  useMap,
+  Tooltip,
+} from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Location } from "@/store/type/locationsType";
@@ -17,21 +23,34 @@ const defaultIcon = L.icon({
 
 interface LocationMapProps {
   locations: Location[];
-  selectedId?: string;
+  selectedLocation: Location | null;
   onSelect: (location: Location) => void;
+  onOpenChange: (setIsSheetOpen: boolean) => void;
 }
+
+const MapUpdater = ({ location }: { location: Location | null }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (location && location.latitude && location.longitude) {
+      map.flyTo([location.latitude, location.longitude], 16, {
+        duration: 1.5,
+      });
+    }
+  }, [location, map]);
+
+  return null;
+};
 
 const MapBounds = ({ locations }: { locations: Location[] }) => {
   const map = useMap();
 
   useEffect(() => {
     const validMarkers = locations.filter((m) => m.latitude && m.longitude);
-
     if (validMarkers.length > 0) {
       const bounds = L.latLngBounds(
         validMarkers.map((m) => [m.latitude!, m.longitude!]),
       );
-
       map.fitBounds(bounds, { padding: [50, 50] });
     }
   }, [locations, map]);
@@ -39,7 +58,12 @@ const MapBounds = ({ locations }: { locations: Location[] }) => {
   return null;
 };
 
-const LocationMap = ({ locations, onSelect }: LocationMapProps) => {
+const LocationMap = ({
+  locations,
+  selectedLocation,
+  onSelect,
+  onOpenChange,
+}: LocationMapProps) => {
   const defaultPosition: [number, number] = [10.7769, 106.7009];
 
   return (
@@ -63,20 +87,25 @@ const LocationMap = ({ locations, onSelect }: LocationMapProps) => {
               position={[loc.latitude, loc.longitude]}
               icon={defaultIcon}
               eventHandlers={{
-                click: () => onSelect(loc),
+                click: () => {
+                  onSelect(loc);
+                  onOpenChange(true);
+                },
               }}
             >
-              <Popup>
+              <Tooltip direction="top" offset={[0, -30]} opacity={1}>
                 <div className="p-1">
                   <h3 className="font-bold text-sm">{loc.name}</h3>
                   <p className="text-xs text-gray-500">{loc.address}</p>
                 </div>
-              </Popup>
+              </Tooltip>
             </Marker>
           );
         })}
 
-        <MapBounds locations={locations} />
+        {!selectedLocation && <MapBounds locations={locations} />}
+
+        <MapUpdater location={selectedLocation} />
       </MapContainer>
     </div>
   );

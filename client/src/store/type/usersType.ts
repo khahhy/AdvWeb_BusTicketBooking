@@ -1,44 +1,86 @@
-import type { Booking } from "./bookingType";
+export enum UserRole {
+  passenger = "passenger",
+  admin = "admin",
+}
 
-export type Admin = {
+export enum UserStatus {
+  active = "active",
+  banned = "banned",
+  unverified = "unverified",
+}
+
+export interface User {
   id: string;
-  name: string;
+  fullName: string | null;
   email: string;
-  phone?: string;
-  createdDate: string;
-};
+  phoneNumber: string | null;
+  role: UserRole;
+  status: UserStatus;
+  createdAt: string;
+  _count?: {
+    bookings: number;
+  };
+}
 
-export type ActivityLog = {
-  id: string;
-  action: string;
-  timestamp: string;
-};
+export interface UserQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: UserRole;
+}
 
-export type AdminUpdateData = {
-  name: string;
+export interface CreateUserRequest {
+  fullName: string;
   email: string;
-  phone: string;
-};
-
-export type AdminCreateData = {
-  name: string;
-  email: string;
-  phone?: string;
+  phoneNumber?: string;
   password?: string;
-};
+}
 
-export type Passenger = {
+export interface UpdateUserRequest {
   id: string;
-  name: string;
-  email: string;
-  phone: string;
-  status: "Active" | "Banned";
-  joinDate: string;
-  bookings: Booking[];
-};
+  data: {
+    fullName?: string;
+    email?: string;
+    phoneNumber?: string;
+  };
+}
 
-export type PassengerUpdateData = {
-  name: string;
-  email: string;
-  phone: string;
-};
+export interface UpdateRoleRequest {
+  id: string;
+  role: UserRole;
+}
+
+export interface UpdateStatusRequest {
+  id: string;
+  status: UserStatus;
+}
+
+export interface UsersResponse {
+  message: string;
+  data: User[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export interface SingleUserResponse {
+  message: string;
+  data: User;
+}
+
+export interface StatItem {
+  value: number;
+  growth: number;
+}
+
+export interface UserStatsResponse {
+  message: string;
+  data: {
+    total: StatItem;
+    newThisMonth: StatItem;
+    active: StatItem;
+  };
+}

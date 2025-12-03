@@ -26,18 +26,13 @@ import {
 } from "@/store/api/routesApi";
 import { TripRouteMap } from "@/store/type/tripRoutesType";
 import { toast } from "sonner";
+import type { ApiError } from "@/store/type/apiError";
 
 type Props = {
   routeId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
-
-interface ApiError {
-  data?: {
-    message?: string;
-  };
-}
 
 const RouteDetailsDrawer = ({ routeId, open, onOpenChange }: Props) => {
   const { data: route, isLoading } = useGetRouteByIdQuery(routeId || "", {

@@ -26,18 +26,13 @@ import {
 } from "@/store/api/routesApi";
 import { Route, RouteTripAvailable } from "@/store/type/routesType";
 import { toast } from "sonner";
+import type { ApiError } from "@/store/type/apiError";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   route: Route;
 };
-
-interface ApiError {
-  data?: {
-    message?: string;
-  };
-}
 
 const TripAssignmentDialog = ({ open, onOpenChange, route }: Props) => {
   const [startDate, setStartDate] = useState<string>("");

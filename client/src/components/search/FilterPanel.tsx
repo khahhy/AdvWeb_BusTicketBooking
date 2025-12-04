@@ -39,22 +39,22 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
   ];
 
   const busTypes = [
-    { label: "Standard", value: BusType.STANDARD, icon: "🚌" },
-    { label: "VIP", value: BusType.VIP, icon: "✨" },
-    { label: "Sleeper", value: BusType.SLEEPER, icon: "🛏️" },
-    { label: "Limousine", value: BusType.LIMOUSINE, icon: "🚐" },
+    { label: "Standard", value: BusType.STANDARD },
+    { label: "VIP", value: BusType.VIP },
+    { label: "Sleeper", value: BusType.SLEEPER },
+    { label: "Limousine", value: BusType.LIMOUSINE },
   ];
 
   const amenityOptions = [
-    { label: "WiFi", value: "wifi", icon: "📶" },
-    { label: "Air Condition", value: "airCondition", icon: "❄️" },
-    { label: "TV", value: "tv", icon: "📺" },
-    { label: "Toilet", value: "toilet", icon: "🚻" },
-    { label: "Blanket", value: "blanket", icon: "🛏️" },
-    { label: "Snack", value: "snack", icon: "🍪" },
-    { label: "Entertainment", value: "entertainment", icon: "🎬" },
-    { label: "USB", value: "usb", icon: "🔌" },
-    { label: "Reclining", value: "reclining", icon: "🪑" },
+    { label: "WiFi", value: "wifi" },
+    { label: "Air Condition", value: "airCondition" },
+    { label: "TV", value: "tv" },
+    { label: "Toilet", value: "toilet" },
+    { label: "Blanket", value: "blanket" },
+    { label: "Snack", value: "snack" },
+    { label: "Entertainment", value: "entertainment" },
+    { label: "USB", value: "usb" },
+    { label: "Reclining", value: "reclining" },
   ];
 
   const handleDepartureTimeToggle = (value: string) => {
@@ -234,45 +234,34 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
             <button
               key={type.value}
               onClick={() => handleBusTypeToggle(type.value)}
-              className={`p-3 rounded-2xl border-2 transition-all ${
+              className={`px-4 py-3 rounded-xl border-2 transition-all text-center font-medium text-sm ${
                 selectedBusTypes.includes(type.value)
-                  ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-500"
-                  : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                  ? "border-blue-600 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:border-blue-500 dark:text-blue-300"
+                  : "border-gray-200 bg-white text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700"
               }`}
             >
-              <div className="flex items-center justify-center mb-1">
-                <span className="text-lg">{type.icon}</span>
-              </div>
-              <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
-                {type.label}
-              </div>
+              {type.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Amenities */}
       <div className="mb-8">
         <h4 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-4">
           Amenities
         </h4>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="flex flex-wrap gap-2">
           {amenityOptions.map((amenity) => (
             <button
               key={amenity.value}
               onClick={() => handleAmenityToggle(amenity.value)}
-              className={`p-2 rounded-xl border transition-all ${
+              className={`px-3 py-2 rounded-lg border transition-all text-xs font-medium ${
                 selectedAmenities.includes(amenity.value)
-                  ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-500"
-                  : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                  ? "border-blue-600 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:border-blue-500 dark:text-blue-300"
+                  : "border-gray-200 bg-white text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700"
               }`}
             >
-              <div className="flex flex-col items-center">
-                <span className="text-sm mb-1">{amenity.icon}</span>
-                <span className="text-xs text-gray-900 dark:text-gray-100 font-medium">
-                  {amenity.label}
-                </span>
-              </div>
+              {amenity.label}
             </button>
           ))}
         </div>

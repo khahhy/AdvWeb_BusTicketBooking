@@ -354,86 +354,80 @@ export default function SearchPage() {
               )}
 
               {/* Use paginated trips data */}
-              {!isLoading && currentTrips.length > 0 && (
-                <>
-                  {currentTrips.map((tripRoute) => {
-                    // Check if this is API data or mock data
-                    const isApiData = "trip" in tripRoute;
+              {!isLoading &&
+                currentTrips.length > 0 &&
+                currentTrips.map((tripRoute, index) => {
+                  // Check if this is API data or mock data
+                  const isApiData = "trip" in tripRoute;
 
-                    if (isApiData) {
-                      // Convert TripRoute data to Trip format for TripCard component
-                      const startTime = dayjs(tripRoute.trip.startTime);
-                      const endTime = dayjs(tripRoute.trip.endTime);
-                      const durationHours = endTime.diff(
-                        startTime,
-                        "hour",
-                        true,
-                      );
-                      const durationText =
-                        durationHours >= 1
-                          ? `${Math.floor(durationHours)}h ${Math.round((durationHours % 1) * 60)}m`
-                          : `${Math.round(durationHours * 60)}m`;
+                  if (isApiData) {
+                    // Convert TripRoute data to Trip format for TripCard component
+                    const startTime = dayjs(tripRoute.trip.startTime);
+                    const endTime = dayjs(tripRoute.trip.endTime);
+                    const durationHours = endTime.diff(startTime, "hour", true);
+                    const durationText =
+                      durationHours >= 1
+                        ? `${Math.floor(durationHours)}h ${Math.round((durationHours % 1) * 60)}m`
+                        : `${Math.round(durationHours * 60)}m`;
 
-                      // Map seat capacity to total seats number
-                      const seatCapacityMap: { [key: string]: number } = {
-                        SEAT_16: 16,
-                        SEAT_28: 28,
-                        SEAT_32: 32,
-                      };
+                    // Map seat capacity to total seats number
+                    const seatCapacityMap: { [key: string]: number } = {
+                      SEAT_16: 16,
+                      SEAT_28: 28,
+                      SEAT_32: 32,
+                    };
 
-                      const totalSeats =
-                        seatCapacityMap[
-                          tripRoute?.trip?.bus?.seatCapacity ?? "SEAT_32"
-                        ] || 32;
+                    const totalSeats =
+                      seatCapacityMap[
+                        tripRoute?.trip?.bus?.seatCapacity ?? "SEAT_32"
+                      ] || 32;
 
-                      const tripData = {
-                        id: tripRoute.id,
-                        route: tripRoute.route,
-                        departureTime: startTime.format("HH:mm"),
-                        arrivalTime: endTime.format("HH:mm"),
-                        duration: durationText,
-                        from: tripRoute.route.origin.city,
-                        to: tripRoute.route.destination.city,
-                        fromTerminal: tripRoute.route.origin.name,
-                        toTerminal: tripRoute.route.destination.name,
-                        price: Number(tripRoute.price),
-                        availableSeats: Math.floor(totalSeats * 0.6),
-                        totalSeats,
-                        busType:
-                          tripRoute.trip.bus?.busType?.toLowerCase() ||
-                          "standard",
-                        amenities:
-                          (tripRoute.trip.bus?.amenities as unknown as {
-                            [key: string]: boolean;
-                          }) || {},
-                      };
+                    const tripData = {
+                      id: tripRoute.id,
+                      route: tripRoute.route,
+                      departureTime: startTime.format("HH:mm"),
+                      arrivalTime: endTime.format("HH:mm"),
+                      duration: durationText,
+                      from: tripRoute.route.origin.city,
+                      to: tripRoute.route.destination.city,
+                      fromTerminal: tripRoute.route.origin.name,
+                      toTerminal: tripRoute.route.destination.name,
+                      price: Number(tripRoute.price),
+                      availableSeats: Math.floor(totalSeats * 0.6),
+                      totalSeats,
+                      busType:
+                        tripRoute.trip.bus?.busType?.toLowerCase() ||
+                        "standard",
+                      amenities:
+                        (tripRoute.trip.bus?.amenities as unknown as {
+                          [key: string]: boolean;
+                        }) || {},
+                    };
 
-                      return (
-                        <TripCard
-                          key={tripData.id}
-                          trip={tripData}
-                          isOpen={openTripId === tripData.id}
-                          onToggle={(tripId) =>
-                            setOpenTripId(openTripId === tripId ? null : tripId)
-                          }
-                        />
-                      );
-                    } else {
-                      // This is mock data
-                      return (
-                        <TripCard
-                          key={tripRoute.id}
-                          trip={tripRoute as Trip}
-                          isOpen={openTripId === tripRoute.id}
-                          onToggle={(tripId) =>
-                            setOpenTripId(openTripId === tripId ? null : tripId)
-                          }
-                        />
-                      );
-                    }
-                  })}
-                </>
-              )}
+                    return (
+                      <TripCard
+                        key={`trip-${tripData.id}-${index}`}
+                        trip={tripData}
+                        isOpen={openTripId === tripData.id}
+                        onToggle={(tripId) =>
+                          setOpenTripId(openTripId === tripId ? null : tripId)
+                        }
+                      />
+                    );
+                  } else {
+                    // This is mock data
+                    return (
+                      <TripCard
+                        key={`trip-${tripRoute.id}-${index}`}
+                        trip={tripRoute as Trip}
+                        isOpen={openTripId === tripRoute.id}
+                        onToggle={(tripId) =>
+                          setOpenTripId(openTripId === tripId ? null : tripId)
+                        }
+                      />
+                    );
+                  }
+                })}
 
               {/* No results message */}
               {!isLoading && currentTrips.length === 0 && (

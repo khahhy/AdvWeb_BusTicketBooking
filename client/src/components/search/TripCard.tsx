@@ -234,65 +234,65 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
           {/* Amenities */}
           {trip.amenities && Object.keys(trip.amenities).length > 0 && (
             <div className="flex flex-wrap items-center gap-2">
-              {Object.entries(trip.amenities).map(([amenity, available]) => {
-                if (!available) return null;
+              {Object.entries(trip.amenities)
+                .filter(([, available]) => available)
+                .map(([amenity]) => {
+                  const getAmenityIcon = (amenity: string) => {
+                    switch (amenity.toLowerCase()) {
+                      case "wifi":
+                        return <Wifi className="w-3 h-3" />;
+                      case "tv":
+                        return <Tv className="w-3 h-3" />;
+                      case "snack":
+                        return <Coffee className="w-3 h-3" />;
+                      case "water":
+                        return <Droplets className="w-3 h-3" />;
+                      case "toilet":
+                        return <Bath className="w-3 h-3" />;
+                      case "blanket":
+                        return <ShirtIcon className="w-3 h-3" />;
+                      case "charger":
+                        return <Zap className="w-3 h-3" />;
+                      case "aircondition":
+                        return <Snowflake className="w-3 h-3" />;
+                      default:
+                        return null;
+                    }
+                  };
 
-                const getAmenityIcon = (amenity: string) => {
-                  switch (amenity.toLowerCase()) {
-                    case "wifi":
-                      return <Wifi className="w-3 h-3" />;
-                    case "tv":
-                      return <Tv className="w-3 h-3" />;
-                    case "snack":
-                      return <Coffee className="w-3 h-3" />;
-                    case "water":
-                      return <Droplets className="w-3 h-3" />;
-                    case "toilet":
-                      return <Bath className="w-3 h-3" />;
-                    case "blanket":
-                      return <ShirtIcon className="w-3 h-3" />;
-                    case "charger":
-                      return <Zap className="w-3 h-3" />;
-                    case "aircondition":
-                      return <Snowflake className="w-3 h-3" />;
-                    default:
-                      return null;
-                  }
-                };
+                  const getAmenityLabel = (amenity: string) => {
+                    switch (amenity.toLowerCase()) {
+                      case "wifi":
+                        return "WiFi";
+                      case "tv":
+                        return "TV";
+                      case "snack":
+                        return "Snack";
+                      case "water":
+                        return "Water";
+                      case "toilet":
+                        return "Toilet";
+                      case "blanket":
+                        return "Blanket";
+                      case "charger":
+                        return "Charger";
+                      case "aircondition":
+                        return "A/C";
+                      default:
+                        return amenity;
+                    }
+                  };
 
-                const getAmenityLabel = (amenity: string) => {
-                  switch (amenity.toLowerCase()) {
-                    case "wifi":
-                      return "WiFi";
-                    case "tv":
-                      return "TV";
-                    case "snack":
-                      return "Snack";
-                    case "water":
-                      return "Water";
-                    case "toilet":
-                      return "Toilet";
-                    case "blanket":
-                      return "Blanket";
-                    case "charger":
-                      return "Charger";
-                    case "aircondition":
-                      return "A/C";
-                    default:
-                      return amenity;
-                  }
-                };
-
-                return (
-                  <div
-                    key={amenity}
-                    className="flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-xs font-medium"
-                  >
-                    {getAmenityIcon(amenity)}
-                    <span>{getAmenityLabel(amenity)}</span>
-                  </div>
-                );
-              })}
+                  return (
+                    <div
+                      key={amenity}
+                      className="flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-xs font-medium"
+                    >
+                      {getAmenityIcon(amenity)}
+                      <span>{getAmenityLabel(amenity)}</span>
+                    </div>
+                  );
+                })}
             </div>
           )}
         </div>

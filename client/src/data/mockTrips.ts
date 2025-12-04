@@ -5,6 +5,8 @@ export interface Trip {
   duration: string;
   from: string;
   to: string;
+  fromTerminal?: string;
+  toTerminal?: string;
   availableSeats: number;
   totalSeats: number;
   price: number;
@@ -23,6 +25,8 @@ export const mockTrips: Trip[] = [
     duration: "6 hours",
     from: "Ho Chi Minh City",
     to: "Mui Ne",
+    fromTerminal: "Ho Chi Minh City Central Station",
+    toTerminal: "Mui Ne Station",
     availableSeats: 24,
     totalSeats: 32,
     price: 200000,
@@ -42,6 +46,8 @@ export const mockTrips: Trip[] = [
     duration: "6 hours 15 min",
     from: "Ho Chi Minh City",
     to: "Da Lat",
+    fromTerminal: "Mien Dong Bus Station",
+    toTerminal: "Da Lat Central Terminal",
     availableSeats: 18,
     totalSeats: 32,
     price: 250000,
@@ -63,6 +69,8 @@ export const mockTrips: Trip[] = [
     duration: "6 hours 30 min",
     from: "Ho Chi Minh City",
     to: "Nha Trang",
+    fromTerminal: "An Suong Bus Station",
+    toTerminal: "Nha Trang Bus Terminal",
     availableSeats: 28,
     totalSeats: 32,
     price: 195000,
@@ -80,6 +88,8 @@ export const mockTrips: Trip[] = [
     duration: "6 hours 30 min",
     from: "Da Lat",
     to: "Nha Trang",
+    fromTerminal: "Da Lat Central Terminal",
+    toTerminal: "Nha Trang Bus Terminal",
     availableSeats: 10,
     totalSeats: 32,
     price: 320000,

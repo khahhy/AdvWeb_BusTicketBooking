@@ -394,6 +394,8 @@ export default function SearchPage() {
                         duration: durationText,
                         from: tripRoute.route.origin.city,
                         to: tripRoute.route.destination.city,
+                        fromTerminal: tripRoute.route.origin.name,
+                        toTerminal: tripRoute.route.destination.name,
                         price: Number(tripRoute.price),
                         availableSeats: Math.floor(totalSeats * 0.6),
                         totalSeats,

@@ -138,6 +138,11 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
               <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 {trip.from}
               </div>
+              {trip.fromTerminal && (
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {trip.fromTerminal}
+                </div>
+              )}
             </div>
 
             {/* Duration */}
@@ -163,6 +168,11 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
               <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 {trip.to}
               </div>
+              {trip.toTerminal && (
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {trip.toTerminal}
+                </div>
+              )}
             </div>
           </div>
 
@@ -373,6 +383,9 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">{trip.from}</p>
+                  {trip.fromTerminal && (
+                    <p className="text-sm text-gray-600">{trip.fromTerminal}</p>
+                  )}
                   <p className="text-sm text-gray-500">
                     Departure: {trip.departureTime}
                   </p>
@@ -387,6 +400,9 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">{trip.to}</p>
+                  {trip.toTerminal && (
+                    <p className="text-sm text-gray-600">{trip.toTerminal}</p>
+                  )}
                   <p className="text-sm text-gray-500">
                     Arrival: {trip.arrivalTime}
                   </p>

@@ -13,7 +13,8 @@ import {
   Snowflake,
 } from "lucide-react";
 import { Trip, Seat, generateSeats } from "@/data/mockTrips";
-import SeatMap from "./SeatMap";
+import InteractiveSeatMap from "./InteractiveSeatMap";
+import { BusType } from "@/store/type/busType";
 import dayjs from "dayjs";
 
 type TripData = Trip & {
@@ -35,8 +36,48 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<TabId | null>(null);
+
+  // Convert string bus type to BusType enum
+  const getBusTypeEnum = (busType?: string): BusType => {
+    if (!busType) return BusType.STANDARD;
+
+    const normalized = busType.toUpperCase();
+
+    switch (normalized) {
+      case "VIP":
+        return BusType.VIP;
+      case "SLEEPER":
+        return BusType.SLEEPER;
+      case "LIMOUSINE":
+        return BusType.LIMOUSINE;
+      case "STANDARD":
+      default:
+        return BusType.STANDARD;
+    }
+  };
+
+  // Determine seat capacity based on bus type (matching admin)
+  const getSeatCapacity = (busType?: string): number => {
+    switch (busType?.toLowerCase()) {
+      case "vip":
+        return 18; // 2-1 layout, 6 rows
+      case "sleeper":
+      case "limousine":
+        return 16;
+      case "standard":
+      default:
+        return 32; // 2-2 layout, 8 rows
+    }
+  };
+
+  const totalCapacity = getSeatCapacity(trip.busType);
   const [seats, setSeats] = useState<Seat[]>(() =>
-    generateSeats(32, 32 - trip.availableSeats, trip.price),
+    generateSeats(
+      totalCapacity,
+      totalCapacity - trip.availableSeats,
+      trip.price,
+      trip.busType,
+    ),
   );
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
 
@@ -338,36 +379,22 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
 
       {/* Tab Content */}
       {activeTab === "seat" && (
-        <div className="p-6 bg-gray-50 border-t border-gray-200">
+        <div className="p-6 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
           <div className="max-w-4xl mx-auto">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
               Choose Your Seat
             </h3>
-            <SeatMap seats={seats} onSeatSelect={handleSeatSelect} />
-
-            {selectedSeats.length > 0 && (
-              <div className="mt-6 p-4 bg-white rounded-2xl border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">
-                      Selected {selectedSeats.length} seats:
-                    </p>
-                    <p className="text-lg font-bold text-gray-900 mt-1">
-                      {seats
-                        .filter((seat) => selectedSeats.includes(seat.id))
-                        .map((seat) => seat.number)
-                        .join(", ")}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-600">Total</p>
-                    <p className="text-2xl font-bold text-foreground">
-                      {totalPrice.toLocaleString("vi-VN")}đ
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+            <InteractiveSeatMap
+              busType={getBusTypeEnum(trip.busType)}
+              seats={seats.map((seat) => ({
+                seatId: seat.id,
+                seatNumber: seat.number,
+                status: seat.type,
+                price: seat.price,
+              }))}
+              onSeatSelect={handleSeatSelect}
+              selectedSeats={selectedSeats}
+            />
           </div>
         </div>
       )}

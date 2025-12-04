@@ -637,6 +637,9 @@ export class RoutesService {
           endTime: data.trip.endTime,
           status: data.trip.status,
           bus: {
+            id: data.trip.bus.id,
+            busType: data.trip.bus.busType,
+            seatCapacity: data.trip.bus.seatCapacity,
             plate: data.trip.bus.plate,
             amenities: data.trip.bus.amenities,
           },

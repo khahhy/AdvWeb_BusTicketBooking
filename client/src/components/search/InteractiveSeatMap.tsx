@@ -12,14 +12,14 @@ interface InteractiveSeatMapProps {
   busType: BusType;
   seats: SeatStatus[];
   onSeatSelect: (seatId: string) => void;
-  selectedSeats: string[];
+  selectedSeats?: string[];
 }
 
 export default function InteractiveSeatMap({
   busType,
   seats,
   onSeatSelect,
-  selectedSeats,
+  selectedSeats = [],
 }: InteractiveSeatMapProps) {
   const renderSeatLayout = () => {
     switch (busType) {

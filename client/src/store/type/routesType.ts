@@ -42,12 +42,28 @@ export interface TripRouteMapDetail {
   startTime?: string;
   endTime?: string;
   bus: {
+    id: string;
     plate: string;
+    busType: string;
+    seatCapacity: string;
     amenities: string[];
   };
   routeName: string;
   origin: string;
+  originCity: string;
   destination: string;
+  destinationCity: string;
+}
+
+export interface BackendSeat {
+  id: string;
+  busId: string;
+  seatNumber: string;
+  coordinates?: {
+    row: number;
+    col: number;
+    tier?: number;
+  };
 }
 
 export interface TopPerformingRoute {

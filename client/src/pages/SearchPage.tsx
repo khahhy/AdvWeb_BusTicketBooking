@@ -67,6 +67,8 @@ export default function SearchPage() {
   const tripRouteData =
     searchTripsData?.items?.map((item) => ({
       id: item.id,
+      tripId: item.tripId, // Add tripId from API
+      routeId: item.routeId, // Add routeId from API
       departureTime: item.trip.startTime,
       arrivalTime: item.trip.endTime,
       busType: item.trip.bus?.busType,
@@ -383,7 +385,9 @@ export default function SearchPage() {
                       ] || 32;
 
                     const tripData = {
-                      id: tripRoute.id,
+                      id: tripRoute.tripId || tripRoute.id, // Use actual tripId, fallback to id
+                      tripId: tripRoute.tripId, // tripId for navigation
+                      routeId: tripRoute.routeId, // routeId for navigation
                       route: tripRoute.route,
                       departureTime: startTime.format("HH:mm"),
                       arrivalTime: endTime.format("HH:mm"),

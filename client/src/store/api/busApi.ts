@@ -9,6 +9,7 @@ import {
   UpdateBusRequest,
 } from "../type/busType";
 import { ApiResponse } from "@/store/type/shared";
+import { BackendSeat } from "../type/routesType";
 
 export const SEAT_LAYOUTS: Record<BusType, SeatLayout[]> = {
   [BusType.STANDARD]: [
@@ -105,9 +106,10 @@ export const busApi = createApi({
       invalidatesTags: ["Bus"],
     }),
 
-    getBusSeats: builder.query<unknown[], string>({
+    getBusSeats: builder.query<BackendSeat[], string>({
       query: (busId) => `/buses/${busId}/seats`,
-      transformResponse: (response: ApiResponse<unknown[]>) => response.data,
+      transformResponse: (response: ApiResponse<BackendSeat[]>) =>
+        response.data,
     }),
   }),
 });

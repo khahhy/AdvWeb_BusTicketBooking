@@ -18,6 +18,7 @@ import { BusType } from "@/store/type/busType";
 import dayjs from "dayjs";
 
 type TripData = Trip & {
+  tripId?: string;
   routeId?: string;
   busType?: string;
   amenities?: Record<string, boolean>;
@@ -150,8 +151,9 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
 
   const handleViewDetail = () => {
     const date = dayjs().format("YYYY-MM-DD");
+    const tripIdParam = trip.tripId || trip.id; // Use tripId if available, otherwise fallback to id
     const routeParam = trip.routeId ? `&routeId=${trip.routeId}` : "";
-    navigate(`/trip-detail?tripId=${trip.id}${routeParam}&date=${date}`);
+    navigate(`/trip-detail?tripId=${tripIdParam}${routeParam}&date=${date}`);
   };
 
   const tabs = [

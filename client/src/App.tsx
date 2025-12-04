@@ -47,6 +47,7 @@ import AboutPage from "./pages/AboutPage";
 import SupportPage from "./pages/SupportPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import TripDetailPage from "./pages/TripDetailPage";
+import ETicketDemoPage from "./pages/ETicketDemoPage";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
 function AppContent() {
@@ -111,6 +112,7 @@ function AppContent() {
       />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/support" element={<SupportPage />} />
+      <Route path="/eticket-demo" element={<ETicketDemoPage />} />
       <Route
         path="/profile"
         element={

@@ -105,11 +105,30 @@ export const routesApi = createApi({
       TripRouteMapResponse, // type response for pagination
       QueryTripRouteMapParams
     >({
-      query: (params) => ({
-        url: "/routes/trip-maps",
-        method: "GET",
-        params: params,
-      }),
+      query: (params) => {
+        // Custom serialization for array params to match NestJS expectations
+        const searchParams = new URLSearchParams();
+
+        Object.entries(params).forEach(([key, value]) => {
+          if (value === undefined || value === null) return;
+
+          if (Array.isArray(value)) {
+            // For arrays, append each value with the same key (busType=vip&busType=sleeper)
+            value.forEach((item) => {
+              if (item !== undefined && item !== null) {
+                searchParams.append(key, String(item));
+              }
+            });
+          } else {
+            searchParams.append(key, String(value));
+          }
+        });
+
+        return {
+          url: `/routes/trip-maps?${searchParams.toString()}`,
+          method: "GET",
+        };
+      },
       providesTags: ["TripRouteMap"],
       transformResponse: (response: ApiResponse<TripRouteMapResponse>) =>
         response.data,

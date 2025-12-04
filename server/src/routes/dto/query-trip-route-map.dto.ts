@@ -141,7 +141,12 @@ export class QueryTripRouteMapDto {
   })
   @IsOptional()
   @Transform(({ value }) => {
-    return Array.isArray(value) ? (value as BusType[]) : ([value] as BusType[]);
+    if (!value) return [];
+    if (Array.isArray(value)) return value as BusType[];
+    if (typeof value === 'string') {
+      return value.split(',').map((v) => v.trim()) as BusType[];
+    }
+    return [value] as BusType[];
   })
   @IsArray()
   @IsEnum(BusType, { each: true })
@@ -154,9 +159,12 @@ export class QueryTripRouteMapDto {
   })
   @IsOptional()
   @Transform(({ value }) => {
-    return Array.isArray(value)
-      ? (value as SeatCapacity[])
-      : ([value] as SeatCapacity[]);
+    if (!value) return [];
+    if (Array.isArray(value)) return value as SeatCapacity[];
+    if (typeof value === 'string') {
+      return value.split(',').map((v) => v.trim()) as SeatCapacity[];
+    }
+    return [value] as SeatCapacity[];
   })
   @IsArray()
   @IsEnum(SeatCapacity, { each: true })
@@ -167,6 +175,14 @@ export class QueryTripRouteMapDto {
     example: 'wifi,airCondition,tv',
   })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (!value) return [];
+    if (Array.isArray(value)) return value as string[];
+    if (typeof value === 'string') {
+      return value.split(',').map((v) => v.trim());
+    }
+    return [String(value)];
+  })
   @IsArray()
   @IsString({ each: true })
   amenities?: string[];

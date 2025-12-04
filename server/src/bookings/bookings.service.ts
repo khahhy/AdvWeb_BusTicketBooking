@@ -5,14 +5,20 @@ import {
   BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { BookingsGateway } from './bookings.gateway';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { RedisCacheService } from 'src/cache/redis-cache.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { Prisma, BookingStatus } from '@prisma/client';
 import { QueryBookingDto } from './dto/query-booking.dto';
 
 @Injectable()
 export class BookingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cacheManager: RedisCacheService,
+    private readonly bookingsGateway: BookingsGateway,
+  ) {}
 
   private async calculateDetailsFromRoute(tripId: string, routeId: string) {
     const route = await this.prisma.routes.findUnique({
@@ -63,6 +69,78 @@ export class BookingsService {
     };
   }
 
+  // bookings.service.ts
+
+  async lockSeat(
+    userId: string,
+    tripId: string,
+    seatId: string,
+    routeId: string,
+  ) {
+    const { segmentIds } = await this.calculateDetailsFromRoute(
+      tripId,
+      routeId,
+    );
+    const TTL = 600; // 10m
+
+    const isBookedInDb = await this.prisma.seatSegmentLocks.findFirst({
+      where: { tripId, seatId, segmentId: { in: segmentIds } },
+    });
+    if (isBookedInDb)
+      throw new ConflictException(
+        'Seat is already booked for this route segment.',
+      );
+
+    for (const segId of segmentIds) {
+      const lockKey = `lock:trip:${tripId}:segment:${segId}:seat:${seatId}`;
+      const holder = await this.cacheManager.get(lockKey);
+
+      if (holder && holder !== userId) {
+        throw new ConflictException(
+          `Ghế đang được giữ bởi người khác ở đoạn ${segId}`,
+        );
+      }
+    }
+
+    const lockPromises = segmentIds.map((segId) => {
+      const lockKey = `lock:trip:${tripId}:segment:${segId}:seat:${seatId}`;
+      return this.cacheManager.set(lockKey, userId, TTL);
+    });
+
+    await Promise.all(lockPromises);
+
+    this.bookingsGateway.emitSeatLocked(tripId, seatId, segmentIds);
+
+    return { message: 'Seat locked successfully', expiresIn: TTL };
+  }
+
+  async unlockSeat(
+    userId: string,
+    tripId: string,
+    seatId: string,
+    routeId: string,
+  ) {
+    const { segmentIds } = await this.calculateDetailsFromRoute(
+      tripId,
+      routeId,
+    );
+
+    const unlockPromises = segmentIds.map(async (segId) => {
+      const lockKey = `lock:trip:${tripId}:segment:${segId}:seat:${seatId}`;
+      const holderId = await this.cacheManager.get<string>(lockKey);
+
+      if (holderId && holderId === userId) {
+        await this.cacheManager.del(lockKey);
+      }
+    });
+
+    await Promise.all(unlockPromises);
+
+    this.bookingsGateway.emitSeatUnlocked(tripId, seatId, segmentIds);
+
+    return { message: 'Seat unlocked successfully' };
+  }
+
   async create(createBookingDto: CreateBookingDto) {
     try {
       const { userId, tripId, seatId, routeId, customerInfo } =
@@ -70,6 +148,17 @@ export class BookingsService {
 
       const { segmentIds, pickupStopId, dropoffStopId } =
         await this.calculateDetailsFromRoute(tripId, routeId);
+
+      for (const segId of segmentIds) {
+        const lockKey = `lock:trip:${tripId}:segment:${segId}:seat:${seatId}`;
+        const lockHolder = await this.cacheManager.get<string>(lockKey);
+
+        if (lockHolder && lockHolder !== userId) {
+          throw new ConflictException(
+            `Seat at segment ${segId} is being held by another user.`,
+          );
+        }
+      }
 
       const result = await this.prisma.$transaction(
         async (tx: Prisma.TransactionClient) => {
@@ -126,6 +215,12 @@ export class BookingsService {
             })),
           });
 
+          const deleteLockPromises = segmentIds.map((segId) => {
+            const lockKey = `lock:trip:${tripId}:segment:${segId}:seat:${seatId}`;
+            return this.cacheManager.del(lockKey);
+          });
+          await Promise.all(deleteLockPromises);
+
           return {
             bookingId: booking.id,
             status: booking.status,
@@ -133,6 +228,8 @@ export class BookingsService {
           };
         },
       );
+
+      this.bookingsGateway.emitSeatSold(tripId, seatId, segmentIds);
 
       return { message: 'Booking initiated successfully', data: result };
     } catch (err) {

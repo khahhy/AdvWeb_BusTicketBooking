@@ -12,10 +12,17 @@ import {
   Zap,
   Snowflake,
 } from "lucide-react";
+import { io, Socket } from "socket.io-client";
 import { Trip, Seat, generateSeats } from "@/data/mockTrips";
 import InteractiveSeatMap from "./InteractiveSeatMap";
 import { BusType } from "@/store/type/busType";
 import dayjs from "dayjs";
+import {
+  useLockSeatMutation,
+  useUnlockSeatMutation,
+} from "@/store/api/bookingApi";
+import type { SeatSocketPayload } from "@/store/type/bookingType";
+import type { ApiError } from "@/store/type/apiError";
 
 type TripData = Trip & {
   tripId?: string;
@@ -33,10 +40,15 @@ interface TripCardProps {
 
 type TabId = "schedule" | "seat" | "shipment" | "policy";
 
+const SOCKET_URL = import.meta.env.VITE_API_BASE || "http://localhost:3000";
+
 export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<TabId | null>(null);
+
+  const [lockSeat] = useLockSeatMutation();
+  const [unlockSeat] = useUnlockSeatMutation();
 
   // Convert string bus type to BusType enum
   const getBusTypeEnum = (busType?: string): BusType => {
@@ -121,28 +133,94 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
     }
   }, [isOpen, activeTab]);
 
-  const handleSeatSelect = (seatId: string) => {
-    // Build new seats array and update selectedSeats deterministically
-    setSeats((prevSeats) => {
-      const newSeats = prevSeats.map((seat) => {
-        if (seat.id === seatId) {
-          const newType: Seat["type"] =
-            seat.type === "selected" ? "available" : "selected";
-          return { ...seat, type: newType };
-        }
-        return seat;
-      });
+  const socketRef = useRef<Socket | null>(null);
 
-      // Compute new selected list (deduplicated)
-      const newSelected: string[] = [];
-      for (const s of newSeats) {
-        if (s.type === "selected") newSelected.push(s.id);
+  useEffect(() => {
+    if (!isOpen || activeTab !== "seat") {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
       }
-      // Apply selected seats in one shot
-      setSelectedSeats(() => newSelected);
+      return;
+    }
 
-      return newSeats;
-    });
+    // connect socket
+    socketRef.current = io(SOCKET_URL);
+
+    // listen event
+    const currentTripId = trip.tripId || trip.id;
+    socketRef.current.on(
+      `trip.${currentTripId}`,
+      (payload: SeatSocketPayload) => {
+        const { event, data } = payload;
+        // data: { seatId, segmentIds }
+
+        setSeats((prevSeats) => {
+          return prevSeats.map((seat) => {
+            if (seat.id === data.seatId) {
+              if (event === "SEAT_LOCKED" || event === "SEAT_SOLD") {
+                return { ...seat, type: "booked" as Seat["type"] };
+              }
+              if (event === "SEAT_UNLOCKED") {
+                return { ...seat, type: "available" as Seat["type"] };
+              }
+            }
+            return seat;
+          });
+        });
+
+        if (event === "SEAT_LOCKED" || event === "SEAT_SOLD") {
+          setSelectedSeats((prev) => prev.filter((id) => id !== data.seatId));
+        }
+      },
+    );
+
+    return () => {
+      if (socketRef.current) socketRef.current.disconnect();
+    };
+  }, [isOpen, activeTab, trip.tripId, trip.id]);
+
+  const handleSeatSelect = async (seatId: string) => {
+    const targetSeat = seats.find((s) => s.id === seatId);
+
+    if (!targetSeat || targetSeat.type === "booked") return;
+
+    const isSelected = selectedSeats.includes(seatId);
+
+    const payload = {
+      tripId: trip.tripId || trip.id,
+      seatId: seatId,
+      routeId: trip.routeId || "b1234567-89ab-cdef-0123-456789abcdef",
+    };
+
+    try {
+      if (isSelected) {
+        await unlockSeat(payload).unwrap();
+
+        setSelectedSeats((prev) => prev.filter((id) => id !== seatId));
+        setSeats((prev) =>
+          prev.map((s) => (s.id === seatId ? { ...s, type: "available" } : s)),
+        );
+      } else {
+        await lockSeat(payload).unwrap();
+
+        setSelectedSeats((prev) => [...prev, seatId]);
+        setSeats((prev) =>
+          prev.map((s) => (s.id === seatId ? { ...s, type: "selected" } : s)),
+        );
+      }
+    } catch (error) {
+      const err = error as ApiError;
+      console.error("Error performing seat action:", error);
+      if (err?.status === 409) {
+        alert("This seat has already been selected by someone else!");
+        setSeats((prev) =>
+          prev.map((s) => (s.id === seatId ? { ...s, type: "booked" } : s)),
+        );
+      } else {
+        alert("An error occurred, please try again!");
+      }
+    }
   };
 
   const totalPrice = useMemo(() => {
@@ -151,7 +229,7 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
 
   const handleViewDetail = () => {
     const date = dayjs().format("YYYY-MM-DD");
-    const tripIdParam = trip.tripId || trip.id; // Use tripId if available, otherwise fallback to id
+    const tripIdParam = trip.tripId || trip.id;
     const routeParam = trip.routeId ? `&routeId=${trip.routeId}` : "";
     navigate(`/trip-detail?tripId=${tripIdParam}${routeParam}&date=${date}`);
   };
@@ -391,7 +469,12 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
               seats={seats.map((seat) => ({
                 seatId: seat.id,
                 seatNumber: seat.number,
-                status: seat.type,
+                status:
+                  seat.type === "booked"
+                    ? "booked"
+                    : seat.type === "selected"
+                      ? "selected"
+                      : "available",
                 price: seat.price,
               }))}
               onSeatSelect={handleSeatSelect}

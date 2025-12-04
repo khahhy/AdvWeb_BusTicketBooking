@@ -33,6 +33,61 @@ import type { RequestWithUser } from 'src/common/type/request-with-user.interfac
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
+  @Post('lock')
+  @ApiOperation({ summary: 'Lock a seat temporarily (User/Guest)' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['tripId', 'seatId', 'routeId'],
+      properties: {
+        tripId: { type: 'string', format: 'uuid', example: 'trip-uuid-123' },
+        seatId: { type: 'string', format: 'uuid', example: 'seat-uuid-456' },
+        routeId: { type: 'string', format: 'uuid', example: 'route-uuid-789' },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Seat locked successfully.' })
+  @ApiResponse({ status: 409, description: 'Seat is already locked/sold.' })
+  async lockSeat(
+    @Body() body: { tripId: string; seatId: string; routeId: string },
+    @Req() req: RequestWithUser,
+  ) {
+    const userId = req.user?.userId || 'guest-temp-id';
+    return this.bookingsService.lockSeat(
+      userId,
+      body.tripId,
+      body.seatId,
+      body.routeId,
+    );
+  }
+
+  @Post('unlock')
+  @ApiOperation({ summary: 'Unlock a seat (User/Guest)' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['tripId', 'seatId', 'routeId'],
+      properties: {
+        tripId: { type: 'string', format: 'uuid', example: 'trip-uuid-123' },
+        seatId: { type: 'string', format: 'uuid', example: 'seat-uuid-456' },
+        routeId: { type: 'string', format: 'uuid', example: 'route-uuid-789' },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Seat unlocked successfully.' })
+  async unlockSeat(
+    @Body() body: { tripId: string; seatId: string; routeId: string },
+    @Req() req: RequestWithUser,
+  ) {
+    const userId = req.user?.userId || 'guest-temp-id';
+    return this.bookingsService.unlockSeat(
+      userId,
+      body.tripId,
+      body.seatId,
+      body.routeId,
+    );
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.admin)
   @ApiBearerAuth('JWT-auth')

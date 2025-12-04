@@ -12,7 +12,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useGetRoutesQuery, useGetLocationsQuery } from "@/store/api/routesApi";
+import { useGetRoutesQuery } from "@/store/api/routesApi";
+import { useGetLocationsQuery } from "@/store/api/locationApi";
 import {
   RouteDetailsDrawer,
   CreateRouteDialog,

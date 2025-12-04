@@ -6,6 +6,9 @@ import backgroundImage from "@/assets/images/background.png";
 import logoImage from "@/assets/images/logo.png";
 import logoWhiteImage from "@/assets/images/logo-white.svg";
 
+import { useDispatch } from "react-redux";
+import { setCredentials } from "@/store/slice/authSlice";
+
 // Add CSS to hide browser's default password reveal button for all browsers
 const styleSheet = document.createElement("style");
 styleSheet.textContent = `
@@ -36,6 +39,7 @@ if (!document.head.querySelector("style[data-password-style]")) {
 }
 
 export default function LoginPage() {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -112,8 +116,12 @@ export default function LoginPage() {
 
         if (response.ok) {
           // Save token and user info to localStorage
-          localStorage.setItem("accessToken", data.accessToken);
-          localStorage.setItem("user", JSON.stringify(data.user));
+          dispatch(
+            setCredentials({
+              user: data.user,
+              token: data.accessToken,
+            }),
+          );
 
           console.log("Login successful:", data);
 

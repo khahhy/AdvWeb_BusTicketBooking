@@ -2,10 +2,10 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/common/Navbar";
 import backgroundImage from "@/assets/images/background.png";
-import { mockTrips, generateSeats, Seat } from "@/data/mockTrips";
+import { generateSeats, Seat } from "@/data/mockTrips";
 import dayjs from "dayjs";
 import Footer from "@/components/dashboard/Footer";
-import { useGetTripByIdQuery } from "@/store/api/routesApi";
+import { useGetTripRouteMapDetailQuery } from "@/store/api/routesApi";
 import {
   Clock,
   MapPin,
@@ -33,55 +33,67 @@ export default function TripDetailPage() {
 
   // Get trip data from URL params
   const tripId = searchParams.get("tripId") || "1";
+  const routeId = searchParams.get("routeId") || "";
   const travelDate = searchParams.get("date") || dayjs().format("YYYY-MM-DD");
 
   // Fetch trip from API
-  const { data: tripData, isLoading, error } = useGetTripByIdQuery(tripId);
+  const {
+    data: tripData,
+    isLoading,
+    error,
+  } = useGetTripRouteMapDetailQuery(
+    { tripId, routeId },
+    { skip: !tripId || !routeId },
+  );
 
   // Transform API data to component format
   const trip = useMemo(() => {
     if (!tripData) {
-      // Fallback to mock data
-      return mockTrips.find((t) => t.id === tripId) || mockTrips[0];
+      return {
+        id: "",
+        departureTime: "--:--",
+        arrivalTime: "--:--",
+        duration: "0h",
+        from: "",
+        to: "",
+        price: 0,
+        availableSeats: 0,
+        totalSeats: 32,
+        busType: "standard",
+        amenities: {},
+        note: undefined,
+      };
     }
 
-    const startTime = dayjs(
-      tripData.originStop?.departureTime || tripData.departureTime,
-    );
-    const endTime = dayjs(
-      tripData.destinationStop?.arrivalTime || tripData.arrivalTime,
-    );
+    const startTime = dayjs(tripData.startTime);
+    const endTime = dayjs(tripData.endTime);
     const durationHours = endTime.diff(startTime, "hour", true);
     const durationText =
       durationHours >= 1
         ? `${Math.floor(durationHours)}h ${Math.round((durationHours % 1) * 60)}m`
         : `${Math.round(durationHours * 60)}m`;
-
+    const amenitiesObj: Record<string, boolean> = {};
     const seatCapacityMap: { [key: string]: number } = {
       SEAT_16: 16,
       SEAT_28: 28,
       SEAT_32: 32,
     };
 
-    const totalSeats = seatCapacityMap[tripData.bus?.seatCapacity] || 32;
-
-    // Extract price from tripRoutes if available
-    const price = tripData.tripRoutes?.[0]?.price
-      ? Number(tripData.tripRoutes[0].price)
-      : 200000; // Default fallback
+    const busTypeKey = "standard"; // hard code
+    const totalSeats = seatCapacityMap[busTypeKey] || 32;
 
     return {
-      id: tripData.id,
+      id: tripData.tripId,
       departureTime: startTime.format("HH:mm"),
       arrivalTime: endTime.format("HH:mm"),
       duration: durationText,
-      from: tripData.originStop?.location?.city || "Unknown",
-      to: tripData.destinationStop?.location?.city || "Unknown",
-      price,
+      from: tripData.origin,
+      to: tripData.destination,
+      price: tripData.price,
       availableSeats: Math.floor(totalSeats * 0.6),
       totalSeats,
-      busType: tripData.bus?.busType?.toLowerCase() || "standard",
-      amenities: (tripData.bus?.amenities as { [key: string]: boolean }) || {},
+      busType: busTypeKey,
+      amenities: amenitiesObj,
       note: undefined,
     };
   }, [tripData, tripId]);

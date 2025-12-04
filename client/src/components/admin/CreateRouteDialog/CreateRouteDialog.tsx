@@ -19,10 +19,8 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import {
-  useGetLocationsQuery,
-  useCreateRouteMutation,
-} from "@/store/api/routesApi";
+import { useCreateRouteMutation } from "@/store/api/routesApi";
+import { useGetLocationsQuery } from "@/store/api/locationApi";
 import { toast } from "sonner";
 
 type Props = {

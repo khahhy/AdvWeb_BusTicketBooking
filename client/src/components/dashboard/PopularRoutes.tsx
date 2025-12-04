@@ -1,10 +1,9 @@
-import { useGetRoutesQuery } from "@/store/api/routesApi";
+import { useGetTopPerformingRoutesQuery } from "@/store/api/routesApi";
 import { BlurText } from "@/components/ui/blur-text";
 import { Highlight } from "@/components/ui/hero-highlight";
-import dayjs from "dayjs";
 
 export default function PopularRoutes() {
-  const { data: routes, isLoading, error } = useGetRoutesQuery();
+  const { data: routes, isLoading, error } = useGetTopPerformingRoutesQuery(4);
 
   if (isLoading) return <div>Loading popular routes...</div>;
   if (error) {
@@ -16,30 +15,15 @@ export default function PopularRoutes() {
     return <div>No routes available.</div>;
   }
 
-  const popularRoutes = routes.slice(0, 4).map((route) => {
-    const price = `$${Number(route.price).toFixed(2)}`;
-
-    let duration = "N/A";
-    const firstTrip = route.tripRoutes?.[0]?.trip;
-
-    if (firstTrip) {
-      const start = dayjs(firstTrip.startTime);
-      const end = dayjs(firstTrip.endTime);
-      const totalMinutes = end.diff(start, "minute");
-
-      if (totalMinutes > 0) {
-        const hours = Math.floor(totalMinutes / 60);
-        const minutes = totalMinutes % 60;
-        duration = `${hours}h${minutes > 0 ? ` ${minutes}m` : ""}`;
-      }
-    }
+  const popularRoutes = routes.map((route) => {
+    const price = `$${Number(route.minPrice || 0).toFixed(2)}`;
 
     return {
-      id: route.id,
-      originName: route.origin.name,
-      destinationName: route.destination.name,
+      id: route.routeId,
+      originName: route.origin,
+      destinationName: route.destination,
       price,
-      duration,
+      duration: route.duration || "N/A",
     };
   });
 

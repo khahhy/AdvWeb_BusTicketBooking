@@ -18,7 +18,10 @@ import {
   AddLocationDialog,
   LocationMap,
 } from "@/components/admin";
-import type { Location } from "@/store/type/locationsType";
+import type {
+  Location,
+  CreateLocationRequest,
+} from "@/store/type/locationsType";
 import type { RouteTime } from "@/store/type/routesType";
 import {
   useGetLocationsQuery,
@@ -53,15 +56,14 @@ const LocationManagement = () => {
   const [updateLocation] = useUpdateLocationMutation();
   const [deleteLocation] = useDeleteLocationMutation();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleCreateLocation = async (data: any) => {
+  const handleCreateLocation = async (data: CreateLocationRequest) => {
     try {
       const payload = {
         name: data.name,
         city: data.city,
         address: data.address,
-        latitude: data.lat,
-        longitude: data.lng,
+        latitude: data.latitude,
+        longitude: data.longitude,
       };
 
       await createLocation(payload).unwrap();
@@ -98,7 +100,6 @@ const LocationManagement = () => {
 
   const handleSelectLocation = (location: Location) => {
     setSelectedLocation(location);
-    setIsSheetOpen(true);
   };
 
   return (
@@ -193,8 +194,9 @@ const LocationManagement = () => {
       <div className="flex-1 border rounded-xl overflow-hidden shadow-sm bg-gray-100 relative">
         <LocationMap
           locations={locations}
-          selectedId={selectedLocation?.id}
+          selectedLocation={selectedLocation}
           onSelect={handleSelectLocation}
+          onOpenChange={setIsSheetOpen}
         />
       </div>
 

@@ -26,10 +26,8 @@ import {
   useGetBusesQuery,
   useDeleteBusMutation,
   useCreateBusMutation,
-  BusType,
-  SeatCapacity,
-  BusAmenities,
 } from "@/store/api/busApi";
+import { BusType, SeatCapacity, BusAmenities } from "@/store/type/busType";
 import BusLayoutVisualization from "@/components/admin/BusLayoutVisualization";
 import {
   Dialog,

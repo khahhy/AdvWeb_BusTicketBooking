@@ -24,7 +24,9 @@ import {
   useDeleteRouteMutation,
   useGetTripRouteMapQuery,
 } from "@/store/api/routesApi";
+import { TripRouteMap } from "@/store/type/tripRoutesType";
 import { toast } from "sonner";
+import type { ApiError } from "@/store/type/apiError";
 
 type Props = {
   routeId: string | null;
@@ -50,9 +52,9 @@ const RouteDetailsDrawer = ({ routeId, open, onOpenChange }: Props) => {
       await deleteRoute(routeId).unwrap();
       toast.success("Route deleted successfully");
       onOpenChange(false);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Cannot delete route");
+    } catch (error) {
+      const err = error as ApiError;
+      toast.error(err?.data?.message || "Cannot delete route");
     }
   };
 
@@ -120,17 +122,18 @@ const RouteDetailsDrawer = ({ routeId, open, onOpenChange }: Props) => {
                   </TableHeader>
                   <TableBody>
                     {tripMapsData?.items && tripMapsData.items.length > 0 ? (
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      tripMapsData.items.map((item: any) => (
+                      tripMapsData.items.map((item: TripRouteMap) => (
                         <TableRow key={item.tripId}>
                           <TableCell className="font-medium">
-                            {item.trip.bus.plate}
+                            {item.trip?.bus?.plate || "Unknown Bus"}
                           </TableCell>
                           <TableCell>
-                            {format(
-                              new Date(item.trip.startTime),
-                              "dd/MM HH:mm",
-                            )}
+                            {item.trip?.startTime
+                              ? format(
+                                  new Date(item.trip.startTime),
+                                  "dd/MM HH:mm",
+                                )
+                              : "N/A"}
                           </TableCell>
                           <TableCell className="text-right">
                             {new Intl.NumberFormat("vi-VN", {

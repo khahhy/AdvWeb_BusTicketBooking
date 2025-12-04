@@ -1,7 +1,8 @@
 import { Trip } from "./tripsType";
 import { BusType } from "./busType";
+import { PaginationParams } from "./shared";
 
-export interface TripRoute {
+export interface TripRouteMap {
   id: string;
   tripId: string;
   routeId: string;
@@ -20,18 +21,26 @@ export interface TripRoute {
   };
 }
 
-export interface QueryTripRouteParams {
-  page?: number;
-  limit?: number;
+export interface TripRouteMapResponse {
+  items: TripRouteMap[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    lastPage: number;
+  };
+}
+
+export interface QueryTripRouteMapParams extends PaginationParams {
   routeId?: string;
   tripId?: string;
   locationId?: string;
   originLocationId?: string;
   destinationLocationId?: string;
+  routeName?: string;
   minPrice?: number;
   maxPrice?: number;
   sortByPrice?: "asc" | "desc";
-  // Advanced filtering
   departureDate?: string;
   departureTimeStart?: string;
   departureTimeEnd?: string;
@@ -40,15 +49,8 @@ export interface QueryTripRouteParams {
   seatCapacity?: string[];
 }
 
-export interface TripRouteResponse {
-  message: string;
-  data: {
-    items: TripRoute[];
-    meta: {
-      total: number;
-      page: number;
-      limit: number;
-      lastPage: number;
-    };
-  };
+export interface CreateTripRouteMapDto {
+  tripId: string;
+  routeId: string;
+  manualPrice?: number;
 }

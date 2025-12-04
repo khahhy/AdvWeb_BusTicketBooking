@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, CheckCircle2, Calendar } from "lucide-react";
@@ -25,12 +24,14 @@ import {
   useCreateTripRouteMapMutation,
   useGetTripsForRouteQuery,
 } from "@/store/api/routesApi";
+import { Route, RouteTripAvailable } from "@/store/type/routesType";
 import { toast } from "sonner";
+import type { ApiError } from "@/store/type/apiError";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  route: any;
+  route: Route;
 };
 
 const TripAssignmentDialog = ({ open, onOpenChange, route }: Props) => {
@@ -52,11 +53,12 @@ const TripAssignmentDialog = ({ open, onOpenChange, route }: Props) => {
 
   const [assignTrip, { isLoading: isAssigning }] =
     useCreateTripRouteMapMutation();
+
   const [assignedTripIds, setAssignedTripIds] = useState<Set<string>>(
     new Set(),
   );
 
-  const handleAssign = async (tripItem: any) => {
+  const handleAssign = async (tripItem: RouteTripAvailable) => {
     try {
       await assignTrip({
         tripId: tripItem.tripId,
@@ -66,8 +68,9 @@ const TripAssignmentDialog = ({ open, onOpenChange, route }: Props) => {
 
       setAssignedTripIds((prev) => new Set(prev).add(tripItem.tripId));
       toast.success("Trip assigned to route successfully!");
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to assign trip");
+    } catch (error) {
+      const err = error as ApiError;
+      toast.error(err?.data?.message || "Failed to assign trip");
     }
   };
 

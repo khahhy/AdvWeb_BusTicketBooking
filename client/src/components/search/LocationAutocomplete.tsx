@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { MapPin, X } from "lucide-react";
-import { useGetLocationsQuery } from "@/store/api/routesApi";
+import { useGetLocationsQuery } from "@/store/api/locationApi";
 
 interface LocationAutocompleteProps {
   value: string;
@@ -181,16 +181,6 @@ export default function LocationAutocomplete({
                     <div className="text-base font-semibold text-gray-900 dark:text-white truncate">
                       {suggestion.city}
                     </div>
-                    {suggestion.name !== suggestion.city && (
-                      <div className="text-sm text-gray-600 dark:text-gray-400 truncate mt-0.5">
-                        {suggestion.name}
-                      </div>
-                    )}
-                    {suggestion.address && (
-                      <div className="text-sm text-gray-500 dark:text-gray-500 truncate mt-0.5">
-                        {suggestion.address}
-                      </div>
-                    )}
                   </div>
                 </button>
               ))

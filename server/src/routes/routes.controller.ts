@@ -38,9 +38,6 @@ import type { RequestWithUser } from 'src/common/type/request-with-user.interfac
 export class RoutesController {
   constructor(private readonly routesService: RoutesService) {}
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.admin)
-  @ApiBearerAuth('JWT-auth')
   @Get('top-performing')
   @ApiOperation({
     summary: 'Dashboard: Get top performing routes by booking count',

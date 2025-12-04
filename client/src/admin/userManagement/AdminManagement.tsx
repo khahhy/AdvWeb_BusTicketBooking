@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Eye } from "lucide-react";
+import { useState } from "react";
+import { Eye, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -10,88 +10,50 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { AdminDetailDrawer, AddAdminDialog } from "@/components/admin";
-import { type Admin } from "@/store/type/usersType";
-import { type ActivityLog } from "@/store/type/usersType";
-
-const mockAdmins: Admin[] = [
-  {
-    id: "ADM-001",
-    name: "Admin Chính",
-    email: "main@example.com",
-    phone: "0901111111",
-    createdDate: "2024-01-01T10:00:00Z",
-  },
-  {
-    id: "ADM-002",
-    name: "Admin Hỗ Trợ",
-    email: "admin@example.com",
-    phone: "0902222222",
-    createdDate: "2024-05-15T14:30:00Z",
-  },
-  {
-    id: "ADM-003",
-    name: "Admin Mới",
-    email: "support@example.com",
-    createdDate: "2024-08-20T08:00:00Z",
-  },
-];
-
-const mockLogs: ActivityLog[] = [
-  {
-    id: "LOG-1",
-    action: "Logged in",
-    timestamp: "2025-11-17T09:00:00Z",
-  },
-  {
-    id: "LOG-2",
-    action: "Updated passenger CUST-002 status to Banned",
-    timestamp: "2025-11-16T15:30:00Z",
-  },
-];
-
-const CURRENT_USER = {
-  id: "ADM-002",
-};
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/stores";
+import { useGetUsersQuery } from "@/store/api/usersApi";
+import { User, UserRole } from "@/store/type/usersType";
 
 const AdminManagement = () => {
-  const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
+  const [page, setPage] = useState(1);
+  const [selectedAdmin, setSelectedAdmin] = useState<User | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const [editableName, setEditableName] = useState("");
-  const [editableEmail, setEditableEmail] = useState("");
-  const [editablePhone, setEditablePhone] = useState("");
+  const currentUser = useSelector((state: RootState) => state.auth.user);
 
-  const canEdit = CURRENT_USER.id === selectedAdmin?.id;
+  const {
+    data: usersData,
+    isLoading,
+    isFetching,
+  } = useGetUsersQuery({
+    page,
+    limit: 10,
+    role: UserRole.admin,
+  });
 
-  useEffect(() => {
-    if (selectedAdmin) {
-      setEditableName(selectedAdmin.name);
-      setEditableEmail(selectedAdmin.email);
-      setEditablePhone(selectedAdmin.phone || "");
-    }
-  }, [selectedAdmin]);
+  const admins = usersData?.data || [];
+  const meta = usersData?.meta;
 
-  const handleViewClick = (admin: Admin) => {
+  const handleViewClick = (admin: User) => {
     setSelectedAdmin(admin);
     setIsSheetOpen(true);
   };
 
-  const handleSaveChanges = () => {
-    if (!canEdit || !selectedAdmin) return;
-    console.log("Saving admin...", selectedAdmin.id, {
-      name: editableName,
-      email: editableEmail,
-      phone: editablePhone,
-    });
-
-    setIsSheetOpen(false);
-  };
-
-  const handleCreateAdmin = () => {
-    console.log("Creating new admin...");
-    setIsAddModalOpen(false);
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= (meta?.totalPages || 1)) {
+      setPage(newPage);
+    }
   };
 
   return (
@@ -105,7 +67,6 @@ const AdminManagement = () => {
           <AddAdminDialog
             open={isAddModalOpen}
             onOpenChange={setIsAddModalOpen}
-            onCreate={handleCreateAdmin}
           />
         </CardHeader>
         <CardContent>
@@ -121,27 +82,74 @@ const AdminManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockAdmins.map((admin) => (
-                  <TableRow key={admin.id}>
-                    <TableCell className="font-medium">{admin.name}</TableCell>
-                    <TableCell>{admin.email}</TableCell>
-                    <TableCell>{admin.phone || "N/A"}</TableCell>
-                    <TableCell>
-                      {new Date(admin.createdDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewClick(admin)}
-                      >
-                        <Eye className="mr-2 h-4 w-4" /> View
-                      </Button>
+                {isLoading || isFetching ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      <Loader2 className="mr-2 h-6 w-6 animate-spin inline" />{" "}
+                      Loading...
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : admins.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      No administrators found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  admins.map((admin) => (
+                    <TableRow key={admin.id}>
+                      <TableCell className="font-medium">
+                        {admin.fullName || "—"}
+                      </TableCell>
+                      <TableCell>{admin.email}</TableCell>
+                      <TableCell>{admin.phoneNumber || "N/A"}</TableCell>
+                      <TableCell>
+                        {new Date(admin.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewClick(admin)}
+                        >
+                          <Eye className="mr-2 h-4 w-4" /> View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
+          </div>
+
+          <div className="flex justify-end pt-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => handlePageChange(page - 1)}
+                    className={
+                      page <= 1
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink isActive>{page}</PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => handlePageChange(page + 1)}
+                    className={
+                      page >= (meta?.totalPages || 1)
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         </CardContent>
       </Card>
@@ -150,9 +158,7 @@ const AdminManagement = () => {
         open={isSheetOpen}
         onOpenChange={setIsSheetOpen}
         admin={selectedAdmin}
-        logs={mockLogs}
-        currentUserId={CURRENT_USER.id}
-        onSave={handleSaveChanges}
+        currentUserId={currentUser?.id || ""}
       />
     </div>
   );

@@ -1132,13 +1132,14 @@ export class RoutesService {
           data: cachedData,
         };
       }
+
       const topRoutesRaw = await this.prisma.bookings.groupBy({
         by: ['routeId'],
         where: {
           status: BookingStatus.confirmed,
         },
         _count: {
-          id: true, // Đếm số lượng booking ID
+          id: true,
         },
         _sum: {
           price: true,
@@ -1151,38 +1152,57 @@ export class RoutesService {
         take: limit,
       });
 
-      if (topRoutesRaw.length === 0) {
-        return { message: 'No booking data available', data: [] };
+      let formattedResult: any[] = [];
+
+      if (topRoutesRaw.length > 0) {
+        const routeIds = topRoutesRaw.map((item) => item.routeId);
+
+        const routesDetails = await this.prisma.routes.findMany({
+          where: {
+            id: { in: routeIds },
+          },
+          select: {
+            id: true,
+            name: true,
+            origin: { select: { city: true, name: true } },
+            destination: { select: { city: true, name: true } },
+          },
+        });
+
+        formattedResult = topRoutesRaw.map((stat) => {
+          const routeInfo = routesDetails.find((r) => r.id === stat.routeId);
+          return {
+            routeId: stat.routeId,
+            routeName: routeInfo?.name || 'Unknown Route',
+            origin: routeInfo?.origin.city,
+            destination: routeInfo?.destination.city,
+            totalBookings: stat._count.id,
+            totalRevenue: stat._sum.price || 0,
+          };
+        });
+      } else {
+        const defaultRoutes = await this.prisma.routes.findMany({
+          take: limit,
+          where: { isActive: true },
+          orderBy: { createdAt: 'desc' },
+          include: {
+            origin: { select: { city: true, name: true } },
+            destination: { select: { city: true, name: true } },
+          },
+        });
+
+        formattedResult = defaultRoutes.map((route) => ({
+          routeId: route.id,
+          routeName: route.name,
+          origin: route.origin.city,
+          destination: route.destination.city,
+          totalBookings: 0,
+          totalRevenue: 0,
+        }));
       }
 
-      const routeIds = topRoutesRaw.map((item) => item.routeId);
-
-      const routesDetails = await this.prisma.routes.findMany({
-        where: {
-          id: { in: routeIds },
-        },
-        select: {
-          id: true,
-          name: true,
-          origin: { select: { city: true, name: true } },
-          destination: { select: { city: true, name: true } },
-        },
-      });
-
-      const formattedResult = topRoutesRaw.map((stat) => {
-        const routeInfo = routesDetails.find((r) => r.id === stat.routeId);
-
-        return {
-          routeId: stat.routeId,
-          routeName: routeInfo?.name || 'Unknown Route',
-          origin: routeInfo?.origin.city,
-          destination: routeInfo?.destination.city,
-          totalBookings: stat._count.id,
-          totalRevenue: stat._sum.price || 0,
-        };
-      });
-
       await this.cacheManager.set(cacheKey, formattedResult, 3600);
+
       return {
         message: 'Fetched top performing routes successfully',
         data: formattedResult,

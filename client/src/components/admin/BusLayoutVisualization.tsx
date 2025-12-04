@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, User, Armchair, Bed } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BusType } from "@/store/api/busApi";
+import { BusType } from "@/store/type/busType";
 
 interface BusLayoutVisualizationProps {
   className?: string;

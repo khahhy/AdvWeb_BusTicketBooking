@@ -1,90 +1,15 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "./baseQuery";
-import { ApiResponse } from "@/store/type/apiResponse";
-import { Location } from "@/store/type/locationsType";
-import { Bus } from "@/store/type/busType";
-
-export enum TripStatus {
-  Scheduled = "scheduled",
-  Ongoing = "ongoing",
-  Completed = "completed",
-  Cancelled = "cancelled",
-  Delayed = "delayed",
-}
-
-export interface TripStop {
-  id: string;
-  locationId: string;
-  sequence: number;
-  arrivalTime: string | null;
-  departureTime: string | null;
-  location?: Location;
-}
-
-export interface TripSegment {
-  id: string;
-  fromStopId: string;
-  toStopId: string;
-  segmentIndex: number;
-  durationMinutes: number | null;
-}
-
-export interface Trip {
-  id: string;
-  busId: string;
-  tripName?: string;
-  startTime: string;
-  endTime: string;
-  status: TripStatus;
-  createdAt: string;
-  updatedAt: string;
-  bus?: Bus;
-  tripStops?: TripStop[];
-  segments?: TripSegment[];
-
-  routeName?: string;
-  originStop?: TripStop;
-  destinationStop?: TripStop;
-}
-
-export interface CreateTripRequest {
-  busId: string;
-  stops: {
-    locationId: string;
-    arrivalTime?: string;
-    departureTime?: string;
-  }[];
-}
-
-export interface TripQueryParams {
-  startTime?: string;
-  endTime?: string;
-  origin?: string;
-  destination?: string;
-  busId?: string;
-  status?: TripStatus;
-  includeStops?: boolean;
-  includeSegments?: boolean;
-}
-
-export interface SearchTripParams {
-  originCity?: string;
-  destinationCity?: string;
-  departureDate?: string;
-  includeStops?: boolean;
-  includeRoutes?: boolean;
-}
-
-export interface UpdateTripRequest extends Partial<CreateTripRequest> {
-  id: string;
-}
-
-export interface SeatStatus {
-  seatId: string;
-  seatNumber: string;
-  coordinates?: Record<string, unknown> | null;
-  status: "AVAILABLE" | "BOOKED" | "LOCKED";
-}
+import { ApiResponse } from "../type/shared";
+import {
+  Trip,
+  TripQueryParams,
+  SearchTripParams,
+  CreateTripRequest,
+  UpdateTripRequest,
+  TripStatus,
+  SeatStatus,
+} from "../type/tripsType";
 
 export const tripsApi = createApi({
   reducerPath: "tripsApi",
@@ -189,12 +114,12 @@ export const tripsApi = createApi({
 });
 
 export const {
-  useGetTripsQuery,
-  useSearchTripsQuery,
-  useGetTripByIdQuery,
+  useGetTripsQuery, // get all + param
+  useSearchTripsQuery, // get all again + param name...
+  useGetTripByIdQuery, // get one
   useCreateTripMutation,
   useUpdateTripMutation,
   useUpdateTripStatusMutation,
   useDeleteTripMutation,
-  useGetTripSeatsQuery,
+  useGetTripSeatsQuery, // realtime seats status (trip + route)
 } = tripsApi;

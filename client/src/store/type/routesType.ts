@@ -1,5 +1,5 @@
-import { TripRoute } from "./tripRoutesType";
 import { Location } from "./locationsType";
+import { TripRouteMap } from "./tripRoutesType";
 
 export interface Route {
   id: string;
@@ -13,9 +13,99 @@ export interface Route {
   updatedAt: string;
   origin: Location;
   destination: Location;
-  tripRoutes: TripRoute[];
+  tripRouteMaps: TripRouteMap[];
 }
 
 export interface RouteTime extends Route {
   departureTime: Date;
+}
+export interface CreateRouteDto {
+  originLocationId: string;
+  destinationLocationId: string;
+  description?: string;
+}
+
+export interface UpdateRouteDto extends Partial<CreateRouteDto> {
+  isActive?: boolean;
+}
+
+export interface GetRouteTripsDto {
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface TripRouteMapDetail {
+  tripId: string;
+  routeId: string;
+  price: number;
+  tripName: string;
+  startTime?: string;
+  endTime?: string;
+  bus: {
+    plate: string;
+    amenities: string[];
+  };
+  routeName: string;
+  origin: string;
+  destination: string;
+}
+
+export interface TopPerformingRoute {
+  routeId: string;
+  routeName: string;
+  origin: string;
+  destination: string;
+  totalBookings: number;
+  totalRevenue: number;
+  minPrice?: number;
+  duration?: string;
+}
+
+export interface SearchTripRouteResult {
+  tripId: string;
+  startTime: string;
+  endTime: string;
+  price: number;
+  busName: string;
+  amenities: string[];
+  pickupLocation: string;
+  dropoffLocation: string;
+  availableSeats?: number;
+}
+
+export interface RouteTripAvailable {
+  tripId: string;
+  startTime: string;
+  endTime: string;
+  busName: string;
+  amenities: string[];
+  pickupLocation: string;
+  dropoffLocation: string;
+  pricing: {
+    basePrice: number;
+    surcharge: string;
+    surchargeReason: string;
+    finalPrice: number;
+    currency: string;
+  };
+}
+
+export interface TripResponseRaw {
+  id: string;
+  tripName: string;
+  startTime: string;
+  endTime: string;
+  tripStops?: {
+    id: string;
+    sequence: number;
+    locationId: string;
+    location: Location;
+  }[];
+  bus?: {
+    id: string;
+    plate: string;
+    busType: string;
+    seatCapacity: string;
+    amenities: Record<string, unknown>;
+  };
 }

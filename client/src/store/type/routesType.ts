@@ -45,7 +45,6 @@ export interface TripRouteMapDetail {
     id: string;
     plate: string;
     busType: string;
-    seatCapacity: string;
     amenities: string[];
   };
   routeName: string;
@@ -121,7 +120,6 @@ export interface TripResponseRaw {
     id: string;
     plate: string;
     busType: string;
-    seatCapacity: string;
     amenities: Record<string, unknown>;
   };
 }

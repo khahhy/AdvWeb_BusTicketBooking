@@ -2,7 +2,6 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "./baseQuery";
 import {
   BusType,
-  SeatCapacity,
   Bus,
   SeatLayout,
   CreateBusRequest,
@@ -15,45 +14,33 @@ export const SEAT_LAYOUTS: Record<BusType, SeatLayout[]> = {
   [BusType.STANDARD]: [
     {
       busType: BusType.STANDARD,
-      seatCapacity: SeatCapacity.SEAT_32,
+      totalSeats: 32,
       layout: { columns: [2, 2], rows: 8, aisles: [2] },
       description: "Standard 32 seats (2-2 layout)",
-    },
-    {
-      busType: BusType.STANDARD,
-      seatCapacity: SeatCapacity.SEAT_28,
-      layout: { columns: [2, 2], rows: 7, aisles: [2] },
-      description: "Standard 28 seats (2-2 layout)",
     },
   ],
   [BusType.VIP]: [
     {
       busType: BusType.VIP,
-      seatCapacity: SeatCapacity.SEAT_28,
-      layout: { columns: [2, 1], rows: 7, aisles: [2] },
-      description: "VIP 21 seats (2-1 layout)",
-    },
-    {
-      busType: BusType.VIP,
-      seatCapacity: SeatCapacity.SEAT_16,
+      totalSeats: 18,
       layout: { columns: [2, 1], rows: 6, aisles: [2] },
-      description: "VIP 16 seats (2-1 layout)",
+      description: "VIP 18 seats (2-1 layout)",
     },
   ],
   [BusType.SLEEPER]: [
     {
       busType: BusType.SLEEPER,
-      seatCapacity: SeatCapacity.SEAT_16,
-      layout: { columns: [1, 1], rows: 4, aisles: [1] },
-      description: "Sleeper 16 beds (2 tiers, 8 beds per tier)",
+      totalSeats: 16,
+      layout: { columns: [1, 1], rows: 8, aisles: [1] },
+      description: "Sleeper 16 beds (1-1 layout)",
     },
   ],
   [BusType.LIMOUSINE]: [
     {
       busType: BusType.LIMOUSINE,
-      seatCapacity: SeatCapacity.SEAT_16,
-      layout: { columns: [1, 2, 1], rows: 4, aisles: [1, 3] },
-      description: "Limousine 16 seats (1-2-1 layout)",
+      totalSeats: 16,
+      layout: { columns: [3, 1], rows: 4, aisles: [3] },
+      description: "Limousine 16 seats (3-1 layout)",
     },
   ],
 };

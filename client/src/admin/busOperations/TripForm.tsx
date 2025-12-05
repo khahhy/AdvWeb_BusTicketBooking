@@ -272,7 +272,7 @@ const TripForm = () => {
                   <SelectContent>
                     {buses.map((bus) => (
                       <SelectItem key={bus.id} value={bus.id}>
-                        {bus.plate} ({bus.seatCapacity} seats)
+                        {bus.plate} ({bus.busType})
                       </SelectItem>
                     ))}
                   </SelectContent>

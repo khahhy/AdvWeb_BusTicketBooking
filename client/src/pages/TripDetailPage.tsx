@@ -97,14 +97,7 @@ export default function TripDetailPage() {
       });
     }
 
-    // Map seat capacity enum to numbers
-    const seatCapacityMap: { [key: string]: number } = {
-      SEAT_16: 16,
-      SEAT_28: 28,
-      SEAT_32: 32,
-    };
-
-    // Map bus type enum to lowercase strings
+    // Map bus type enum to lowercase strings and get total seats
     const busTypeMap: { [key: string]: string } = {
       STANDARD: "standard",
       VIP: "vip",
@@ -114,8 +107,23 @@ export default function TripDetailPage() {
 
     const busTypeKey =
       busTypeMap[actualData.bus?.busType || "STANDARD"] || "standard";
-    const totalSeats =
-      seatCapacityMap[actualData.bus?.seatCapacity || "SEAT_32"] || 32;
+
+    // Get total seats from bus type
+    const getTotalSeatsFromBusType = (busType: string): number => {
+      switch (busType.toLowerCase()) {
+        case "vip":
+          return 18; // 2-1 layout, 6 rows
+        case "sleeper":
+          return 16; // 1-1 layout, 8 rows
+        case "limousine":
+          return 16; // 3-1 layout, 4 rows
+        case "standard":
+        default:
+          return 32; // 2-2 layout, 8 rows
+      }
+    };
+
+    const totalSeats = getTotalSeatsFromBusType(busTypeKey);
 
     // Calculate available seats from backend seat data
     const availableSeats = backendSeats

@@ -48,7 +48,6 @@ model Buses {
   id            String          @id @default(uuid())
   plate         String          @unique
   busType       BusType         @default(standard)
-  seatCapacity  SeatCapacity    @default(SEAT_16)
   amenities     Json?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
@@ -333,10 +332,4 @@ enum BusType {
   vip
   sleeper
   limousine
-}
-
-enum SeatCapacity {
-  SEAT_16
-  SEAT_28
-  SEAT_32
 }

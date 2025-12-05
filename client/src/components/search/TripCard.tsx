@@ -75,8 +75,9 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
       case "vip":
         return 18; // 2-1 layout, 6 rows
       case "sleeper":
+        return 16; // 1-1 layout, 8 rows (sleeper beds)
       case "limousine":
-        return 16;
+        return 16; // 3-1 layout, 4 rows
       case "standard":
       default:
         return 32; // 2-2 layout, 8 rows

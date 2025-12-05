@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { BusType, SeatCapacity } from '@prisma/client';
+import { BusType } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -54,7 +54,6 @@ async function main() {
     data: {
       plate: '51A-12345',
       busType: BusType.standard,
-      seatCapacity: SeatCapacity.SEAT_32,
       amenities: {
         wifi: true,
         airCondition: true,
@@ -72,7 +71,6 @@ async function main() {
     data: {
       plate: '51A-67890',
       busType: BusType.vip,
-      seatCapacity: SeatCapacity.SEAT_16,
       amenities: {
         wifi: true,
         airCondition: true,
@@ -90,7 +88,6 @@ async function main() {
     data: {
       plate: '51A-11111',
       busType: BusType.sleeper,
-      seatCapacity: SeatCapacity.SEAT_32,
       amenities: {
         wifi: true,
         airCondition: true,
@@ -108,7 +105,6 @@ async function main() {
     data: {
       plate: '51A-22222',
       busType: BusType.limousine,
-      seatCapacity: SeatCapacity.SEAT_16,
       amenities: {
         wifi: true,
         airCondition: true,
@@ -127,7 +123,7 @@ async function main() {
   // Create routes
   const hcmcToMuine = await prisma.routes.create({
     data: {
-      name: 'Ho Chi Minh City to Mui Ne',
+      name: 'Ho Chi Minh City - Mui Ne',
       description: 'Route from Ho Chi Minh City to Mui Ne',
       originLocationId: hcmcStation.id,
       destinationLocationId: muineStation.id,
@@ -161,39 +157,115 @@ async function main() {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
 
+  const trip1Start = new Date(tomorrow);
+  trip1Start.setHours(6, 0, 0, 0);
+  const trip1End = new Date(tomorrow);
+  trip1End.setHours(10, 30, 0, 0);
+
   const trip1 = await prisma.trips.create({
     data: {
       busId: standardBus.id,
       tripName: 'HCMC-Mui Ne Morning',
-      startTime: new Date(tomorrow.setHours(6, 0, 0, 0)),
-      endTime: new Date(tomorrow.setHours(10, 30, 0, 0)),
+      startTime: trip1Start,
+      endTime: trip1End,
+      tripStops: {
+        create: [
+          {
+            locationId: hcmcStation.id,
+            sequence: 1,
+            departureTime: trip1Start,
+          },
+          {
+            locationId: muineStation.id,
+            sequence: 2,
+            arrivalTime: trip1End,
+          },
+        ],
+      },
     },
   });
+
+  const trip2Start = new Date(tomorrow);
+  trip2Start.setHours(8, 0, 0, 0);
+  const trip2End = new Date(tomorrow);
+  trip2End.setHours(12, 30, 0, 0);
 
   const trip2 = await prisma.trips.create({
     data: {
       busId: vipBus.id,
       tripName: 'HCMC-Mui Ne VIP',
-      startTime: new Date(tomorrow.setHours(8, 0, 0, 0)),
-      endTime: new Date(tomorrow.setHours(12, 30, 0, 0)),
+      startTime: trip2Start,
+      endTime: trip2End,
+      tripStops: {
+        create: [
+          {
+            locationId: hcmcStation.id,
+            sequence: 1,
+            departureTime: trip2Start,
+          },
+          {
+            locationId: muineStation.id,
+            sequence: 2,
+            arrivalTime: trip2End,
+          },
+        ],
+      },
     },
   });
+
+  const trip3Start = new Date(tomorrow);
+  trip3Start.setHours(14, 0, 0, 0);
+  const trip3End = new Date(tomorrow);
+  trip3End.setHours(18, 30, 0, 0);
 
   const trip3 = await prisma.trips.create({
     data: {
       busId: sleeperBus.id,
       tripName: 'HCMC-Mui Ne Sleeper',
-      startTime: new Date(tomorrow.setHours(14, 0, 0, 0)),
-      endTime: new Date(tomorrow.setHours(18, 30, 0, 0)),
+      startTime: trip3Start,
+      endTime: trip3End,
+      tripStops: {
+        create: [
+          {
+            locationId: hcmcStation.id,
+            sequence: 1,
+            departureTime: trip3Start,
+          },
+          {
+            locationId: muineStation.id,
+            sequence: 2,
+            arrivalTime: trip3End,
+          },
+        ],
+      },
     },
   });
+
+  const trip4Start = new Date(tomorrow);
+  trip4Start.setHours(16, 0, 0, 0);
+  const trip4End = new Date(tomorrow);
+  trip4End.setHours(20, 30, 0, 0);
 
   const trip4 = await prisma.trips.create({
     data: {
       busId: limousineBus.id,
       tripName: 'HCMC-Mui Ne Limousine',
-      startTime: new Date(tomorrow.setHours(16, 0, 0, 0)),
-      endTime: new Date(tomorrow.setHours(20, 30, 0, 0)),
+      startTime: trip4Start,
+      endTime: trip4End,
+      tripStops: {
+        create: [
+          {
+            locationId: hcmcStation.id,
+            sequence: 1,
+            departureTime: trip4Start,
+          },
+          {
+            locationId: muineStation.id,
+            sequence: 2,
+            arrivalTime: trip4End,
+          },
+        ],
+      },
     },
   });
 

@@ -10,7 +10,7 @@ import { RedisCacheService } from 'src/cache/redis-cache.service';
 import { CreateBusDto } from './dto/create-bus.dto';
 import { UpdateBusDto } from './dto/update-bus.dto';
 import { QueryBusesDto } from './dto/query-buses.dto';
-import { Prisma, SeatCapacity, BusType, Buses, Seats } from '@prisma/client';
+import { Prisma, BusType, Buses, Seats } from '@prisma/client';
 
 @Injectable()
 export class BusesService {
@@ -20,14 +20,14 @@ export class BusesService {
     private readonly cacheManager: RedisCacheService,
   ) {}
 
-  private generateSeats(busId: string, capacity: SeatCapacity) {
+  private generateSeats(busId: string, capacity: number = 32) {
     const seats: Array<{
       busId: string;
       seatNumber: string;
       coordinates: { x: number; y: number };
     }> = [];
 
-    if (capacity === SeatCapacity.SEAT_16) {
+    if (capacity === 16) {
       const seatLayout = [
         { num: '01', x: 2, y: 0 },
         { num: '02', x: 1, y: 0 },
@@ -57,10 +57,10 @@ export class BusesService {
       let totalRows = 0;
 
       switch (capacity) {
-        case SeatCapacity.SEAT_28:
+        case 28:
           totalRows = 7;
           break;
-        case SeatCapacity.SEAT_32:
+        case 32:
         default:
           totalRows = 8;
           break;
@@ -97,18 +97,15 @@ export class BusesService {
         throw new BadRequestException('Plate already exists');
       }
 
-      const seatCapacity = createBusDto.seatCapacity || SeatCapacity.SEAT_16;
-
       const bus = await this.prisma.buses.create({
         data: {
           plate: createBusDto.plate,
           busType: createBusDto.busType || BusType.standard,
-          seatCapacity: seatCapacity,
           amenities: createBusDto.amenities || Prisma.JsonNull,
         },
       });
 
-      const seats = this.generateSeats(bus.id, seatCapacity);
+      const seats = this.generateSeats(bus.id, 32);
 
       await this.prisma.seats.createMany({
         data: seats,
@@ -148,12 +145,6 @@ export class BusesService {
       if (query?.busType && query.busType.length > 0) {
         where.busType = {
           in: query.busType,
-        };
-      }
-
-      if (query?.seatCapacity && query.seatCapacity.length > 0) {
-        where.seatCapacity = {
-          in: query.seatCapacity,
         };
       }
 
@@ -237,9 +228,6 @@ export class BusesService {
 
       await this.cacheManager.del(`buses:detail:${id}`);
       await this.cacheManager.delByPattern('buses:all*');
-      if (data.seatCapacity) {
-        await this.cacheManager.del(`buses:seats:${id}`);
-      }
 
       return { message: 'Bus updated successfully', data: updatedBus };
     } catch (err) {

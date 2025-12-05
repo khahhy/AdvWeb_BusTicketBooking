@@ -639,7 +639,6 @@ export class RoutesService {
           bus: {
             id: data.trip.bus.id,
             busType: data.trip.bus.busType,
-            seatCapacity: data.trip.bus.seatCapacity,
             plate: data.trip.bus.plate,
             amenities: data.trip.bus.amenities,
           },
@@ -693,7 +692,6 @@ export class RoutesService {
         departureTimeStart,
         departureTimeEnd,
         busType,
-        seatCapacity,
         amenities,
         minDuration,
         maxDuration,
@@ -837,11 +835,6 @@ export class RoutesService {
         busWhere.busType = { in: busType };
       }
 
-      // Filter by Seat Capacity
-      if (seatCapacity && seatCapacity.length > 0) {
-        busWhere.seatCapacity = { in: seatCapacity };
-      }
-
       // Filter by Amenities - Enhanced to handle both object and array formats
       if (amenities && amenities.length > 0) {
         busWhere.OR = [
@@ -879,13 +872,24 @@ export class RoutesService {
         orderBy.trip = { startTime: 'desc' };
       }
 
+      // If filtering by origin/destination sequence or duration, we need to fetch more data
+      // to apply filters at application level, then paginate
+      const needsAppLevelFiltering =
+        (originLocationId && destinationLocationId) ||
+        minDuration !== undefined ||
+        maxDuration !== undefined ||
+        sortByDuration;
+
       const [rawTripData, total] = await this.prisma.$transaction([
         this.prisma.tripRouteMap.findMany({
-          skip,
-          take: limit,
+          skip: needsAppLevelFiltering ? undefined : skip,
+          take: needsAppLevelFiltering ? undefined : limit,
           where,
           orderBy,
-          include: {
+          select: {
+            price: true,
+            tripId: true,
+            routeId: true,
             route: {
               select: {
                 name: true,
@@ -900,7 +904,12 @@ export class RoutesService {
                 endTime: true,
                 status: true,
                 tripStops: {
-                  include: {
+                  select: {
+                    id: true,
+                    locationId: true,
+                    sequence: true,
+                    arrivalTime: true,
+                    departureTime: true,
                     location: true,
                   },
                   orderBy: {
@@ -911,7 +920,6 @@ export class RoutesService {
                   select: {
                     plate: true,
                     busType: true,
-                    seatCapacity: true,
                     amenities: true,
                   },
                 },
@@ -925,10 +933,20 @@ export class RoutesService {
       type RawItem = (typeof rawTripData)[number];
       type ProcessedItem = RawItem & { durationMinutes?: number };
 
+      // Process data - add duration if needed
+      let processedData: ProcessedItem[] = rawTripData.map((item) => {
+        if (minDuration || maxDuration || sortByDuration) {
+          const start = new Date(item.trip.startTime).getTime();
+          const end = new Date(item.trip.endTime).getTime();
+          const durationMinutes = (end - start) / 60000;
+          return { ...item, durationMinutes };
+        }
+        return item;
+      });
+
       // Filter trips based on origin/destination sequence order
-      let filteredTripData = rawTripData;
       if (originLocationId && destinationLocationId) {
-        filteredTripData = rawTripData.filter((item) => {
+        processedData = processedData.filter((item) => {
           const tripStops = item.trip.tripStops;
           const originStop = tripStops.find(
             (stop) => stop.locationId === originLocationId,
@@ -946,52 +964,46 @@ export class RoutesService {
         });
       }
 
-      let finalData: ProcessedItem[] = filteredTripData;
-
-      if (minDuration || maxDuration || sortByDuration) {
-        finalData = rawTripData.map((item) => {
-          const start = new Date(item.trip.startTime).getTime();
-          const end = new Date(item.trip.endTime).getTime();
-          const durationMinutes = (end - start) / 60000;
-
-          return { ...item, durationMinutes };
-        });
-
-        if (minDuration !== undefined) {
-          finalData = finalData.filter(
-            (item) => (item.durationMinutes ?? 0) >= minDuration,
-          );
-        }
-        if (maxDuration !== undefined) {
-          finalData = finalData.filter(
-            (item) => (item.durationMinutes ?? 0) <= maxDuration,
-          );
-        }
-
-        if (sortByDuration) {
-          finalData.sort((a, b) => {
-            const durationA = a.durationMinutes ?? 0;
-            const durationB = b.durationMinutes ?? 0;
-            return sortByDuration === SortOrder.ASC
-              ? durationA - durationB
-              : durationB - durationA;
-          });
-        }
+      // Filter by duration if needed
+      if (minDuration !== undefined) {
+        processedData = processedData.filter(
+          (item) => (item.durationMinutes ?? 0) >= minDuration,
+        );
+      }
+      if (maxDuration !== undefined) {
+        processedData = processedData.filter(
+          (item) => (item.durationMinutes ?? 0) <= maxDuration,
+        );
       }
 
-      // Update total count if we filtered by sequence order
-      const actualTotal =
-        originLocationId && destinationLocationId
-          ? filteredTripData.length
-          : total;
+      // Sort by duration if needed
+      if (sortByDuration) {
+        processedData.sort((a, b) => {
+          const durationA = a.durationMinutes ?? 0;
+          const durationB = b.durationMinutes ?? 0;
+          return sortByDuration === SortOrder.ASC
+            ? durationA - durationB
+            : durationB - durationA;
+        });
+      }
+
+      // Apply pagination at application level if we did app-level filtering
+      let finalItems = processedData;
+      let finalTotal = total;
+
+      if (needsAppLevelFiltering) {
+        finalTotal = processedData.length;
+        const startIndex = (page - 1) * limit;
+        finalItems = processedData.slice(startIndex, startIndex + limit);
+      }
 
       const resultData = {
-        items: finalData,
+        items: finalItems,
         meta: {
-          total: actualTotal,
+          total: finalTotal,
           page,
           limit,
-          lastPage: Math.ceil(actualTotal / limit),
+          lastPage: Math.ceil(finalTotal / limit),
         },
       };
       await this.cacheManager.set(cacheKey, resultData, 300);

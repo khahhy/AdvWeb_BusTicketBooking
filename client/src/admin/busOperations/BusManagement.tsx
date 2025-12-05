@@ -27,8 +27,9 @@ import {
   useDeleteBusMutation,
   useCreateBusMutation,
 } from "@/store/api/busApi";
-import { BusType, SeatCapacity, BusAmenities } from "@/store/type/busType";
+import { BusType, BusAmenities } from "@/store/type/busType";
 import BusLayoutVisualization from "@/components/admin/BusLayoutVisualization";
+import SeatLayoutPreview from "@/components/admin/SeatLayoutPreview";
 import {
   Dialog,
   DialogContent,
@@ -45,20 +46,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-// import BusDetailsDrawer from "@/components/admin/BusDetailsDrawer/BusDetailsDrawer";
-
-// Bus type definitions and layout configurations are now in busApi.ts
 
 const BusManagement = () => {
-  // const [selectedBus, setSelectedBus] = useState<Bus | null>(null);
-  // const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [plate, setPlate] = useState("");
   const [selectedBusType, setSelectedBusType] = useState<BusType>(
     BusType.STANDARD,
   );
-  const [selectedSeatCapacity, setSelectedSeatCapacity] =
-    useState<SeatCapacity>(SeatCapacity.SEAT_16);
   const [selectedAmenities, setSelectedAmenities] = useState<BusAmenities>({
     tv: false,
     wifi: false,
@@ -84,12 +78,6 @@ const BusManagement = () => {
       }
     }
   };
-
-  // const handleViewDetails = (bus: Bus) => {
-  //   setSelectedBus(bus);
-  //   setIsSheetOpen(true);
-  // };
-
   const getAmenityIcon = (amenity: keyof BusAmenities, enabled: boolean) => {
     const iconClass = `w-4 h-4 ${enabled ? "text-green-600" : "text-gray-300"}`;
 
@@ -140,7 +128,6 @@ const BusManagement = () => {
   function handleOpenCreate() {
     setPlate("");
     setSelectedBusType(BusType.STANDARD);
-    setSelectedSeatCapacity(SeatCapacity.SEAT_16);
     setSelectedAmenities({
       tv: false,
       wifi: false,
@@ -164,7 +151,6 @@ const BusManagement = () => {
       await createBus({
         plate: plate.trim(),
         busType: selectedBusType,
-        seatCapacity: selectedSeatCapacity,
         amenities: selectedAmenities,
       }).unwrap();
 
@@ -209,7 +195,6 @@ const BusManagement = () => {
                   <TableRow>
                     <TableHead className="pl-4">License Plate</TableHead>
                     <TableHead>Bus Type</TableHead>
-                    <TableHead>Capacity</TableHead>
                     <TableHead>Amenities</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -224,10 +209,6 @@ const BusManagement = () => {
                         <Badge className={getBusTypeColor(bus.busType)}>
                           {bus.busType.toUpperCase()}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {bus.seatCapacity.replace("SEAT_", "")}{" "}
-                        {bus.busType === BusType.SLEEPER ? "beds" : "seats"}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2 flex-wrap">
@@ -286,7 +267,7 @@ const BusManagement = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="busType">Bus Type</Label>
                 <Select
@@ -333,7 +314,7 @@ const BusManagement = () => {
                           Limousine
                         </Badge>
                         <span className="text-sm text-gray-600">
-                          1-2-1 Layout
+                          3-1 Layout
                         </span>
                       </div>
                     </SelectItem>
@@ -341,30 +322,12 @@ const BusManagement = () => {
                 </Select>
               </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="seatCapacity">Seat Capacity</Label>
-                <Select
-                  value={selectedSeatCapacity}
-                  onValueChange={(value: SeatCapacity) =>
-                    setSelectedSeatCapacity(value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select capacity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={SeatCapacity.SEAT_16}>
-                      <Badge variant="outline">16 seats</Badge>
-                    </SelectItem>
-                    <SelectItem value={SeatCapacity.SEAT_28}>
-                      <Badge variant="outline">28 seats</Badge>
-                    </SelectItem>
-                    <SelectItem value={SeatCapacity.SEAT_32}>
-                      <Badge variant="outline">32 seats</Badge>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {selectedBusType && (
+                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <Label className="mb-3 block">Layout Preview</Label>
+                  <SeatLayoutPreview busType={selectedBusType} />
+                </div>
+              )}
             </div>
 
             <div className="grid gap-4">

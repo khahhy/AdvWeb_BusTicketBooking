@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsEnum, IsArray, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
-import { BusType, SeatCapacity } from '@prisma/client';
+import { BusType } from '@prisma/client';
 
 export class QueryBusesDto {
   @ApiPropertyOptional({
@@ -13,16 +13,6 @@ export class QueryBusesDto {
   @IsArray()
   @IsEnum(BusType, { each: true })
   busType?: BusType[];
-
-  @ApiPropertyOptional({
-    enum: SeatCapacity,
-    description: 'Filter by seat capacity',
-    isArray: true,
-  })
-  @IsOptional()
-  @IsArray()
-  @IsEnum(SeatCapacity, { each: true })
-  seatCapacity?: SeatCapacity[];
 
   @ApiPropertyOptional({
     description: 'Filter by amenities (comma-separated)',

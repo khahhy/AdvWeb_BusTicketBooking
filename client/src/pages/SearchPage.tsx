@@ -457,6 +457,7 @@ export default function SearchPage() {
                       price: Number(tripRoute.price),
                       availableSeats: Math.floor(totalSeats * 0.6),
                       totalSeats,
+                      busId: tripRoute.trip.bus?.id,
                       busType:
                         tripRoute.trip.bus?.busType?.toLowerCase() ||
                         "standard",

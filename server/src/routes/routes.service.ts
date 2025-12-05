@@ -918,6 +918,7 @@ export class RoutesService {
                 },
                 bus: {
                   select: {
+                    id: true,
                     plate: true,
                     busType: true,
                     amenities: true,

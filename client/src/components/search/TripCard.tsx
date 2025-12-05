@@ -21,6 +21,7 @@ import {
   useLockSeatMutation,
   useUnlockSeatMutation,
 } from "@/store/api/bookingApi";
+import { useGetBusSeatsQuery } from "@/store/api/busApi";
 import type { SeatSocketPayload } from "@/store/type/bookingType";
 import type { ApiError } from "@/store/type/apiError";
 
@@ -28,6 +29,7 @@ type TripData = Trip & {
   tripId?: string;
   routeId?: string;
   busType?: string;
+  busId?: string;
   amenities?: Record<string, boolean>;
   note?: string;
 };
@@ -85,15 +87,97 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
   };
 
   const totalCapacity = getSeatCapacity(trip.busType);
-  const [seats, setSeats] = useState<Seat[]>(() =>
-    generateSeats(
-      totalCapacity,
-      totalCapacity - trip.availableSeats,
-      trip.price,
-      trip.busType,
-    ),
-  );
+
+  // Fetch seats from backend
+  const { data: backendSeats } = useGetBusSeatsQuery(trip.busId || "", {
+    skip: !trip.busId,
+  });
+
+  const [seats, setSeats] = useState<Seat[]>([]);
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+
+  // Calculate available seats count from backend data
+  const availableSeatsCount = useMemo(() => {
+    if (backendSeats && backendSeats.length > 0) {
+      // All seats from backend are available (not booked yet)
+      return backendSeats.length;
+    }
+    return trip.availableSeats;
+  }, [backendSeats, trip.availableSeats]);
+
+  // Function to convert seat index to proper seat label based on bus type
+  const getSeatLabel = (index: number, busType?: string): string => {
+    const busTypeNormalized = busType?.toLowerCase();
+
+    if (busTypeNormalized === "standard") {
+      // Standard: 2-2 layout, 8 rows, 4 seats per row (A1-D8)
+      const row = Math.floor(index / 4) + 1;
+      const col = ["A", "B", "C", "D"][index % 4];
+      return `${col}${row}`;
+    } else if (busTypeNormalized === "vip") {
+      // VIP: 2-1 layout, 6 rows, 3 seats per row (A1-C6) = 18 seats
+      const row = Math.floor(index / 3) + 1;
+      const col = ["A", "B", "C"][index % 3];
+      return `${col}${row}`;
+    } else if (busTypeNormalized === "sleeper") {
+      // Sleeper: 2 tiers, 4 rows, 2 beds per row (A1-B4, C1-D4) = 16 beds
+      if (index < 8) {
+        // Upper tier: A1-B4
+        const row = Math.floor(index / 2) + 1;
+        const col = ["A", "B"][index % 2];
+        return `${col}${row}`;
+      } else {
+        // Lower tier: C1-D4
+        const adjustedIndex = index - 8;
+        const row = Math.floor(adjustedIndex / 2) + 1;
+        const col = ["C", "D"][adjustedIndex % 2];
+        return `${col}${row}`;
+      }
+    } else if (busTypeNormalized === "limousine") {
+      // Limousine: 3-1 layout, 4 rows, 4 seats per row (A1-D4) = 16 seats
+      const row = Math.floor(index / 4) + 1;
+      const col = ["A", "B", "C", "D"][index % 4];
+      return `${col}${row}`;
+    }
+
+    // Fallback for unknown types
+    return (index + 1).toString().padStart(2, "0");
+  };
+
+  // Initialize seats when backend data is available
+  useEffect(() => {
+    if (backendSeats && backendSeats.length > 0) {
+      // Transform backend seats to component format with proper seat labels
+      const transformedSeats: Seat[] = backendSeats.map(
+        (backendSeat, index) => ({
+          id: backendSeat.id,
+          number: getSeatLabel(index, trip.busType),
+          type: "available" as Seat["type"],
+          price: trip.price,
+        }),
+      );
+      setSeats(transformedSeats);
+    } else {
+      // Fallback to mock data if no backend data
+      setSeats(
+        generateSeats(
+          totalCapacity,
+          totalCapacity - trip.availableSeats,
+          trip.price,
+          trip.busType,
+        ),
+      );
+    }
+  }, [
+    backendSeats,
+    totalCapacity,
+    trip.availableSeats,
+    trip.price,
+    trip.busType,
+    trip.busId,
+    trip.tripId,
+    trip.id,
+  ]);
 
   // Reset activeTab when card is closed
   if (!isOpen && activeTab !== null) {
@@ -303,7 +387,7 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <Clock className="w-4 h-4" />
               <span className="font-medium">
-                {trip.availableSeats} blank seats
+                {availableSeatsCount} blank seats
               </span>
             </div>
           </div>

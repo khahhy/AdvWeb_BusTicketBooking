@@ -49,6 +49,29 @@ async function main() {
 
   console.log('Creating buses...');
 
+  // Helper function to generate seats for a bus
+  async function createSeatsForBus(busId: string, busType: BusType) {
+    const seatConfigs = {
+      [BusType.standard]: { count: 32, prefix: 'A' },
+      [BusType.vip]: { count: 18, prefix: 'B' },
+      [BusType.sleeper]: { count: 16, prefix: 'C' },
+      [BusType.limousine]: { count: 16, prefix: 'D' },
+    };
+
+    const config = seatConfigs[busType];
+    const seats: { busId: string; seatNumber: string }[] = [];
+
+    for (let i = 1; i <= config.count; i++) {
+      seats.push({
+        busId: busId,
+        seatNumber: `${config.prefix}${i}`,
+      });
+    }
+
+    await prisma.seats.createMany({ data: seats });
+    console.log(`  Created ${config.count} seats for ${busType} bus`);
+  }
+
   // Create buses with different types and amenities
   const standardBus = await prisma.buses.create({
     data: {
@@ -66,6 +89,7 @@ async function main() {
       },
     },
   });
+  await createSeatsForBus(standardBus.id, BusType.standard);
 
   const vipBus = await prisma.buses.create({
     data: {
@@ -83,6 +107,7 @@ async function main() {
       },
     },
   });
+  await createSeatsForBus(vipBus.id, BusType.vip);
 
   const sleeperBus = await prisma.buses.create({
     data: {
@@ -100,6 +125,7 @@ async function main() {
       },
     },
   });
+  await createSeatsForBus(sleeperBus.id, BusType.sleeper);
 
   const limousineBus = await prisma.buses.create({
     data: {
@@ -117,6 +143,7 @@ async function main() {
       },
     },
   });
+  await createSeatsForBus(limousineBus.id, BusType.limousine);
 
   console.log('Creating routes...');
 

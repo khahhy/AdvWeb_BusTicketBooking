@@ -26,7 +26,7 @@ export interface SeatLockRequest {
 }
 
 export interface CreateBookingRequest {
-  userId: string;
+  userId?: string;
   tripId: string;
   routeId: string;
   seatId: string;
@@ -35,6 +35,7 @@ export interface CreateBookingRequest {
 
 export interface CreateBookingResult {
   bookingId: string;
+  ticketCode: string;
   status: BookingStatus;
   expiresAt: string;
 }
@@ -111,4 +112,18 @@ export interface SeatSocketPayload {
     seatId: string;
     segmentIds: string[];
   };
+}
+
+export interface GuestLookupRequest {
+  email: string;
+  phoneNumber: string;
+}
+
+export interface TicketLookupParams {
+  ticketCode: string;
+  email: string;
+}
+
+export interface GuestCancelRequest {
+  email: string;
 }

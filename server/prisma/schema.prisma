@@ -152,7 +152,7 @@ model TripRouteMap {
 
 model Bookings {
   id            String             @id @default(uuid())
-  userId        String
+  userId        String?
   tripId        String
   routeId       String
   seatId        String
@@ -169,7 +169,7 @@ model Bookings {
   route         Routes             @relation(fields: [routeId], references: [id])
   seat          Seats              @relation(fields: [seatId], references: [id])
   trip          Trips              @relation(fields: [tripId], references: [id])
-  user          Users              @relation(fields: [userId], references: [id])
+  user          Users?             @relation(fields: [userId], references: [id])
   notifications Notifications[]
   payments      Payments[]
   reviews       Reviews[]
@@ -179,6 +179,7 @@ model Bookings {
   @@index([tripId])
   @@index([routeId])
   @@index([seatId])
+  @@index([ticketCode])
 }
 
 model SeatSegmentLocks {

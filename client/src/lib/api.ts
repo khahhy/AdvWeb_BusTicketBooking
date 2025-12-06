@@ -19,7 +19,12 @@ export const API_ENDPOINTS = {
   },
   bookings: {
     list: "/bookings",
+    myBookings: "/bookings/my-bookings",
     details: "/bookings/{id}",
+    cancel: "/bookings/{id}/cancel",
+    modify: "/bookings/{id}/modify",
+    lockSeat: "/bookings/lock",
+    unlockSeat: "/bookings/unlock",
   },
   buses: {
     list: "/buses",

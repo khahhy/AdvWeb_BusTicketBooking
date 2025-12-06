@@ -12,95 +12,55 @@ import {
   Phone,
   Mail,
   CheckCircle2,
-  Star,
   Edit,
 } from "lucide-react";
 import Navbar from "@/components/common/Navbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Footer from "@/components/dashboard/Footer";
+import { toast } from "sonner";
 import backgroundImage from "@/assets/images/background.png";
 import dayjs from "dayjs";
 
 interface BookingDetails {
   id: string;
-  bookingCode: string;
-  from: string;
-  to: string;
-  date: string;
-  departureTime: string;
-  arrivalTime: string;
-  seat: string;
+  ticketCode: string;
+  status: "pendingPayment" | "confirmed" | "cancelled";
   price: number;
-  status: "completed" | "upcoming" | "cancelled";
-  passengerName: string;
-  duration: string;
-  busNumber: string;
-  busType: string;
-  contactPhone: string;
-  contactEmail: string;
-  pickupLocation: string;
-  dropoffLocation: string;
-  paymentMethod: string;
-  bookingDate: string;
-  insuranceFee: number;
-  serviceFee: number;
-  totalAmount: number;
+  customerInfo: {
+    fullName: string;
+    phoneNumber: string;
+    email: string;
+    idNumber?: string;
+  };
+  createdAt: string;
+  trip: {
+    tripName: string;
+    startTime: string;
+    bus: {
+      plate: string;
+      busType: string;
+    };
+  };
+  route?: {
+    name: string;
+  };
+  seat: {
+    seatNumber: string;
+  };
+  pickupStop: {
+    location: {
+      name: string;
+      city: string;
+    };
+  };
+  dropoffStop: {
+    location: {
+      name: string;
+      city: string;
+    };
+  };
 }
-
-// Mock data for booking details
-const mockBookingDetails: { [key: string]: BookingDetails } = {
-  "1": {
-    id: "1",
-    bookingCode: "BUS123456",
-    from: "Ho Chi Minh City",
-    to: "Da Lat",
-    date: "2024-11-15",
-    departureTime: "08:00",
-    arrivalTime: "14:30",
-    seat: "A12",
-    price: 280000,
-    status: "completed",
-    passengerName: "Nguyen Van A",
-    duration: "6h 30m",
-    busNumber: "SGN-DAL-001",
-    busType: "Limousine 22 seats",
-    contactPhone: "+84 901 234 567",
-    contactEmail: "nguyenvana@email.com",
-    pickupLocation: "Ben xe Mien Dong, 292 Đinh Bộ Lĩnh, Bình Thạnh",
-    dropoffLocation: "Ben xe Da Lat, 01 Tô Hiến Thành, Phường 3",
-    paymentMethod: "Credit Card",
-    bookingDate: "2024-11-10",
-    insuranceFee: 5000,
-    serviceFee: 15000,
-    totalAmount: 300000,
-  },
-  "2": {
-    id: "2",
-    bookingCode: "BUS789012",
-    from: "Ho Chi Minh City",
-    to: "Nha Trang",
-    date: "2024-12-01",
-    departureTime: "22:00",
-    arrivalTime: "06:30",
-    seat: "B08",
-    price: 320000,
-    status: "upcoming",
-    passengerName: "Nguyen Van A",
-    duration: "8h 30m",
-    busNumber: "SGN-NTR-003",
-    busType: "Sleeper Bus 34 beds",
-    contactPhone: "+84 901 234 567",
-    contactEmail: "nguyenvana@email.com",
-    pickupLocation: "Ben xe Mien Dong, 292 Đinh Bộ Lĩnh, Bình Thạnh",
-    dropoffLocation: "Ben xe Nha Trang, 23 Thang 10, Vĩnh Hải",
-    paymentMethod: "Bank Transfer",
-    bookingDate: "2024-11-25",
-    insuranceFee: 8000,
-    serviceFee: 17000,
-    totalAmount: 345000,
-  },
-};
 
 export default function BookingDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -110,15 +70,37 @@ export default function BookingDetailsPage() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-
-    // Simulate API call
-    setTimeout(() => {
-      if (id && mockBookingDetails[id]) {
-        setBooking(mockBookingDetails[id]);
-      }
-      setLoading(false);
-    }, 500);
+    fetchBookingDetails();
   }, [id]);
+
+  const fetchBookingDetails = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        toast.error("Please login to view booking details");
+        navigate("/login");
+        return;
+      }
+
+      const response = await fetch(`http://localhost:3000/bookings/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch booking details");
+      }
+
+      const result = await response.json();
+      setBooking(result.data);
+    } catch (error) {
+      console.error("Error fetching booking details:", error);
+      toast.error("Unable to load booking details");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatCurrency = (amount: number) => {
     return amount.toLocaleString("vi-VN") + " VND";
@@ -134,21 +116,21 @@ export default function BookingDetailsPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "completed":
+      case "confirmed":
         return (
-          <Badge className="bg-success-100 text-success hover:bg-success-100 dark:bg-green-900 dark:text-green-300">
-            Completed
+          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900 dark:text-green-300">
+            Confirmed
           </Badge>
         );
-      case "upcoming":
+      case "pendingPayment":
         return (
-          <Badge className="bg-primary-50 text-primary hover:bg-primary-50 dark:bg-blue-900 dark:text-blue-300">
-            Upcoming
+          <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-300">
+            Pending Payment
           </Badge>
         );
       case "cancelled":
         return (
-          <Badge className="bg-error-50 text-error hover:bg-error-50 dark:bg-red-900 dark:text-red-300">
+          <Badge className="bg-red-100 text-red-700 hover:bg-red-100 dark:bg-red-900 dark:text-red-300">
             Cancelled
           </Badge>
         );
@@ -157,17 +139,49 @@ export default function BookingDetailsPage() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!booking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <Ticket className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Booking not found</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              The booking you're looking for doesn't exist.
+            </p>
+            <Button onClick={() => navigate("/booking-history")}>
+              Back to Booking History
+            </Button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   const handleDownloadTicket = () => {
-    console.log("Downloading ticket for:", booking?.bookingCode);
-    // Implement download logic
+    console.log("Downloading ticket for:", booking?.ticketCode);
+    toast.info("Download ticket feature is under development");
   };
 
   const handleGoBack = () => {
     navigate("/booking-history");
-  };
-
-  const handleRateTrip = () => {
-    navigate(`/feedback/${booking?.id}`);
   };
 
   const handleModifyBooking = () => {
@@ -240,7 +254,7 @@ export default function BookingDetailsPage() {
             Booking Details
           </h1>
           <p className="text-xl text-foreground/60 dark:text-gray-300 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
-            Booking Code: {booking.bookingCode}
+            Booking Code: {booking.ticketCode}
           </p>
         </div>
       </div>
@@ -257,7 +271,7 @@ export default function BookingDetailsPage() {
                     Booking Confirmed
                   </h2>
                   <p className="text-gray-600 dark:text-gray-400">
-                    Booked on {formatDateTime(booking.bookingDate)}
+                    Booked on {formatDateTime(booking.createdAt)}
                   </p>
                 </div>
               </div>
@@ -280,10 +294,10 @@ export default function BookingDetailsPage() {
                 <div className="flex items-center justify-between mb-8">
                   <div className="w-50 flex-shrink-0">
                     <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {booking.from}
+                      {booking.pickupStop.location.city}
                     </div>
                     <div className="text-lg font-semibold text-gray-900 dark:text-gray-300 mt-1">
-                      {booking.departureTime}
+                      {dayjs(booking.trip.startTime).format("HH:mm")}
                     </div>
                   </div>
 
@@ -295,16 +309,16 @@ export default function BookingDetailsPage() {
                     </div>
                     <div className="text-sm text-gray-500 flex items-center justify-center gap-1">
                       <Clock className="w-4 h-4" />
-                      {booking.duration}
+                      {booking.route?.name || booking.trip.tripName}
                     </div>
                   </div>
 
                   <div className="text-right w-40 flex-shrink-0">
                     <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {booking.to}
+                      {booking.dropoffStop.location.city}
                     </div>
                     <div className="text-lg font-semibold text-gray-900 dark:text-gray-300 mt-1">
-                      {booking.arrivalTime}
+                      Arrival
                     </div>
                   </div>
                 </div>
@@ -319,7 +333,7 @@ export default function BookingDetailsPage() {
                           Travel Date
                         </p>
                         <p className="text-base font-semibold text-gray-900 dark:text-white">
-                          {formatDate(booking.date)}
+                          {formatDate(booking.trip.startTime)}
                         </p>
                       </div>
                     </div>
@@ -331,7 +345,7 @@ export default function BookingDetailsPage() {
                           Seat Number
                         </p>
                         <p className="text-base font-semibold text-gray-900 dark:text-white">
-                          {booking.seat}
+                          {booking.seat.seatNumber}
                         </p>
                       </div>
                     </div>
@@ -347,7 +361,7 @@ export default function BookingDetailsPage() {
                           Bus Number
                         </p>
                         <p className="text-base font-semibold text-gray-900 dark:text-white">
-                          {booking.busNumber}
+                          {booking.trip.bus.plate}
                         </p>
                       </div>
                     </div>
@@ -361,7 +375,7 @@ export default function BookingDetailsPage() {
                           Bus Type
                         </p>
                         <p className="text-base font-semibold text-gray-900 dark:text-white">
-                          {booking.busType}
+                          {booking.trip.bus.busType}
                         </p>
                       </div>
                     </div>
@@ -385,7 +399,7 @@ export default function BookingDetailsPage() {
                         Full Name
                       </p>
                       <p className="text-base font-semibold text-gray-900 dark:text-white">
-                        {booking.passengerName}
+                        {booking.customerInfo.fullName}
                       </p>
                     </div>
                   </div>
@@ -397,7 +411,7 @@ export default function BookingDetailsPage() {
                         Phone Number
                       </p>
                       <p className="text-base font-semibold text-gray-900 dark:text-white">
-                        {booking.contactPhone}
+                        {booking.customerInfo.phoneNumber}
                       </p>
                     </div>
                   </div>
@@ -409,7 +423,7 @@ export default function BookingDetailsPage() {
                         Email
                       </p>
                       <p className="text-base font-semibold text-gray-900 dark:text-white">
-                        {booking.contactEmail}
+                        {booking.customerInfo.email}
                       </p>
                     </div>
                   </div>
@@ -434,7 +448,7 @@ export default function BookingDetailsPage() {
                         Pickup Location
                       </p>
                       <p className="text-base font-semibold text-gray-900 dark:text-white">
-                        {booking.pickupLocation}
+                        {booking.pickupStop.location.name}
                       </p>
                     </div>
                   </div>
@@ -448,7 +462,7 @@ export default function BookingDetailsPage() {
                         Dropoff Location
                       </p>
                       <p className="text-base font-semibold text-gray-900 dark:text-white">
-                        {booking.dropoffLocation}
+                        {booking.dropoffStop.location.name}
                       </p>
                     </div>
                   </div>
@@ -467,25 +481,10 @@ export default function BookingDetailsPage() {
                 </h3>
 
                 <div className="space-y-4">
-                  <div className="flex justify-between text-gray-700 dark:text-gray-300">
-                    <span>Ticket Price</span>
-                    <span>{formatCurrency(booking.price)}</span>
-                  </div>
-
-                  <div className="flex justify-between text-gray-700 dark:text-gray-300">
-                    <span>Insurance Fee</span>
-                    <span>{formatCurrency(booking.insuranceFee)}</span>
-                  </div>
-
-                  <div className="flex justify-between text-gray-700 dark:text-gray-300">
-                    <span>Service Fee</span>
-                    <span>{formatCurrency(booking.serviceFee)}</span>
-                  </div>
-
                   <div className="border-t pt-4 flex justify-between text-xl font-bold text-gray-900 dark:text-white">
-                    <span>Total Paid</span>
+                    <span>Total Price</span>
                     <span className="text-success">
-                      {formatCurrency(booking.totalAmount)}
+                      {formatCurrency(booking.price)}
                     </span>
                   </div>
 
@@ -494,10 +493,14 @@ export default function BookingDetailsPage() {
                       <CreditCard className="w-5 h-5 text-gray-400" />
                       <div>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Payment Method
+                          Payment Status
                         </p>
                         <p className="text-base font-semibold text-gray-900 dark:text-white">
-                          {booking.paymentMethod}
+                          {booking.status === "confirmed"
+                            ? "Paid"
+                            : booking.status === "pendingPayment"
+                              ? "Pending"
+                              : "Cancelled"}
                         </p>
                       </div>
                     </div>
@@ -518,23 +521,13 @@ export default function BookingDetailsPage() {
                   Download Ticket
                 </Button>
 
-                {booking.status === "upcoming" && (
+                {booking.status !== "cancelled" && (
                   <Button
                     onClick={handleModifyBooking}
-                    className="w-full bg-primary hover:bg-primary text-white py-3 rounded-2xl font-semibold flex items-center justify-center gap-2"
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-2xl font-semibold flex items-center justify-center gap-2"
                   >
                     <Edit className="w-5 h-5" />
                     Modify Booking
-                  </Button>
-                )}
-
-                {booking.status === "completed" && (
-                  <Button
-                    onClick={handleRateTrip}
-                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-2xl font-semibold flex items-center justify-center gap-2"
-                  >
-                    <Star className="w-5 h-5" />
-                    Rate This Trip
                   </Button>
                 )}
 

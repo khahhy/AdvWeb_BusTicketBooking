@@ -251,7 +251,23 @@ export class BookingsService {
       const booking = await this.prisma.bookings.findUnique({
         where: { id },
         include: {
-          trip: { select: { tripName: true, startTime: true } },
+          trip: {
+            select: {
+              tripName: true,
+              startTime: true,
+              bus: {
+                select: {
+                  plate: true,
+                  busType: true,
+                },
+              },
+            },
+          },
+          route: {
+            select: {
+              name: true,
+            },
+          },
           seat: { select: { seatNumber: true } },
           pickupStop: { include: { location: true } },
           dropoffStop: { include: { location: true } },
@@ -363,7 +379,7 @@ export class BookingsService {
     try {
       const booking = await this.prisma.bookings.findUnique({
         where: { id },
-        select: { status: true, userId: true },
+        select: { status: true, userId: true, tripId: true, seatId: true },
       });
 
       if (!booking) {
@@ -386,9 +402,22 @@ export class BookingsService {
           data: { status: BookingStatus.cancelled },
         });
 
+        const locks = await tx.seatSegmentLocks.findMany({
+          where: { bookingId: id },
+          select: { segmentId: true },
+        });
+
         await tx.seatSegmentLocks.deleteMany({
           where: { bookingId: id },
         });
+
+        // Notify via WebSocket
+        const segmentIds = locks.map((lock) => lock.segmentId);
+        this.bookingsGateway.emitSeatUnlocked(
+          booking.tripId,
+          booking.seatId,
+          segmentIds,
+        );
 
         return updatedBooking;
       });
@@ -402,6 +431,182 @@ export class BookingsService {
         throw err;
       }
       throw new InternalServerErrorException('Failed to cancel booking', {
+        cause: err,
+      });
+    }
+  }
+
+  async modify(
+    id: string,
+    userId: string,
+    modifyData: {
+      tripId?: string;
+      seatId?: string;
+      routeId?: string;
+      customerInfo?: any;
+    },
+  ) {
+    try {
+      const booking = await this.prisma.bookings.findUnique({
+        where: { id },
+        include: {
+          trip: true,
+          seatLocks: true,
+        },
+      });
+
+      if (!booking) {
+        throw new NotFoundException('Booking not found');
+      }
+
+      if (booking.userId !== userId) {
+        throw new BadRequestException(
+          'You do not have permission to modify this booking',
+        );
+      }
+
+      if (booking.status === BookingStatus.cancelled) {
+        throw new BadRequestException('Cannot modify a cancelled booking');
+      }
+
+      // Check if trip has already departed
+      if (new Date() > booking.trip.startTime) {
+        throw new BadRequestException(
+          'Cannot modify booking for a trip that has already departed',
+        );
+      }
+
+      const result = await this.prisma.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          const updatedData: Prisma.BookingsUpdateInput = {}; // If changing seat or trip, handle seat locks
+          if (modifyData.seatId || modifyData.tripId || modifyData.routeId) {
+            const newTripId = modifyData.tripId || booking.tripId;
+            const newSeatId = modifyData.seatId || booking.seatId;
+            const newRouteId = modifyData.routeId || booking.routeId;
+
+            // Calculate new segments
+            const { segmentIds, pickupStopId, dropoffStopId } =
+              await this.calculateDetailsFromRoute(newTripId, newRouteId);
+
+            // Check if new seat is available
+            const conflictLock = await tx.seatSegmentLocks.findFirst({
+              where: {
+                tripId: newTripId,
+                seatId: newSeatId,
+                segmentId: { in: segmentIds },
+                bookingId: { not: id },
+              },
+            });
+
+            if (conflictLock) {
+              throw new ConflictException(
+                'Selected seat is already booked for this segment',
+              );
+            }
+
+            // Get new price if route changed
+            let newPrice = booking.price;
+            if (modifyData.routeId || modifyData.tripId) {
+              const tripRoute = await tx.tripRouteMap.findUnique({
+                where: {
+                  tripId_routeId: {
+                    tripId: newTripId,
+                    routeId: newRouteId,
+                  },
+                },
+                select: { price: true },
+              });
+
+              if (!tripRoute) {
+                throw new NotFoundException(
+                  'Route not available for selected trip',
+                );
+              }
+              newPrice = tripRoute.price;
+            }
+
+            // Remove old locks
+            await tx.seatSegmentLocks.deleteMany({
+              where: { bookingId: id },
+            });
+
+            // Create new locks
+            await tx.seatSegmentLocks.createMany({
+              data: segmentIds.map((segId) => ({
+                tripId: newTripId,
+                seatId: newSeatId,
+                segmentId: segId,
+                bookingId: id,
+              })),
+            });
+
+            Object.assign(updatedData, {
+              ...(modifyData.tripId && {
+                trip: { connect: { id: newTripId } },
+              }),
+              ...(modifyData.seatId && {
+                seat: { connect: { id: newSeatId } },
+              }),
+              ...(modifyData.routeId && {
+                route: { connect: { id: newRouteId } },
+              }),
+              pickupStop: { connect: { id: pickupStopId } },
+              dropoffStop: { connect: { id: dropoffStopId } },
+              price: newPrice,
+            });
+
+            // Emit WebSocket events
+            if (booking.tripId !== newTripId || booking.seatId !== newSeatId) {
+              // Unlock old seat
+              const oldSegmentIds = booking.seatLocks.map((l) => l.segmentId);
+              this.bookingsGateway.emitSeatUnlocked(
+                booking.tripId,
+                booking.seatId,
+                oldSegmentIds,
+              );
+              // Lock new seat
+              this.bookingsGateway.emitSeatSold(
+                newTripId,
+                newSeatId,
+                segmentIds,
+              );
+            }
+          }
+
+          // Update customer info if provided
+          if (modifyData.customerInfo) {
+            Object.assign(updatedData, {
+              customerInfo:
+                modifyData.customerInfo as unknown as Prisma.InputJsonValue,
+            });
+          }
+
+          const updatedBooking = await tx.bookings.update({
+            where: { id },
+            data: updatedData,
+            include: {
+              trip: { select: { tripName: true, startTime: true } },
+              seat: { select: { seatNumber: true } },
+              route: { select: { name: true } },
+              pickupStop: { include: { location: true } },
+              dropoffStop: { include: { location: true } },
+            },
+          });
+
+          return updatedBooking;
+        },
+      );
+
+      return { message: 'Booking modified successfully', data: result };
+    } catch (err) {
+      if (
+        err instanceof NotFoundException ||
+        err instanceof BadRequestException ||
+        err instanceof ConflictException
+      ) {
+        throw err;
+      }
+      throw new InternalServerErrorException('Failed to modify booking', {
         cause: err,
       });
     }

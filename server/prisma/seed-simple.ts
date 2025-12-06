@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { BusType } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -184,6 +185,9 @@ async function main() {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
 
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
   const trip1Start = new Date(tomorrow);
   trip1Start.setHours(6, 0, 0, 0);
   const trip1End = new Date(tomorrow);
@@ -331,13 +335,339 @@ async function main() {
     },
   });
 
+  console.log('Creating test users and bookings...');
+
+  // Hash password for test users
+  const hashedPassword = await bcrypt.hash('password123', 10);
+
+  // Create test users
+  const testUser1 = await prisma.users.upsert({
+    where: { email: 'user1@example.com' },
+    update: {},
+    create: {
+      email: 'user1@example.com',
+      fullName: 'Nguyen Van A',
+      phoneNumber: '+84901234567',
+      password: hashedPassword,
+      role: 'passenger',
+      status: 'active',
+      emailVerified: true,
+    },
+  });
+
+  const testUser2 = await prisma.users.upsert({
+    where: { email: 'user2@example.com' },
+    update: {},
+    create: {
+      email: 'user2@example.com',
+      fullName: 'Tran Thi B',
+      phoneNumber: '+84902345678',
+      password: hashedPassword,
+      role: 'passenger',
+      status: 'active',
+      emailVerified: true,
+    },
+  });
+
+  // Get trip stops for bookings
+  const trip1Stops = await prisma.tripStops.findMany({
+    where: { tripId: trip1.id },
+    orderBy: { sequence: 'asc' },
+  });
+
+  const trip2Stops = await prisma.tripStops.findMany({
+    where: { tripId: trip2.id },
+    orderBy: { sequence: 'asc' },
+  });
+
+  const trip3Stops = await prisma.tripStops.findMany({
+    where: { tripId: trip3.id },
+    orderBy: { sequence: 'asc' },
+  });
+
+  // Get seats for bookings
+  const standardSeats = await prisma.seats.findMany({
+    where: { busId: standardBus.id },
+    take: 5,
+  });
+
+  const vipSeats = await prisma.seats.findMany({
+    where: { busId: vipBus.id },
+    take: 5,
+  });
+
+  const sleeperSeats = await prisma.seats.findMany({
+    where: { busId: sleeperBus.id },
+    take: 5,
+  });
+
+  // Create trip segments for locking
+  const trip1Segments = await prisma.tripSegments.create({
+    data: {
+      tripId: trip1.id,
+      fromStopId: trip1Stops[0].id,
+      toStopId: trip1Stops[1].id,
+      segmentIndex: 1,
+      durationMinutes: 270, // 4.5 hours
+    },
+  });
+
+  const trip2Segments = await prisma.tripSegments.create({
+    data: {
+      tripId: trip2.id,
+      fromStopId: trip2Stops[0].id,
+      toStopId: trip2Stops[1].id,
+      segmentIndex: 1,
+      durationMinutes: 270,
+    },
+  });
+
+  const trip3Segments = await prisma.tripSegments.create({
+    data: {
+      tripId: trip3.id,
+      fromStopId: trip3Stops[0].id,
+      toStopId: trip3Stops[1].id,
+      segmentIndex: 1,
+      durationMinutes: 270,
+    },
+  });
+
+  // Create bookings for test users
+  // Booking 1: Confirmed (User1, Trip1)
+  const booking1 = await prisma.bookings.create({
+    data: {
+      userId: testUser1.id,
+      tripId: trip1.id,
+      routeId: hcmcToMuine.id,
+      seatId: standardSeats[0].id,
+      pickupStopId: trip1Stops[0].id,
+      dropoffStopId: trip1Stops[1].id,
+      customerInfo: {
+        fullName: 'Nguyen Van A',
+        phoneNumber: '+84901234567',
+        email: 'user1@example.com',
+        idNumber: '001234567890',
+      },
+      price: 150000,
+      status: 'confirmed',
+      ticketCode: 'TKT' + Date.now() + '001',
+    },
+  });
+
+  await prisma.seatSegmentLocks.create({
+    data: {
+      tripId: trip1.id,
+      seatId: standardSeats[0].id,
+      segmentId: trip1Segments.id,
+      bookingId: booking1.id,
+    },
+  });
+
+  await prisma.payments.create({
+    data: {
+      bookingId: booking1.id,
+      amount: 150000,
+      gateway: 'momo',
+      status: 'successful',
+      gatewayTransactionId: 'MOMO' + Date.now(),
+    },
+  });
+
+  // Booking 2: Confirmed (User1, Trip2 - different date)
+  const booking2 = await prisma.bookings.create({
+    data: {
+      userId: testUser1.id,
+      tripId: trip2.id,
+      routeId: hcmcToMuine.id,
+      seatId: vipSeats[0].id,
+      pickupStopId: trip2Stops[0].id,
+      dropoffStopId: trip2Stops[1].id,
+      customerInfo: {
+        fullName: 'Nguyen Van A',
+        phoneNumber: '+84901234567',
+        email: 'user1@example.com',
+        idNumber: '001234567890',
+      },
+      price: 200000,
+      status: 'confirmed',
+      ticketCode: 'TKT' + Date.now() + '002',
+    },
+  });
+
+  await prisma.seatSegmentLocks.create({
+    data: {
+      tripId: trip2.id,
+      seatId: vipSeats[0].id,
+      segmentId: trip2Segments.id,
+      bookingId: booking2.id,
+    },
+  });
+
+  await prisma.payments.create({
+    data: {
+      bookingId: booking2.id,
+      amount: 200000,
+      gateway: 'zalopay',
+      status: 'successful',
+      gatewayTransactionId: 'ZALO' + Date.now(),
+    },
+  });
+
+  // Booking 3: Pending Payment (User1, Trip3)
+  const booking3 = await prisma.bookings.create({
+    data: {
+      userId: testUser1.id,
+      tripId: trip3.id,
+      routeId: hcmcToMuine.id,
+      seatId: sleeperSeats[0].id,
+      pickupStopId: trip3Stops[0].id,
+      dropoffStopId: trip3Stops[1].id,
+      customerInfo: {
+        fullName: 'Nguyen Van A',
+        phoneNumber: '+84901234567',
+        email: 'user1@example.com',
+        idNumber: '001234567890',
+      },
+      price: 250000,
+      status: 'pendingPayment',
+      ticketCode: 'TKT' + Date.now() + '003',
+    },
+  });
+
+  await prisma.seatSegmentLocks.create({
+    data: {
+      tripId: trip3.id,
+      seatId: sleeperSeats[0].id,
+      segmentId: trip3Segments.id,
+      bookingId: booking3.id,
+    },
+  });
+
+  await prisma.payments.create({
+    data: {
+      bookingId: booking3.id,
+      amount: 250000,
+      status: 'pending',
+    },
+  });
+
+  // Booking 4: Cancelled (User1)
+  const yesterdayTrip = new Date(yesterday);
+  yesterdayTrip.setHours(8, 0, 0, 0);
+
+  const oldTrip = await prisma.trips.create({
+    data: {
+      busId: standardBus.id,
+      tripName: 'HCMC-Mui Ne Past Trip',
+      startTime: yesterdayTrip,
+      endTime: new Date(yesterdayTrip.getTime() + 4.5 * 60 * 60 * 1000),
+      status: 'completed',
+      tripStops: {
+        create: [
+          {
+            locationId: hcmcStation.id,
+            sequence: 1,
+            departureTime: yesterdayTrip,
+          },
+          {
+            locationId: muineStation.id,
+            sequence: 2,
+            arrivalTime: new Date(
+              yesterdayTrip.getTime() + 4.5 * 60 * 60 * 1000,
+            ),
+          },
+        ],
+      },
+    },
+  });
+
+  const oldTripStops = await prisma.tripStops.findMany({
+    where: { tripId: oldTrip.id },
+    orderBy: { sequence: 'asc' },
+  });
+
+  await prisma.tripRouteMap.create({
+    data: {
+      tripId: oldTrip.id,
+      routeId: hcmcToMuine.id,
+      price: 150000,
+    },
+  });
+
+  await prisma.bookings.create({
+    data: {
+      userId: testUser1.id,
+      tripId: oldTrip.id,
+      routeId: hcmcToMuine.id,
+      seatId: standardSeats[1].id,
+      pickupStopId: oldTripStops[0].id,
+      dropoffStopId: oldTripStops[1].id,
+      customerInfo: {
+        fullName: 'Nguyen Van A',
+        phoneNumber: '+84901234567',
+        email: 'user1@example.com',
+        idNumber: '001234567890',
+      },
+      price: 150000,
+      status: 'cancelled',
+      ticketCode: 'TKT' + Date.now() + '004',
+    },
+  });
+
+  // Booking 5: Confirmed for User2
+  const booking5 = await prisma.bookings.create({
+    data: {
+      userId: testUser2.id,
+      tripId: trip1.id,
+      routeId: hcmcToMuine.id,
+      seatId: standardSeats[2].id,
+      pickupStopId: trip1Stops[0].id,
+      dropoffStopId: trip1Stops[1].id,
+      customerInfo: {
+        fullName: 'Tran Thi B',
+        phoneNumber: '+84902345678',
+        email: 'user2@example.com',
+        idNumber: '009876543210',
+      },
+      price: 150000,
+      status: 'confirmed',
+      ticketCode: 'TKT' + Date.now() + '005',
+    },
+  });
+
+  await prisma.seatSegmentLocks.create({
+    data: {
+      tripId: trip1.id,
+      seatId: standardSeats[2].id,
+      segmentId: trip1Segments.id,
+      bookingId: booking5.id,
+    },
+  });
+
+  await prisma.payments.create({
+    data: {
+      bookingId: booking5.id,
+      amount: 150000,
+      gateway: 'payos',
+      status: 'successful',
+      gatewayTransactionId: 'PAYOS' + Date.now(),
+    },
+  });
+
   console.log('Seed data created successfully!');
   console.log('Created:');
   console.log('- 4 locations');
   console.log('- 4 buses (different types and amenities)');
   console.log('- 3 routes');
-  console.log('- 4 trips');
-  console.log('- 4 trip route maps');
+  console.log('- 5 trips (including 1 past trip)');
+  console.log('- 5 trip route maps');
+  console.log('- 2 test users');
+  console.log(
+    '- 5 bookings (2 confirmed, 1 pending, 1 cancelled, 1 for user2)',
+  );
+  console.log('\nTest Users:');
+  console.log('User 1: user1@example.com (Password: password123)');
+  console.log('User 2: user2@example.com (Password: password123)');
 }
 
 main()

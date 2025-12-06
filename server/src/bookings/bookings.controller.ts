@@ -125,6 +125,8 @@ export class BookingsController {
     return this.bookingsService.findAll(query);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get booking history of current user' })
   @ApiResponse({ status: 200, description: 'Fetched user bookings.' })
   @Get('my-bookings')
@@ -141,6 +143,8 @@ export class BookingsController {
     return this.bookingsService.findOne(id);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Cancel a booking and release seat locks' })
   @ApiParam({ name: 'id', description: 'Booking ID', type: String })
   @ApiResponse({ status: 200, description: 'Booking cancelled successfully.' })
@@ -151,5 +155,51 @@ export class BookingsController {
   @Patch(':id/cancel')
   async cancel(@Param('id') id: string, @Req() req: RequestWithUser) {
     return this.bookingsService.cancel(id, req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Modify a booking (change seat, trip, route, or customer info)',
+  })
+  @ApiParam({ name: 'id', description: 'Booking ID', type: String })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        tripId: {
+          type: 'string',
+          format: 'uuid',
+          description: 'New trip ID (optional)',
+        },
+        seatId: {
+          type: 'string',
+          format: 'uuid',
+          description: 'New seat ID (optional)',
+        },
+        routeId: {
+          type: 'string',
+          format: 'uuid',
+          description: 'New route ID (optional)',
+        },
+        customerInfo: {
+          type: 'object',
+          description: 'Updated customer information (optional)',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Booking modified successfully.' })
+  @ApiResponse({
+    status: 400,
+    description: 'Cannot modify (permission, cancelled, or departed).',
+  })
+  @Patch(':id/modify')
+  async modify(
+    @Param('id') id: string,
+    @Body() modifyData: ModifyBookingDto,
+    @Req() req: RequestWithUser,
+  ) {
+    return this.bookingsService.modify(id, req.user.userId, modifyData);
   }
 }

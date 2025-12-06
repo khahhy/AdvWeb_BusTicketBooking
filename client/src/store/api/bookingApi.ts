@@ -9,6 +9,9 @@ import {
   CreateBookingResult,
   LockSeatResponse,
   SeatLockRequest,
+  GuestLookupRequest,
+  TicketLookupParams,
+  GuestCancelRequest,
 } from "@/store/type/bookingType";
 
 export const bookingApi = createApi({
@@ -103,6 +106,41 @@ export const bookingApi = createApi({
       }),
       providesTags: ["BookingStats"],
     }),
+
+    // Guest: Look up bookings by email and phone
+    lookupGuestBookings: builder.mutation<
+      ApiResponse<Booking[]>,
+      GuestLookupRequest
+    >({
+      query: (body) => ({
+        url: "/bookings/guest/lookup",
+        method: "POST",
+        body,
+      }),
+    }),
+
+    // Look up booking by ticket code and email
+    lookupByTicketCode: builder.query<ApiResponse<Booking>, TicketLookupParams>(
+      {
+        query: ({ ticketCode, email }) => ({
+          url: `/bookings/lookup/${ticketCode}`,
+          method: "GET",
+          params: { email },
+        }),
+      },
+    ),
+
+    // Guest: Cancel booking by ticket code
+    cancelGuestBooking: builder.mutation<
+      ApiResponse<Booking>,
+      { ticketCode: string } & GuestCancelRequest
+    >({
+      query: ({ ticketCode, email }) => ({
+        url: `/bookings/guest/${ticketCode}/cancel`,
+        method: "PATCH",
+        body: { email },
+      }),
+    }),
   }),
 });
 
@@ -115,4 +153,8 @@ export const {
   useGetBookingByIdQuery,
   useCancelBookingMutation,
   useGetBookingStatsQuery,
+  useLookupGuestBookingsMutation,
+  useLookupByTicketCodeQuery,
+  useLazyLookupByTicketCodeQuery,
+  useCancelGuestBookingMutation,
 } = bookingApi;

@@ -20,6 +20,9 @@ export const API_ENDPOINTS = {
   bookings: {
     list: "/bookings",
     details: "/bookings/{id}",
+    guestLookup: "/bookings/guest/lookup",
+    lookupByTicketCode: "/bookings/lookup/{ticketCode}",
+    guestCancel: "/bookings/guest/{ticketCode}/cancel",
   },
   buses: {
     list: "/buses",

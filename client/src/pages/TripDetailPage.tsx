@@ -2,12 +2,12 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/common/Navbar";
 import backgroundImage from "@/assets/images/background.png";
-import { generateSeats, Seat } from "@/data/mockTrips";
+import { Seat } from "@/data/mockTrips";
 import dayjs from "dayjs";
 import Footer from "@/components/dashboard/Footer";
 import { useGetTripRouteMapDetailQuery } from "@/store/api/routesApi";
-import { useGetBusSeatsQuery } from "@/store/api/busApi";
-import { BackendSeat } from "@/store/type/routesType";
+import { useGetTripSeatsQuery } from "@/store/api/tripsApi";
+import { SeatStatus } from "@/store/type/tripsType";
 import {
   Clock,
   MapPin,
@@ -49,15 +49,14 @@ export default function TripDetailPage() {
     { skip: !tripId || !routeId }, // Skip if either param is missing
   );
 
-  // Fetch seats for the bus
-  const busId = tripData?.bus?.id;
+  // Fetch real-time seat status for the trip
   const {
-    data: backendSeats,
+    data: seatStatusData,
     isLoading: seatsLoading,
-    error: seatsError,
-  } = useGetBusSeatsQuery(busId || "", {
-    skip: !busId,
-  });
+  } = useGetTripSeatsQuery(
+    { tripId, routeId },
+    { skip: !tripId || !routeId },
+  );
 
   // Transform API data to component format
   const trip = useMemo(() => {
@@ -67,6 +66,7 @@ export default function TripDetailPage() {
     if (!actualData) {
       return {
         id: "",
+        busPlate: "",
         departureTime: "--:--",
         arrivalTime: "--:--",
         duration: "0h",
@@ -97,16 +97,9 @@ export default function TripDetailPage() {
       });
     }
 
-    // Map bus type enum to lowercase strings and get total seats
-    const busTypeMap: { [key: string]: string } = {
-      STANDARD: "standard",
-      VIP: "vip",
-      SLEEPER: "sleeper",
-      LIMOUSINE: "limousine",
-    };
-
-    const busTypeKey =
-      busTypeMap[actualData.bus?.busType || "STANDARD"] || "standard";
+    // Map bus type to lowercase (case-insensitive)
+    const rawBusType = actualData.bus?.busType || "STANDARD";
+    const busTypeKey = rawBusType.toLowerCase();
 
     // Get total seats from bus type
     const getTotalSeatsFromBusType = (busType: string): number => {
@@ -125,14 +118,15 @@ export default function TripDetailPage() {
 
     const totalSeats = getTotalSeatsFromBusType(busTypeKey);
 
-    // Calculate available seats from backend seat data
-    const availableSeats = backendSeats
-      ? backendSeats.length
+    // Calculate available seats from real seat status data
+    const availableSeats = seatStatusData
+      ? seatStatusData.filter((s) => s.status === "AVAILABLE").length
       : Math.floor(totalSeats * 0.6);
 
     return {
       id: actualData.tripId,
       busId: actualData.bus?.id,
+      busPlate: actualData.bus?.plate || "",
       departureTime: startTime.format("HH:mm"),
       arrivalTime: endTime.format("HH:mm"),
       duration: durationText,
@@ -147,7 +141,7 @@ export default function TripDetailPage() {
       amenities: amenitiesObj,
       note: undefined,
     };
-  }, [tripData, tripId, backendSeats]);
+  }, [tripData, tripId, seatStatusData]);
 
   // Convert string bus type to BusType enum
   const getBusTypeEnum = (busType?: string): BusType => {
@@ -165,37 +159,22 @@ export default function TripDetailPage() {
     }
   };
 
-  // Seat management
-  const transformBackendSeats = (
-    backendSeats: BackendSeat[] | undefined,
-    totalSeats: number,
+  // Transform real seat status data to component format
+  const transformSeatStatus = (
+    seatStatusData: SeatStatus[] | undefined,
     basePrice: number,
-    busType: string,
   ): Seat[] => {
-    // If no backendSeats, fallback to generateSeats with 40% booked
-    if (!backendSeats || backendSeats.length === 0) {
-      return generateSeats(
-        totalSeats,
-        Math.floor(totalSeats * 0.4),
-        basePrice,
-        busType,
-      );
+    if (!seatStatusData || seatStatusData.length === 0) {
+      return [];
     }
 
-    // TODO: Integrate with bookings API to get real booked seats
-    // For now, mock some seats as booked (simulate ~40% occupancy)
-    const bookedCount = Math.floor(backendSeats.length * 0.4);
-    const bookedIndices = new Set<number>();
-    while (bookedIndices.size < bookedCount) {
-      bookedIndices.add(Math.floor(Math.random() * backendSeats.length));
-    }
-
-    return backendSeats.map((backendSeat, index) => ({
-      id: backendSeat.id,
-      number: backendSeat.seatNumber,
-      type: bookedIndices.has(index)
-        ? ("booked" as const)
-        : ("available" as const),
+    return seatStatusData.map((seat) => ({
+      id: seat.seatId,
+      number: seat.seatNumber,
+      type:
+        seat.status === "BOOKED" || seat.status === "LOCKED"
+          ? ("booked" as const)
+          : ("available" as const),
       price: basePrice,
     }));
   };
@@ -203,17 +182,13 @@ export default function TripDetailPage() {
   const [seats, setSeats] = useState<Seat[]>([]);
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
 
-  // Update seats when trip data changes
+  // Update seats when seat status data changes
   useEffect(() => {
-    setSeats(
-      transformBackendSeats(
-        backendSeats,
-        trip.totalSeats,
-        trip.price,
-        trip.busType,
-      ),
-    );
-  }, [trip.totalSeats, trip.price, trip.busType, backendSeats]);
+    const transformedSeats = transformSeatStatus(seatStatusData, trip.price);
+    if (transformedSeats.length > 0) {
+      setSeats(transformedSeats);
+    }
+  }, [seatStatusData, trip.price]);
 
   const handleSeatSelect = (seatId: string) => {
     setSeats((prevSeats) => {
@@ -250,11 +225,12 @@ export default function TripDetailPage() {
   };
 
   const handleBookTrip = () => {
-    const seat =
-      selectedSeats.length > 0
-        ? seats.find((s) => s.id === selectedSeats[0])?.number || "01"
-        : "01";
-    navigate(`/checkout?tripId=${trip.id}&seat=${seat}&date=${travelDate}`);
+    const selectedSeat = selectedSeats.length > 0 ? selectedSeats[0] : "";
+    const seatNumber =
+      seats.find((s) => s.id === selectedSeat)?.number || "01";
+    navigate(
+      `/checkout?tripId=${trip.id}&routeId=${routeId}&seatId=${selectedSeat}&seat=${seatNumber}&date=${travelDate}`,
+    );
   };
 
   const getAmenityIcon = (amenity: string) => {
@@ -358,13 +334,10 @@ export default function TripDetailPage() {
         )}
 
         {/* Error State */}
-        {(tripError || seatsError) && (
+        {tripError && (
           <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-2xl p-6 mb-6">
             <p className="text-yellow-800 dark:text-yellow-200">
-              {tripError
-                ? "Unable to load trip details from server."
-                : "Unable to load seat information."}{" "}
-              Showing available data.
+              Unable to load trip details from server. Showing available data.
             </p>
           </div>
         )}
@@ -462,7 +435,7 @@ export default function TripDetailPage() {
                   Bus Information
                 </h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Bus Type */}
                   {trip.busType && (
                     <div className="flex items-start gap-3">
@@ -475,6 +448,25 @@ export default function TripDetailPage() {
                         </div>
                         <div className="text-base font-bold text-gray-900 dark:text-white">
                           {getBusTypeLabel(trip.busType)}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Plate Number */}
+                  {trip.busPlate && (
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center flex-shrink-0">
+                        <span className="text-purple-600 dark:text-purple-300 text-xs font-bold">
+                          #
+                        </span>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                          Plate Number
+                        </div>
+                        <div className="text-base font-bold text-gray-900 dark:text-white">
+                          {trip.busPlate}
                         </div>
                       </div>
                     </div>

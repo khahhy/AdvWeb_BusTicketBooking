@@ -28,17 +28,6 @@ export interface Bus {
   updatedAt: string;
 }
 
-export interface SeatLayout {
-  busType: BusType;
-  totalSeats: number;
-  layout: {
-    columns: number[];
-    rows: number;
-    aisles: number[];
-  };
-  description: string;
-}
-
 export interface CreateBusRequest {
   plate: string;
   busType: BusType;

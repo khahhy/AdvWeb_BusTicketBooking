@@ -1,12 +1,6 @@
 import { Armchair, Bed, User } from "lucide-react";
 import { BusType } from "@/store/type/busType";
-
-export interface SeatStatus {
-  seatId: string;
-  seatNumber: string;
-  status: "available" | "selected" | "booked";
-  price: number;
-}
+import type { SeatStatus } from "@/store/type/seatsType";
 
 interface InteractiveSeatMapProps {
   busType: BusType;
@@ -21,6 +15,196 @@ export default function InteractiveSeatMap({
   onSeatSelect,
   selectedSeats = [],
 }: InteractiveSeatMapProps) {
+  const findSeat = (col: string, row: number) => {
+    const label = `${col}${row}`;
+    return seats.find((s) => s.seatNumber === label);
+  };
+
+  const getSeatStatusStyle = (seat: SeatStatus) => {
+    if (seat.status === "BOOKED") {
+      return "bg-gray-300 dark:bg-gray-600 border-gray-400 dark:border-gray-500 cursor-not-allowed opacity-50";
+    }
+    if (selectedSeats.includes(seat.seatId)) {
+      return "bg-blue-500 dark:bg-blue-600 border-blue-600 dark:border-blue-500 text-white shadow-lg scale-105";
+    }
+    return "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500 hover:bg-blue-50 dark:hover:bg-blue-900 hover:border-blue-400 dark:hover:border-blue-500 hover:scale-105 cursor-pointer";
+  };
+
+  const renderSeatItem = (
+    seat: SeatStatus | undefined,
+    _: string,
+    IconComponent = Armchair,
+  ) => {
+    if (!seat) {
+      return <div className="w-full h-10 opacity-0"></div>;
+    }
+
+    const isDisabled = seat.status === "BOOKED";
+    const isSelected = selectedSeats.includes(seat.seatId);
+
+    return (
+      <button
+        key={seat.seatId}
+        onClick={() => !isDisabled && onSeatSelect(seat.seatId)}
+        disabled={isDisabled}
+        className={`group relative flex flex-col items-center gap-1 transition-all duration-200 ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
+        title={isDisabled ? `Seat ${seat.seatNumber} - Booked` : ""}
+      >
+        <div
+          className={`p-2 border-2 rounded-lg shadow-sm transition-all duration-200 ${getSeatStatusStyle(seat)}`}
+        >
+          <IconComponent size={20} strokeWidth={2.5} />
+        </div>
+        <span
+          className={`text-[10px] font-medium transition-colors ${
+            isSelected
+              ? "text-blue-600 dark:text-blue-400"
+              : isDisabled
+                ? "text-gray-400 dark:text-gray-500"
+                : "text-gray-600 dark:text-gray-400"
+          }`}
+        >
+          {seat.seatNumber}
+        </span>
+      </button>
+    );
+  };
+
+  const renderStandardLayout = () => {
+    const rows = 8;
+    return (
+      <div className="space-y-3">
+        <div className="grid grid-cols-5 gap-x-2 mb-2">
+          {["A", "B", "", "C", "D"].map((col, i) => (
+            <div
+              key={i}
+              className={`text-center text-xs font-medium text-gray-500 ${col === "" ? "w-6" : ""}`}
+            >
+              {col}
+            </div>
+          ))}
+        </div>
+        {Array.from({ length: rows }).map((_, i) => {
+          const r = i + 1;
+          return (
+            <div key={r} className="grid grid-cols-5 gap-x-2 gap-y-2">
+              {renderSeatItem(findSeat("A", r), `A${r}`)}
+              {renderSeatItem(findSeat("B", r), `B${r}`)}
+              <div className="flex justify-center items-center text-xs text-gray-400 font-mono">
+                {r}
+              </div>
+              {renderSeatItem(findSeat("C", r), `C${r}`)}
+              {renderSeatItem(findSeat("D", r), `D${r}`)}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderVIPLayout = () => {
+    const rows = 6;
+    return (
+      <div className="space-y-3">
+        <div className="grid grid-cols-4 gap-x-3 mb-2">
+          {["A", "B", "", "C"].map((col, i) => (
+            <div
+              key={i}
+              className={`text-center text-xs font-medium text-gray-500 ${col === "" ? "w-6" : ""}`}
+            >
+              {col}
+            </div>
+          ))}
+        </div>
+        {Array.from({ length: rows }).map((_, i) => {
+          const r = i + 1;
+          return (
+            <div key={r} className="grid grid-cols-4 gap-x-3 gap-y-2">
+              {renderSeatItem(findSeat("A", r), `A${r}`)}
+              {renderSeatItem(findSeat("B", r), `B${r}`)}
+              <div className="flex justify-center items-center text-xs text-gray-400 font-mono">
+                {r}
+              </div>
+              {renderSeatItem(findSeat("C", r), `C${r}`)}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderLimousineLayout = () => {
+    const rows = 4;
+    return (
+      <div className="space-y-3">
+        <div className="grid grid-cols-5 gap-x-2 mb-2">
+          {["A", "B", "C", "", "D"].map((col, i) => (
+            <div
+              key={i}
+              className={`text-center text-xs font-medium text-gray-500 ${col === "" ? "w-6" : ""}`}
+            >
+              {col}
+            </div>
+          ))}
+        </div>
+        {Array.from({ length: rows }).map((_, i) => {
+          const r = i + 1;
+          return (
+            <div key={r} className="grid grid-cols-5 gap-x-2 gap-y-2">
+              {renderSeatItem(findSeat("A", r), `A${r}`)}
+              {renderSeatItem(findSeat("B", r), `B${r}`)}
+              {renderSeatItem(findSeat("C", r), `C${r}`)}
+              <div className="flex justify-center items-center text-xs text-gray-400 font-mono">
+                {r}
+              </div>
+              {renderSeatItem(findSeat("D", r), `D${r}`)}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderSleeperLayout = () => {
+    const rows = 4;
+
+    const renderTier = (
+      leftCol: string,
+      rightCol: string,
+      tierLabel: string,
+    ) => (
+      <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 mb-4">
+        <div className="text-center text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+          {tierLabel}
+        </div>
+        <div className="grid grid-cols-3 gap-x-2 mb-2">
+          <div className="text-center text-xs text-gray-500">{leftCol}</div>
+          <div className="w-6"></div>
+          <div className="text-center text-xs text-gray-500">{rightCol}</div>
+        </div>
+        {Array.from({ length: rows }).map((_, i) => {
+          const r = i + 1;
+          return (
+            <div key={r} className="grid grid-cols-3 gap-x-2 gap-y-2 mb-2">
+              {renderSeatItem(findSeat(leftCol, r), `${leftCol}${r}`, Bed)}
+              <div className="flex justify-center items-center text-xs text-gray-400 font-mono">
+                {r}
+              </div>
+              {renderSeatItem(findSeat(rightCol, r), `${rightCol}${r}`, Bed)}
+            </div>
+          );
+        })}
+      </div>
+    );
+
+    return (
+      <div>
+        {renderTier("A", "B", "Upper Tier")}
+        {renderTier("C", "D", "Lower Tier")}
+      </div>
+    );
+  };
+
   const renderSeatLayout = () => {
     switch (busType) {
       case BusType.STANDARD:
@@ -34,283 +218,6 @@ export default function InteractiveSeatMap({
       default:
         return renderStandardLayout();
     }
-  };
-
-  const getSeatStatusStyle = (seat: SeatStatus) => {
-    if (seat.status === "booked") {
-      return "bg-gray-300 dark:bg-gray-600 border-gray-400 dark:border-gray-500 cursor-not-allowed opacity-50";
-    }
-    if (selectedSeats.includes(seat.seatId)) {
-      return "bg-blue-500 dark:bg-blue-600 border-blue-600 dark:border-blue-500 text-white shadow-lg scale-105";
-    }
-    return "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500 hover:bg-blue-50 dark:hover:bg-blue-900 hover:border-blue-400 dark:hover:border-blue-500 hover:scale-105 cursor-pointer";
-  };
-
-  const renderSeat = (seat: SeatStatus) => {
-    const isDisabled = seat.status === "booked";
-    const isSelected = selectedSeats.includes(seat.seatId);
-
-    return (
-      <button
-        key={seat.seatId}
-        onClick={() => !isDisabled && onSeatSelect(seat.seatId)}
-        disabled={isDisabled}
-        className={`group relative flex flex-col items-center gap-1 transition-all duration-200 ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
-        title={
-          isDisabled
-            ? `Seat ${seat.seatNumber} - Booked`
-            : `Seat ${seat.seatNumber} - ${new Intl.NumberFormat("vi-VN").format(seat.price)}đ`
-        }
-      >
-        <div
-          className={`p-2 border-2 rounded-lg shadow-sm transition-all duration-200 ${getSeatStatusStyle(seat)}`}
-        >
-          <Armchair size={20} strokeWidth={2.5} />
-        </div>
-        <span
-          className={`text-[10px] font-medium transition-colors ${
-            isSelected
-              ? "text-blue-600 dark:text-blue-400"
-              : isDisabled
-                ? "text-gray-400 dark:text-gray-500"
-                : "text-gray-600 dark:text-gray-400"
-          }`}
-        >
-          {seat.seatNumber}
-        </span>
-      </button>
-    );
-  };
-
-  const renderBed = (seat: SeatStatus) => {
-    const isDisabled = seat.status === "booked";
-    const isSelected = selectedSeats.includes(seat.seatId);
-
-    return (
-      <button
-        key={seat.seatId}
-        onClick={() => !isDisabled && onSeatSelect(seat.seatId)}
-        disabled={isDisabled}
-        className={`group relative flex flex-col items-center gap-1 transition-all duration-200 ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
-        title={
-          isDisabled
-            ? `Bed ${seat.seatNumber} - Booked`
-            : `Bed ${seat.seatNumber} - ${new Intl.NumberFormat("vi-VN").format(seat.price)}đ`
-        }
-      >
-        <div
-          className={`p-2 border-2 rounded-lg shadow-sm transition-all duration-200 ${getSeatStatusStyle(seat)}`}
-        >
-          <Bed size={20} strokeWidth={2.5} />
-        </div>
-        <span
-          className={`text-[10px] font-medium transition-colors ${
-            isSelected
-              ? "text-blue-600 dark:text-blue-400"
-              : isDisabled
-                ? "text-gray-400 dark:text-gray-500"
-                : "text-gray-600 dark:text-gray-400"
-          }`}
-        >
-          {seat.seatNumber}
-        </span>
-      </button>
-    );
-  };
-
-  // Standard Bus: 2-2 Layout (32 seats, 8 rows)
-  const renderStandardLayout = () => {
-    const rows = 8;
-    const seatsPerRow = 4;
-
-    return (
-      <div className="space-y-3">
-        {/* Column Headers */}
-        <div className="grid grid-cols-5 gap-x-2 mb-2">
-          <div className="text-center text-xs font-medium text-gray-500 dark:text-gray-400">
-            A
-          </div>
-          <div className="text-center text-xs font-medium text-gray-500 dark:text-gray-400">
-            B
-          </div>
-          <div className="w-6"></div>
-          <div className="text-center text-xs font-medium text-gray-500 dark:text-gray-400">
-            C
-          </div>
-          <div className="text-center text-xs font-medium text-gray-500 dark:text-gray-400">
-            D
-          </div>
-        </div>
-
-        {/* Rows */}
-        {Array.from({ length: rows }).map((_, rowIndex) => {
-          const seatA = seats[rowIndex * seatsPerRow];
-          const seatB = seats[rowIndex * seatsPerRow + 1];
-          const seatC = seats[rowIndex * seatsPerRow + 2];
-          const seatD = seats[rowIndex * seatsPerRow + 3];
-
-          return (
-            <div key={rowIndex} className="grid grid-cols-5 gap-x-2 gap-y-2">
-              {seatA && renderSeat(seatA)}
-              {seatB && renderSeat(seatB)}
-              <div className="flex justify-center items-center">
-                <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">
-                  {rowIndex + 1}
-                </span>
-              </div>
-              {seatC && renderSeat(seatC)}
-              {seatD && renderSeat(seatD)}
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-  // VIP Bus: 2-1 Layout (18 seats, 6 rows, 3 seats per row)
-  const renderVIPLayout = () => {
-    const rows = 6; // Fixed 6 rows for VIP
-    const seatsPerRow = 3;
-
-    return (
-      <div className="space-y-3">
-        {/* Column Headers */}
-        <div className="grid grid-cols-4 gap-x-3 mb-2">
-          <div className="text-center text-xs font-medium text-gray-500 dark:text-gray-400">
-            A
-          </div>
-          <div className="text-center text-xs font-medium text-gray-500 dark:text-gray-400">
-            B
-          </div>
-          <div className="w-6"></div>
-          <div className="text-center text-xs font-medium text-gray-500 dark:text-gray-400">
-            C
-          </div>
-        </div>
-
-        {/* Rows */}
-        {Array.from({ length: rows }).map((_, rowIndex) => {
-          const seatA = seats[rowIndex * seatsPerRow];
-          const seatB = seats[rowIndex * seatsPerRow + 1];
-          const seatC = seats[rowIndex * seatsPerRow + 2];
-
-          return (
-            <div key={rowIndex} className="grid grid-cols-4 gap-x-3 gap-y-2">
-              {seatA && renderSeat(seatA)}
-              {seatB && renderSeat(seatB)}
-              <div className="flex justify-center items-center">
-                <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">
-                  {rowIndex + 1}
-                </span>
-              </div>
-              {seatC && renderSeat(seatC)}
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-  // Sleeper Bus: 2-tier Layout (16 beds)
-  const renderSleeperLayout = () => {
-    const bedsPerTier = seats.length / 2;
-    const upperTier = seats.slice(0, bedsPerTier);
-    const lowerTier = seats.slice(bedsPerTier);
-
-    const renderTier = (tierSeats: SeatStatus[], tierName: string) => {
-      const rows = Math.ceil(tierSeats.length / 2);
-
-      return (
-        <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3">
-          <div className="text-center text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-            {tierName}
-          </div>
-          <div className="grid grid-cols-3 gap-x-2 mb-2">
-            <div className="text-center text-xs font-medium text-gray-500 dark:text-gray-400">
-              A
-            </div>
-            <div className="w-6"></div>
-            <div className="text-center text-xs font-medium text-gray-500 dark:text-gray-400">
-              B
-            </div>
-          </div>
-          {Array.from({ length: rows }).map((_, rowIndex) => {
-            const bedA = tierSeats[rowIndex * 2];
-            const bedB = tierSeats[rowIndex * 2 + 1];
-
-            return (
-              <div
-                key={rowIndex}
-                className="grid grid-cols-3 gap-x-2 gap-y-2 mb-2"
-              >
-                {bedA && renderBed(bedA)}
-                <div className="flex justify-center items-center">
-                  <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">
-                    {rowIndex + 1}
-                  </span>
-                </div>
-                {bedB && renderBed(bedB)}
-              </div>
-            );
-          })}
-        </div>
-      );
-    };
-
-    return (
-      <div className="space-y-3">
-        {renderTier(upperTier, "Upper Tier")}
-        {renderTier(lowerTier, "Lower Tier")}
-      </div>
-    );
-  };
-
-  // Limousine Bus: 1-2-1 Layout (16 seats, 4 rows)
-  const renderLimousineLayout = () => {
-    const rows = seats.length / 4;
-
-    return (
-      <div className="space-y-3">
-        {/* Column Headers */}
-        <div className="grid grid-cols-5 gap-x-2 mb-2">
-          <div className="text-center text-xs font-medium text-gray-500 dark:text-gray-400">
-            A
-          </div>
-          <div className="text-center text-xs font-medium text-gray-500 dark:text-gray-400">
-            B
-          </div>
-          <div className="text-center text-xs font-medium text-gray-500 dark:text-gray-400">
-            C
-          </div>
-          <div className="w-6"></div>
-          <div className="text-center text-xs font-medium text-gray-500 dark:text-gray-400">
-            D
-          </div>
-        </div>
-
-        {/* Rows */}
-        {Array.from({ length: rows }).map((_, rowIndex) => {
-          const seatA = seats[rowIndex * 4];
-          const seatB = seats[rowIndex * 4 + 1];
-          const seatC = seats[rowIndex * 4 + 2];
-          const seatD = seats[rowIndex * 4 + 3];
-
-          return (
-            <div key={rowIndex} className="grid grid-cols-5 gap-x-2 gap-y-2">
-              {seatA && renderSeat(seatA)}
-              {seatB && renderSeat(seatB)}
-              {seatC && renderSeat(seatC)}
-              <div className="flex justify-center items-center">
-                <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">
-                  {rowIndex + 1}
-                </span>
-              </div>
-              {seatD && renderSeat(seatD)}
-            </div>
-          );
-        })}
-      </div>
-    );
   };
 
   return (
@@ -394,11 +301,6 @@ export default function InteractiveSeatMap({
                 Total Price
               </p>
               <p className="text-lg font-bold text-blue-900 dark:text-blue-100">
-                {new Intl.NumberFormat("vi-VN").format(
-                  seats
-                    .filter((s) => selectedSeats.includes(s.seatId))
-                    .reduce((sum, s) => sum + s.price, 0),
-                )}
                 đ
               </p>
             </div>

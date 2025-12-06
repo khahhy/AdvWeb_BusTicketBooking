@@ -27,7 +27,7 @@ const BusLayoutVisualization: React.FC<BusLayoutVisualizationProps> = ({
       type: BusType.VIP,
       name: "VIP Bus",
       description: "2-1 Layout",
-      capacity: 16,
+      capacity: 18,
       color: "bg-purple-100 text-purple-800",
       seats: generateVIPSeats(6), // ~6 rows × 3 seats = 18, close to 16
     },

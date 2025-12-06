@@ -59,7 +59,6 @@ model Seats {
   id          String             @id @default(uuid())
   busId       String
   seatNumber  String
-  coordinates Json?
   bookings    Bookings[]
   seatLocks   SeatSegmentLocks[]
   bus         Buses              @relation(fields: [busId], references: [id])

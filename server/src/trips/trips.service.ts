@@ -666,6 +666,20 @@ export class TripsService {
       // Collect booked seat IDs from multiple sources
       const bookedSeatIds = new Set<string>();
 
+      const lockPattern = `lock:trip:${tripId}:*`;
+      const activeLocks = await this.cacheManager.keys(lockPattern);
+
+      if (activeLocks && activeLocks.length > 0) {
+        activeLocks.forEach((key) => {
+          const parts = key.split(':');
+          const segId = parts[4];
+          const seatId = parts[6];
+          if (segmentIds.includes(segId)) {
+            bookedSeatIds.add(seatId);
+          }
+        });
+      }
+
       // Method 1: Check SeatSegmentLocks (if segments exist)
       if (segmentIds.length > 0) {
         const lockedSeats = await this.prisma.seatSegmentLocks.findMany({
@@ -703,7 +717,6 @@ export class TripsService {
         return {
           seatId: seat.id,
           seatNumber: seat.seatNumber,
-          coordinates: seat.coordinates,
           status: isLocked ? 'BOOKED' : 'AVAILABLE',
         };
       });

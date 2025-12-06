@@ -424,28 +424,12 @@ export default function SearchPage() {
                         ? `${Math.floor(durationHours)}h ${Math.round((durationHours % 1) * 60)}m`
                         : `${Math.round(durationHours * 60)}m`;
 
-                    // Calculate total seats from bus type
-                    const getTotalSeats = (busType?: string): number => {
-                      switch (busType?.toUpperCase()) {
-                        case "VIP":
-                          return 18;
-                        case "SLEEPER":
-                        case "LIMOUSINE":
-                          return 16;
-                        case "STANDARD":
-                        default:
-                          return 32;
-                      }
-                    };
-
-                    const totalSeats = getTotalSeats(
-                      tripRoute?.trip?.bus?.busType,
-                    );
-
                     const tripData = {
-                      id: tripRoute.tripId || tripRoute.id, // Use actual tripId, fallback to id
-                      tripId: tripRoute.tripId, // tripId for navigation
-                      routeId: tripRoute.routeId, // routeId for navigation
+                      ...tripRoute.trip,
+
+                      id: tripRoute.tripId || tripRoute.id,
+                      tripId: tripRoute.tripId,
+                      routeId: tripRoute.routeId,
                       route: tripRoute.route,
                       departureTime: startTime.format("HH:mm"),
                       arrivalTime: endTime.format("HH:mm"),
@@ -455,9 +439,8 @@ export default function SearchPage() {
                       fromTerminal: tripRoute.route.origin.name,
                       toTerminal: tripRoute.route.destination.name,
                       price: Number(tripRoute.price),
-                      availableSeats: Math.floor(totalSeats * 0.6),
-                      totalSeats,
-                      busId: tripRoute.trip.bus?.id,
+
+                      // Bus Info
                       busType:
                         tripRoute.trip.bus?.busType?.toLowerCase() ||
                         "standard",
@@ -472,18 +455,6 @@ export default function SearchPage() {
                         key={`trip-${tripData.id}-${index}`}
                         trip={tripData}
                         isOpen={openTripId === tripData.id}
-                        onToggle={(tripId) =>
-                          setOpenTripId(openTripId === tripId ? null : tripId)
-                        }
-                      />
-                    );
-                  } else {
-                    // This is mock data
-                    return (
-                      <TripCard
-                        key={`trip-${tripRoute.id}-${index}`}
-                        trip={tripRoute as Trip}
-                        isOpen={openTripId === tripRoute.id}
                         onToggle={(tripId) =>
                           setOpenTripId(openTripId === tripId ? null : tripId)
                         }

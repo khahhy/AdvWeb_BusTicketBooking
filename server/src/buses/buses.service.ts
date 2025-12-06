@@ -20,65 +20,50 @@ export class BusesService {
     private readonly cacheManager: RedisCacheService,
   ) {}
 
-  private generateSeats(busId: string, capacity: number = 32) {
+  private generateSeats(busId: string, type: BusType) {
     const seats: Array<{
       busId: string;
       seatNumber: string;
-      coordinates: { x: number; y: number };
     }> = [];
 
-    if (capacity === 16) {
-      const seatLayout = [
-        { num: '01', x: 2, y: 0 },
-        { num: '02', x: 1, y: 0 },
-        { num: '03', x: 2, y: 1 },
-        { num: '04', x: 1, y: 1 },
-        { num: '05', x: 0, y: 1 },
-        { num: '06', x: 2, y: 2 },
-        { num: '07', x: 1, y: 2 },
-        { num: '08', x: 0, y: 2 },
-        { num: '09', x: 2, y: 3 },
-        { num: '10', x: 1, y: 3 },
-        { num: '11', x: 0, y: 3 },
-        { num: '12', x: 3, y: 4 },
-        { num: '13', x: 2, y: 4 },
-        { num: '14', x: 1, y: 4 },
-        { num: '15', x: 0, y: 4 },
-      ];
+    let cols: string[] = [];
+    let rows = 0;
 
-      seatLayout.forEach((s) => {
+    switch (type) {
+      case BusType.standard:
+        cols = ['A', 'B', 'C', 'D'];
+        rows = 8;
+        break;
+
+      case BusType.limousine:
+        cols = ['A', 'B', 'C', 'D'];
+        rows = 4;
+        break;
+
+      case BusType.sleeper:
+        cols = ['A', 'B', 'C', 'D'];
+        rows = 4;
+        break;
+
+      case BusType.vip:
+        cols = ['A', 'B', 'C'];
+        rows = 6;
+        break;
+
+      default:
+        cols = ['A', 'B', 'C', 'D'];
+        rows = 8;
+        break;
+    }
+
+    cols.forEach((col) => {
+      for (let r = 1; r <= rows; r++) {
         seats.push({
           busId,
-          seatNumber: s.num,
-          coordinates: { x: s.x, y: s.y },
+          seatNumber: `${col}${r}`,
         });
-      });
-    } else {
-      let totalRows = 0;
-
-      switch (capacity) {
-        case 28:
-          totalRows = 7;
-          break;
-        case 32:
-        default:
-          totalRows = 8;
-          break;
       }
-
-      let seatCounter = 1;
-
-      for (let row = 0; row < totalRows; row++) {
-        for (let col = 0; col < 4; col++) {
-          seats.push({
-            busId,
-            seatNumber: String(seatCounter).padStart(2, '0'),
-            coordinates: { x: col, y: row },
-          });
-          seatCounter++;
-        }
-      }
-    }
+    });
 
     return seats;
   }
@@ -105,7 +90,7 @@ export class BusesService {
         },
       });
 
-      const seats = this.generateSeats(bus.id, 32);
+      const seats = this.generateSeats(bus.id, bus.busType);
 
       await this.prisma.seats.createMany({
         data: seats,

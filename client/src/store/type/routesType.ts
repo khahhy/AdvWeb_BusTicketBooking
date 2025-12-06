@@ -58,11 +58,6 @@ export interface BackendSeat {
   id: string;
   busId: string;
   seatNumber: string;
-  coordinates?: {
-    row: number;
-    col: number;
-    tier?: number;
-  };
 }
 
 export interface TopPerformingRoute {

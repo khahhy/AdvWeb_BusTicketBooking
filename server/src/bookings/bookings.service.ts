@@ -43,7 +43,7 @@ export class BookingsService {
   private async calculateDetailsFromRoute(tripId: string, routeId: string) {
     console.log('=== CALCULATE DETAILS FROM ROUTE ===');
     console.log('tripId:', tripId, 'routeId:', routeId);
-    
+
     const route = await this.prisma.routes.findUnique({
       where: { id: routeId },
       select: { originLocationId: true, destinationLocationId: true },
@@ -84,11 +84,14 @@ export class BookingsService {
       where: { tripId },
       include: { fromStop: true, toStop: true },
     });
-    console.log('All trip segments:', allSegments.map(s => ({
-      id: s.id,
-      fromStopSeq: s.fromStop.sequence,
-      toStopSeq: s.toStop.sequence,
-    })));
+    console.log(
+      'All trip segments:',
+      allSegments.map((s) => ({
+        id: s.id,
+        fromStopSeq: s.fromStop.sequence,
+        toStopSeq: s.toStop.sequence,
+      })),
+    );
 
     const segments = await this.prisma.tripSegments.findMany({
       where: {
@@ -120,7 +123,7 @@ export class BookingsService {
       tripId,
       routeId,
     );
-    const TTL = 600; // 10m
+    const TTL = 120; // 2m
 
     const isBookedInDb = await this.prisma.seatSegmentLocks.findFirst({
       where: { tripId, seatId, segmentId: { in: segmentIds } },
@@ -183,7 +186,7 @@ export class BookingsService {
   async create(createBookingDto: CreateBookingDto) {
     console.log('=== BOOKING CREATE CALLED ===');
     console.log('DTO:', JSON.stringify(createBookingDto, null, 2));
-    
+
     try {
       const { userId, tripId, seatId, routeId, customerInfo } =
         createBookingDto;
@@ -257,7 +260,6 @@ export class BookingsService {
           }
 
           // Build booking data with proper relation connections
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const bookingCreateInput: any = {
             customerInfo: customerInfo as unknown as Prisma.InputJsonValue,
             price: tripRoute.price,
@@ -277,6 +279,7 @@ export class BookingsService {
           }
 
           const booking = await tx.bookings.create({
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             data: bookingCreateInput,
           });
 
@@ -289,7 +292,7 @@ export class BookingsService {
               segmentId: segId,
               bookingId: booking.id,
             }));
-            
+
             await tx.seatSegmentLocks.createMany({
               data: lockData,
             });
@@ -329,7 +332,7 @@ export class BookingsService {
       console.error('Error:', err);
       console.error('Stack:', err instanceof Error ? err.stack : 'No stack');
       console.error('============================');
-      
+
       if (
         err instanceof ConflictException ||
         err instanceof NotFoundException ||

@@ -1,13 +1,10 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/common/Navbar";
 import backgroundImage from "@/assets/images/background.png";
-import { Seat } from "@/data/mockTrips";
 import dayjs from "dayjs";
 import Footer from "@/components/dashboard/Footer";
 import { useGetTripRouteMapDetailQuery } from "@/store/api/routesApi";
-import { useGetTripSeatsQuery } from "@/store/api/tripsApi";
-import { SeatStatus } from "@/store/type/tripsType";
 import {
   Clock,
   MapPin,
@@ -25,10 +22,12 @@ import {
 } from "lucide-react";
 import InteractiveSeatMap from "@/components/search/InteractiveSeatMap";
 import { BusType } from "@/store/type/busType";
+import { useSeatBooking } from "@/hooks/useSeatBooking";
 
 export default function TripDetailPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [timeLeft, setTimeLeft] = useState<number>(120);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -46,23 +45,32 @@ export default function TripDetailPage() {
     error: tripError,
   } = useGetTripRouteMapDetailQuery(
     { tripId, routeId },
-    { skip: !tripId || !routeId }, // Skip if either param is missing
-  );
-
-  // Fetch real-time seat status for the trip
-  const {
-    data: seatStatusData,
-    isLoading: seatsLoading,
-  } = useGetTripSeatsQuery(
-    { tripId, routeId },
     { skip: !tripId || !routeId },
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actualData = (tripData as any)?.data || tripData;
+  const basePrice = parseFloat(actualData?.price || 0);
+
+  const {
+    seats,
+    selectedSeats,
+    toggleSeat,
+    totalPrice,
+    availableSeatsCount,
+    isLoading: seatsLoading,
+    handleTimeout,
+    refetch,
+    resetSelection,
+  } = useSeatBooking({
+    tripId,
+    routeId,
+    basePrice,
+    isOpen: true,
+  });
+
   // Transform API data to component format
   const trip = useMemo(() => {
-    // Backend returns {message, data}, but type says it's already unwrapped
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const actualData = (tripData as any)?.data || tripData;
     if (!actualData) {
       return {
         id: "",
@@ -105,23 +113,18 @@ export default function TripDetailPage() {
     const getTotalSeatsFromBusType = (busType: string): number => {
       switch (busType.toLowerCase()) {
         case "vip":
-          return 18; // 2-1 layout, 6 rows
+          return 18;
         case "sleeper":
-          return 16; // 1-1 layout, 8 rows
+          return 16;
         case "limousine":
-          return 16; // 3-1 layout, 4 rows
+          return 16;
         case "standard":
         default:
-          return 32; // 2-2 layout, 8 rows
+          return 32;
       }
     };
 
     const totalSeats = getTotalSeatsFromBusType(busTypeKey);
-
-    // Calculate available seats from real seat status data
-    const availableSeats = seatStatusData
-      ? seatStatusData.filter((s) => s.status === "AVAILABLE").length
-      : Math.floor(totalSeats * 0.6);
 
     return {
       id: actualData.tripId,
@@ -135,13 +138,13 @@ export default function TripDetailPage() {
       fromTerminal: actualData.origin,
       toTerminal: actualData.destination,
       price: parseFloat(actualData.price),
-      availableSeats,
+      availableSeats: availableSeatsCount,
       totalSeats,
       busType: busTypeKey,
       amenities: amenitiesObj,
       note: undefined,
     };
-  }, [tripData, tripId, seatStatusData]);
+  }, [tripData, availableSeatsCount]);
 
   // Convert string bus type to BusType enum
   const getBusTypeEnum = (busType?: string): BusType => {
@@ -159,77 +162,52 @@ export default function TripDetailPage() {
     }
   };
 
-  // Transform real seat status data to component format
-  const transformSeatStatus = (
-    seatStatusData: SeatStatus[] | undefined,
-    basePrice: number,
-  ): Seat[] => {
-    if (!seatStatusData || seatStatusData.length === 0) {
-      return [];
-    }
-
-    return seatStatusData.map((seat) => ({
-      id: seat.seatId,
-      number: seat.seatNumber,
-      type:
-        seat.status === "BOOKED" || seat.status === "LOCKED"
-          ? ("booked" as const)
-          : ("available" as const),
-      price: basePrice,
-    }));
-  };
-
-  const [seats, setSeats] = useState<Seat[]>([]);
-  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
-
-  // Update seats when seat status data changes
   useEffect(() => {
-    const transformedSeats = transformSeatStatus(seatStatusData, trip.price);
-    if (transformedSeats.length > 0) {
-      setSeats(transformedSeats);
+    if (selectedSeats.length === 0) {
+      setTimeLeft(120);
+      return;
     }
-  }, [seatStatusData, trip.price]);
 
-  const handleSeatSelect = (seatId: string) => {
-    setSeats((prevSeats) => {
-      const newSeats = prevSeats.map((seat) => {
-        if (seat.id === seatId) {
-          const newType: Seat["type"] =
-            seat.type === "selected" ? "available" : "selected";
-          return { ...seat, type: newType };
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+
+          resetSelection();
+          handleTimeout().then(() => {
+            refetch();
+          });
+
+          return 0;
         }
-        return seat;
+        return prev - 1;
       });
+    }, 1000);
 
-      const newSelected: string[] = [];
-      for (const s of newSeats) {
-        if (s.type === "selected") newSelected.push(s.id);
-      }
-      setSelectedSeats(() => newSelected);
+    return () => clearInterval(timer);
+  }, [selectedSeats.length === 0]);
 
-      return newSeats;
-    });
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? "0" : ""}${s}`;
   };
 
-  const totalPrice = selectedSeats.length * (trip.price || 0);
-
-  const formatDate = () => {
-    return dayjs(travelDate).format("dddd, MMMM DD, YYYY");
-  };
+  const formatDate = () => dayjs(travelDate).format("dddd, MMMM DD, YYYY");
 
   const formatCurrency = (amount: number | undefined | null) => {
-    if (amount === undefined || amount === null || isNaN(amount)) {
-      return "0đ";
-    }
+    if (amount === undefined || amount === null || isNaN(amount)) return "0đ";
     return amount.toLocaleString("vi-VN") + "đ";
   };
 
   const handleBookTrip = () => {
-    const selectedSeat = selectedSeats.length > 0 ? selectedSeats[0] : "";
-    const seatNumber =
-      seats.find((s) => s.id === selectedSeat)?.number || "01";
+    if (selectedSeats.length === 0) return;
+    const selectedSeatId = selectedSeats[0];
+    const seatObj = seats.find((s) => s.seatId === selectedSeatId);
+    const seatNumber = seatObj?.seatNumber || "";
+
     navigate(
-      `/checkout?tripId=${trip.id}&routeId=${routeId}&seatId=${selectedSeat}&seat=${seatNumber}&date=${travelDate}`,
+      `/checkout?tripId=${tripId}&routeId=${routeId}&seatId=${selectedSeatId}&seat=${seatNumber}&date=${travelDate}`,
     );
   };
 
@@ -296,21 +274,14 @@ export default function TripDetailPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
-      {/* Navbar */}
       <Navbar />
 
-      {/* Header Section with Background */}
       <div className="pt-40 pb-32 relative">
-        {/* Background Image - only in light mode */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat dark:hidden"
           style={{ backgroundImage: `url(${backgroundImage})` }}
         />
-
-        {/* Dark mode background */}
         <div className="absolute inset-0 bg-black hidden dark:block" />
-
-        {/* Gradient fade overlay at bottom */}
         <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 to-transparent dark:from-black dark:to-transparent pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
@@ -324,7 +295,6 @@ export default function TripDetailPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8 pb-20 -mt-16 relative z-10 dark:bg-black">
-        {/* Loading State */}
         {(tripLoading || seatsLoading) && (
           <div className="flex justify-center items-center py-20">
             <div className="text-gray-600 dark:text-gray-400 text-lg">
@@ -333,7 +303,6 @@ export default function TripDetailPage() {
           </div>
         )}
 
-        {/* Error State */}
         {tripError && (
           <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-2xl p-6 mb-6">
             <p className="text-yellow-800 dark:text-yellow-200">
@@ -342,19 +311,16 @@ export default function TripDetailPage() {
           </div>
         )}
 
-        {/* Trip Content */}
         {!tripLoading && !seatsLoading && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Trip Information */}
+            {/* Left Column */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Trip Route Card */}
+              {/* Route Information */}
               <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                   Route Information
                 </h2>
-
                 <div className="flex items-center justify-between gap-6">
-                  {/* Departure */}
                   <div className="flex-1 text-center">
                     <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                       Departure
@@ -371,8 +337,6 @@ export default function TripDetailPage() {
                       {trip.departureTime}
                     </div>
                   </div>
-
-                  {/* Duration */}
                   <div className="flex flex-col items-center px-4">
                     <div className="flex items-center gap-2 mb-2">
                       <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500" />
@@ -386,8 +350,6 @@ export default function TripDetailPage() {
                       </span>
                     </div>
                   </div>
-
-                  {/* Arrival */}
                   <div className="flex-1 text-center">
                     <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                       Arrival
@@ -405,8 +367,6 @@ export default function TripDetailPage() {
                     </div>
                   </div>
                 </div>
-
-                {/* Travel Date */}
                 <div className="mt-4 p-3 bg-foreground/5 rounded-xl flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-foreground" />
                   <div>
@@ -418,8 +378,6 @@ export default function TripDetailPage() {
                     </div>
                   </div>
                 </div>
-
-                {/* Note */}
                 {trip.note && (
                   <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl border border-blue-200 dark:border-blue-800">
                     <p className="text-xs text-blue-900 dark:text-blue-200">
@@ -429,14 +387,12 @@ export default function TripDetailPage() {
                 )}
               </div>
 
-              {/* Bus Information Card */}
+              {/* Bus Information */}
               <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                   Bus Information
                 </h2>
-
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Bus Type */}
                   {trip.busType && (
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
@@ -452,8 +408,6 @@ export default function TripDetailPage() {
                       </div>
                     </div>
                   )}
-
-                  {/* Plate Number */}
                   {trip.busPlate && (
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center flex-shrink-0">
@@ -471,8 +425,6 @@ export default function TripDetailPage() {
                       </div>
                     </div>
                   )}
-
-                  {/* Available Seats */}
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center flex-shrink-0">
                       <Users className="w-5 h-5 text-green-600 dark:text-green-300" />
@@ -518,20 +470,25 @@ export default function TripDetailPage() {
                 )}
               </div>
 
-              {/* Seat Selection Card */}
+              {/* Seat Selection */}
               <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.7s_forwards]">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                   Choose Your Seats
                 </h2>
+
                 <InteractiveSeatMap
                   seats={seats.map((seat) => ({
-                    seatId: seat.id,
-                    seatNumber: seat.number,
-                    status: seat.type as "available" | "selected" | "booked",
-                    price: seat.price,
+                    seatId: seat.seatId,
+                    seatNumber: seat.seatNumber,
+                    status: selectedSeats.includes(seat.seatId)
+                      ? "AVAILABLE"
+                      : seat.status === "BOOKED"
+                        ? "BOOKED"
+                        : "AVAILABLE",
+                    price: trip.price,
                   }))}
                   busType={getBusTypeEnum(trip.busType)}
-                  onSeatSelect={handleSeatSelect}
+                  onSeatSelect={toggleSeat} // Dùng hàm toggle từ hook
                   selectedSeats={selectedSeats}
                 />
 
@@ -544,8 +501,10 @@ export default function TripDetailPage() {
                         </p>
                         <p className="text-base font-bold text-gray-900 dark:text-white">
                           {seats
-                            .filter((seat) => selectedSeats.includes(seat.id))
-                            .map((seat) => seat.number)
+                            .filter((seat) =>
+                              selectedSeats.includes(seat.seatId),
+                            )
+                            .map((seat) => seat.seatNumber)
                             .join(", ")}
                         </p>
                       </div>
@@ -596,14 +555,30 @@ export default function TripDetailPage() {
               </div>
             </div>
 
-            {/* Right Column - Price Summary & Action */}
+            {/* Right Column - Price Summary */}
             <div className="lg:col-span-1">
               <div className="sticky top-32 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.4s_forwards]">
                 <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6">
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                     Price Summary
                   </h2>
-
+                  {selectedSeats.length > 0 && (
+                    <div
+                      className={`mb-4 p-3 rounded-lg flex items-center gap-2 border ${
+                        timeLeft < 60
+                          ? "bg-red-50 border-red-200 text-red-700"
+                          : "bg-blue-50 border-blue-200 text-blue-700"
+                      }`}
+                    >
+                      <Clock className="w-4 h-4" />
+                      <div className="text-sm font-medium">
+                        Giữ ghế trong:{" "}
+                        <span className="font-bold">
+                          {formatTime(timeLeft)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   <div className="space-y-3 mb-6">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -613,7 +588,6 @@ export default function TripDetailPage() {
                         {formatCurrency(trip.price)}
                       </span>
                     </div>
-
                     {selectedSeats.length > 0 && (
                       <>
                         <div className="flex items-center justify-between">
@@ -637,19 +611,12 @@ export default function TripDetailPage() {
                       </>
                     )}
                   </div>
-
                   <button
                     onClick={handleBookTrip}
                     className="w-full py-3 bg-foreground text-white font-semibold rounded-xl hover:bg-foreground/90 active:bg-foreground/80 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
                   >
                     Book Trip
                   </button>
-
-                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-4">
-                    {selectedSeats.length === 0
-                      ? "Select at least one seat to continue"
-                      : "Click to proceed to booking details"}
-                  </p>
                 </div>
               </div>
             </div>
@@ -657,7 +624,6 @@ export default function TripDetailPage() {
         )}
       </div>
 
-      {/* Footer */}
       <Footer />
     </div>
   );

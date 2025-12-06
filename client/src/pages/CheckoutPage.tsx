@@ -11,7 +11,7 @@ import SeatMapModal from "@/components/checkout/SeatMapModal";
 import Footer from "@/components/dashboard/Footer";
 import { useGetTripRouteMapDetailQuery } from "@/store/api/routesApi";
 import { useGetTripSeatsQuery } from "@/store/api/tripsApi";
-import { SeatStatus } from "@/store/type/tripsType";
+import { SeatStatus } from "@/store/type/seatsType";
 import { Loader2 } from "lucide-react";
 
 export default function CheckoutPage() {
@@ -78,9 +78,7 @@ export default function CheckoutPage() {
       busType === "sleeper" || busType === "limousine" ? 20 : 32;
 
     // Calculate available seats from real seat status
-    const availableSeats = seatStatusData
-      ? seatStatusData.filter((s) => s.status === "AVAILABLE").length
-      : totalSeats;
+    const availableSeats = seatStatusData?.availableSeats ?? totalSeats;
 
     return {
       id: actualData.tripId,
@@ -137,7 +135,7 @@ export default function CheckoutPage() {
   const [showSeatMap, setShowSeatMap] = useState(false);
 
   const seats = useMemo(
-    () => transformSeatStatus(seatStatusData, trip.price),
+    () => transformSeatStatus(seatStatusData?.seats, trip.price),
     [seatStatusData, trip.price],
   );
 
@@ -219,7 +217,7 @@ export default function CheckoutPage() {
   }
 
   // Error state
-  if (tripError || (!tripId || !routeId)) {
+  if (tripError || !tripId || !routeId) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
         <Navbar />

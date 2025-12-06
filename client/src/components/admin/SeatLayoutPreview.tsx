@@ -1,4 +1,4 @@
-import { SEAT_LAYOUTS } from "@/store/api/busApi";
+import { BUS_LAYOUT_CONFIGS } from "@/constants/bus-layouts";
 import { BusType } from "@/store/type/busType";
 
 interface SeatLayoutPreviewProps {
@@ -10,7 +10,7 @@ export default function SeatLayoutPreview({
   busType,
   className = "",
 }: SeatLayoutPreviewProps) {
-  const layout = SEAT_LAYOUTS[busType]?.[0];
+  const layout = BUS_LAYOUT_CONFIGS[busType]?.[0];
 
   if (!layout) return null;
 

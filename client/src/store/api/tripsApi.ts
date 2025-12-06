@@ -1,6 +1,6 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "./baseQuery";
-import { ApiResponse } from "../type/shared";
+import { ApiResponse } from "@/store/type/shared";
 import {
   Trip,
   TripQueryParams,
@@ -8,8 +8,8 @@ import {
   CreateTripRequest,
   UpdateTripRequest,
   TripStatus,
-  SeatStatus,
-} from "../type/tripsType";
+} from "@/store/type/tripsType";
+import { SeatStatus, TripSeatResult } from "@/store/type/seatsType";
 
 export const tripsApi = createApi({
   reducerPath: "tripsApi",
@@ -98,7 +98,7 @@ export const tripsApi = createApi({
     }),
 
     getTripSeats: builder.query<
-      SeatStatus[],
+      TripSeatResult,
       { tripId: string; routeId: string }
     >({
       query: ({ tripId, routeId }) => ({
@@ -106,7 +106,18 @@ export const tripsApi = createApi({
         method: "GET",
         params: { routeId },
       }),
-      transformResponse: (response: ApiResponse<SeatStatus[]>) => response.data,
+      transformResponse: (response: ApiResponse<SeatStatus[]>) => {
+        const customMeta = response.meta as unknown as {
+          totalSeats: number;
+          availableSeats: number;
+        };
+
+        return {
+          seats: response.data,
+          totalSeats: customMeta?.totalSeats || 0,
+          availableSeats: customMeta?.availableSeats || 0,
+        };
+      },
       keepUnusedDataFor: 60,
       providesTags: (_, __, { tripId }) => [{ type: "Seats", id: tripId }],
     }),

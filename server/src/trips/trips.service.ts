@@ -663,15 +663,40 @@ export class TripsService {
 
       const segmentIds = relevantSegments.map((s) => s.id);
 
-      const lockedSeats = await this.prisma.seatSegmentLocks.findMany({
+      // Collect booked seat IDs from multiple sources
+      const bookedSeatIds = new Set<string>();
+
+      // Method 1: Check SeatSegmentLocks (if segments exist)
+      if (segmentIds.length > 0) {
+        const lockedSeats = await this.prisma.seatSegmentLocks.findMany({
+          where: {
+            tripId,
+            segmentId: { in: segmentIds },
+          },
+          select: { seatId: true },
+        });
+        lockedSeats.forEach((lock) => bookedSeatIds.add(lock.seatId));
+      }
+
+      // Method 2: Check Bookings table directly (fallback when no segments)
+      const bookedFromBookings = await this.prisma.bookings.findMany({
         where: {
           tripId,
-          segmentId: { in: segmentIds },
+          routeId,
+          status: { in: ['confirmed', 'pendingPayment'] },
         },
         select: { seatId: true },
       });
+      bookedFromBookings.forEach((b) => bookedSeatIds.add(b.seatId));
 
-      const lockedSeatIds = new Set(lockedSeats.map((lock) => lock.seatId));
+      console.log('=== SEAT STATUS DEBUG ===');
+      console.log('tripId:', tripId, 'routeId:', routeId);
+      console.log('segmentIds count:', segmentIds.length);
+      console.log('bookedFromBookings count:', bookedFromBookings.length);
+      console.log('Total booked seats:', bookedSeatIds.size);
+      console.log('=========================');
+
+      const lockedSeatIds = bookedSeatIds;
 
       const result = trip.bus.seats.map((seat) => {
         const isLocked = lockedSeatIds.has(seat.id);

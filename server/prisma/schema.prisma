@@ -48,6 +48,7 @@ model Buses {
   id            String          @id @default(uuid())
   plate         String          @unique
   busType       BusType         @default(standard)
+  priceFactor   Float           @default(1.0)
   amenities     Json?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
@@ -271,6 +272,8 @@ enum SettingKey {
   BOOKING_RULES     
   BUS_AMENITIES     
   PAYMENT_GATEWAYS  
+  BUS_TYPE_PRICING
+  PRICING_POLICIES
 }
 
 enum UserRole {

@@ -88,6 +88,7 @@ export interface RouteTripAvailable {
   startTime: string;
   endTime: string;
   busName: string;
+  busType: string;
   amenities: string[];
   pickupLocation: string;
   dropoffLocation: string;
@@ -95,6 +96,7 @@ export interface RouteTripAvailable {
     basePrice: number;
     surcharge: string;
     surchargeReason: string;
+    busTypeFactor: number;
     finalPrice: number;
     currency: string;
   };

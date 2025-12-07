@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { ActivityLogsService } from 'src/activity-logs/activity-logs.service';
 import { RedisCacheService } from 'src/cache/redis-cache.service';
+import { SettingService } from 'src/setting/setting.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateRouteDto } from './dto/create-route.dto';
 import { UpdateRouteDto } from './dto/update-route.dto';
@@ -16,6 +17,8 @@ import {
   QueryTripRouteMapDto,
   SortOrder,
 } from './dto/query-trip-route-map.dto';
+import { BusTypePricingDto } from 'src/setting/dto/bus-type-pricing.dto';
+import { PricingPoliciesDto } from 'src/setting/dto/pricing-policies.dto';
 import {
   Prisma,
   TripStatus,
@@ -24,20 +27,20 @@ import {
   Locations,
   BookingStatus,
   Routes,
+  Buses,
+  SettingKey,
+  BusType,
 } from '@prisma/client';
 import { TripsForRouteResponse } from 'src/common/type/trip-available-for-route.interface';
 import { TopPerformingRoute } from 'src/common/type/top-performing-route.interface';
 
 @Injectable()
 export class RoutesService {
-  private readonly PRICE_PER_KM = 1400;
-  private readonly WEEKEND_SURCHARGE = 0.05;
-  private readonly HOLIDAY_SURCHARGE = 0.1;
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly activityLogService: ActivityLogsService,
     private readonly cacheManager: RedisCacheService,
+    private readonly settingService: SettingService,
   ) {}
 
   private async clearRouteCache(id?: string) {
@@ -355,10 +358,24 @@ export class RoutesService {
           data: cachedData,
         };
       }
-      const route = await this.prisma.routes.findUnique({
-        where: { id: routeId },
-      });
+      const [route, policySetting, busPriceSetting] = await Promise.all([
+        this.prisma.routes.findUnique({ where: { id: routeId } }),
+        this.settingService.findOne(SettingKey.PRICING_POLICIES),
+        this.settingService.findOne(SettingKey.BUS_TYPE_PRICING),
+      ]);
       if (!route) throw new NotFoundException('Route not found');
+
+      const policies = (policySetting.data as PricingPoliciesDto) || {
+        pricePerKm: 1500,
+        weekendSurcharge: 0,
+        holidaySurcharge: 0,
+      };
+      const busMultipliers = (busPriceSetting.data as BusTypePricingDto) || {
+        standard: 1.0,
+        vip: 1.2,
+        sleeper: 1.3,
+        limousine: 1.5,
+      };
 
       const { startDate, endDate } = query;
       const whereTrip: Prisma.TripsWhereInput = {
@@ -390,12 +407,14 @@ export class RoutesService {
         },
       });
 
-      const result = trips
+      const resolvedTrips = trips
         .map((trip) => {
           const pricing = this.calculateTripRoutePrice(
             trip,
             route.originLocationId,
             route.destinationLocationId,
+            policies,
+            busMultipliers,
           );
 
           if (!pricing) return null;
@@ -405,6 +424,7 @@ export class RoutesService {
             startTime: trip.startTime,
             endTime: trip.endTime,
             busName: trip.bus.plate,
+            busType: trip.bus.busType,
             amenities: trip.bus.amenities,
             pickupLocation: pricing.pickupName,
             dropoffLocation: pricing.dropoffName,
@@ -413,10 +433,10 @@ export class RoutesService {
         })
         .filter((item) => item !== null);
 
-      await this.cacheManager.set(cacheKey, result, 300);
+      await this.cacheManager.set(cacheKey, resolvedTrips, 300);
       return {
-        message: `Found ${result.length} trips matching this route`,
-        data: result,
+        message: `Found ${resolvedTrips.length} trips matching this route`,
+        data: resolvedTrips,
       };
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
@@ -445,20 +465,22 @@ export class RoutesService {
         );
       }
 
-      const route = await this.prisma.routes.findUnique({
-        where: { id: routeId },
-      });
-      if (!route) throw new NotFoundException('Route not found');
-
-      const trip = await this.prisma.trips.findUnique({
-        where: { id: tripId },
-        include: {
-          tripStops: {
-            include: { location: true },
-            orderBy: { sequence: 'asc' },
+      const [route, trip, policySetting, busPriceSetting] = await Promise.all([
+        this.prisma.routes.findUnique({ where: { id: routeId } }),
+        this.prisma.trips.findUnique({
+          where: { id: tripId },
+          include: {
+            tripStops: {
+              include: { location: true },
+              orderBy: { sequence: 'asc' },
+            },
+            bus: true,
           },
-        },
-      });
+        }),
+        this.settingService.findOne(SettingKey.PRICING_POLICIES),
+        this.settingService.findOne(SettingKey.BUS_TYPE_PRICING),
+      ]);
+      if (!route) throw new NotFoundException('Route not found');
       if (!trip) throw new NotFoundException('Trip not found');
 
       let finalPrice = 0;
@@ -466,10 +488,25 @@ export class RoutesService {
       if (manualPrice !== undefined && manualPrice !== null) {
         finalPrice = manualPrice;
       } else {
+        // Prepare settings
+        const policies = (policySetting.data as PricingPoliciesDto) || {
+          pricePerKm: 1500,
+          weekendSurcharge: 0,
+          holidaySurcharge: 0,
+        };
+        const busMultipliers = (busPriceSetting.data as BusTypePricingDto) || {
+          standard: 1.0,
+          vip: 1.2,
+          sleeper: 1.3,
+          limousine: 1.5,
+        };
+
         const pricingCalc = this.calculateTripRoutePrice(
           trip,
           route.originLocationId,
           route.destinationLocationId,
+          policies,
+          busMultipliers,
         );
 
         if (!pricingCalc) {
@@ -1022,9 +1059,14 @@ export class RoutesService {
   }
 
   private calculateTripRoutePrice(
-    trip: Trips & { tripStops: (TripStops & { location: Locations })[] },
+    trip: Trips & {
+      tripStops: (TripStops & { location: Locations })[];
+      bus: Buses;
+    },
     originId: string,
     destinationId: string,
+    policies: PricingPoliciesDto,
+    busMultipliers: BusTypePricingDto,
   ) {
     const originStop = trip.tripStops.find((s) => s.locationId === originId);
     const destStop = trip.tripStops.find((s) => s.locationId === destinationId);
@@ -1039,7 +1081,13 @@ export class RoutesService {
       destStop.sequence,
     );
 
-    const priceDetails = this.calculatePrice(trip.startTime, distanceKm);
+    const priceDetails = this.calculatePrice(
+      trip.startTime,
+      distanceKm,
+      trip.bus.busType,
+      policies,
+      busMultipliers,
+    );
 
     return {
       pickupName: originStop.location.name,
@@ -1049,6 +1097,9 @@ export class RoutesService {
         currency: 'VND',
       },
     };
+  }
+  private roundToThousands(amount: number): number {
+    return Math.ceil(amount / 1000) * 1000;
   }
 
   private calculateSegmentDistance(
@@ -1103,10 +1154,20 @@ export class RoutesService {
     return deg * (Math.PI / 180);
   }
 
-  private calculatePrice(date: Date, distanceKm: number) {
-    const basePrice = Math.round(distanceKm * this.PRICE_PER_KM);
+  private calculatePrice(
+    date: Date,
+    distanceKm: number,
+    busType: BusType,
+    policies: PricingPoliciesDto,
+    busMultipliers: BusTypePricingDto,
+  ) {
+    const basePricePerKm = policies.pricePerKm;
+    const baseRoutePrice = distanceKm * basePricePerKm;
+
+    const busFactor = busMultipliers[busType] || 1.0;
+
     let surchargePercent = 0;
-    let reason = 'Normal day';
+    let surchargeReason = 'Normal day';
 
     const tripDate = new Date(date);
     const dayOfWeek = tripDate.getDay();
@@ -1116,23 +1177,28 @@ export class RoutesService {
     const isHoliday =
       (day === 30 && month === 4) ||
       (day === 1 && month === 5) ||
-      (day === 2 && month === 9);
+      (day === 2 && month === 9) ||
+      (day === 1 && month === 1);
 
     if (isHoliday) {
-      surchargePercent = this.HOLIDAY_SURCHARGE;
-      reason = 'Holiday surcharge';
+      surchargePercent = policies.holidaySurcharge;
+      surchargeReason = 'Holiday surcharge';
     } else if (dayOfWeek === 0 || dayOfWeek === 6) {
-      surchargePercent = this.WEEKEND_SURCHARGE;
-      reason = 'Weekend surcharge';
+      surchargePercent = policies.weekendSurcharge;
+      surchargeReason = 'Weekend surcharge';
     }
 
-    const finalPrice = basePrice * (1 + surchargePercent);
+    const priceBeforeSurcharge = baseRoutePrice * busFactor;
+    const finalRawPrice = priceBeforeSurcharge * (1 + surchargePercent);
+
+    const roundedPrice = this.roundToThousands(finalRawPrice);
 
     return {
-      basePrice,
-      surcharge: `${surchargePercent * 100}%`,
-      surchargeReason: reason,
-      finalPrice: Math.round(finalPrice),
+      basePrice: this.roundToThousands(baseRoutePrice),
+      busTypeFactor: busFactor,
+      surcharge: `${(surchargePercent * 100).toFixed(0)}%`,
+      surchargeReason,
+      finalPrice: roundedPrice,
     };
   }
 

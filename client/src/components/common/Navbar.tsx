@@ -49,6 +49,11 @@ export default function Navbar() {
 
   const navItems: NavItem[] = [
     {
+      name: "Book Ticket",
+      link: "/search",
+      icon: <Ticket className="h-4 w-4" />,
+    },
+    {
       name: "Routes",
       link: "/routes",
       icon: <Map className="h-4 w-4" />,
@@ -75,11 +80,15 @@ export default function Navbar() {
         },
       ],
     },
-    {
-      name: "History",
-      link: "/booking-history",
-      icon: <CalendarIcon className="h-4 w-4" />,
-    },
+    ...(isLoggedIn
+      ? [
+          {
+            name: "History",
+            link: "/booking-history",
+            icon: <CalendarIcon className="h-4 w-4" />,
+          },
+        ]
+      : []),
     {
       name: "Services",
       link: "/services",

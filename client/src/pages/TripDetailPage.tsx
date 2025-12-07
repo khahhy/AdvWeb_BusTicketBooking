@@ -1,8 +1,7 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/common/Navbar";
 import backgroundImage from "@/assets/images/background.png";
-import { generateSeats, Seat } from "@/data/mockTrips";
 import dayjs from "dayjs";
 import Footer from "@/components/dashboard/Footer";
 import { useGetTripRouteMapDetailQuery } from "@/store/api/routesApi";
@@ -21,36 +20,61 @@ import {
   Bus,
   Users,
 } from "lucide-react";
-import SeatMap from "@/components/search/SeatMap";
+import InteractiveSeatMap from "@/components/search/InteractiveSeatMap";
+import { BusType } from "@/store/type/busType";
+import { useSeatBooking } from "@/hooks/useSeatBooking";
 
 export default function TripDetailPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [timeLeft, setTimeLeft] = useState<number>(120);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
   // Get trip data from URL params
-  const tripId = searchParams.get("tripId") || "1";
+  const tripId = searchParams.get("tripId") || "";
   const routeId = searchParams.get("routeId") || "";
   const travelDate = searchParams.get("date") || dayjs().format("YYYY-MM-DD");
 
-  // Fetch trip from API
+  // Fetch trip from API - only skip if both params are missing
   const {
     data: tripData,
-    isLoading,
-    error,
+    isLoading: tripLoading,
+    error: tripError,
   } = useGetTripRouteMapDetailQuery(
     { tripId, routeId },
     { skip: !tripId || !routeId },
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actualData = (tripData as any)?.data || tripData;
+  const basePrice = parseFloat(actualData?.price || 0);
+
+  const {
+    seats,
+    selectedSeats,
+    toggleSeat,
+    totalPrice,
+    availableSeatsCount,
+    isLoading: seatsLoading,
+    handleTimeout,
+    refetch,
+    resetSelection,
+  } = useSeatBooking({
+    tripId,
+    routeId,
+    basePrice,
+    isOpen: true,
+  });
+
   // Transform API data to component format
   const trip = useMemo(() => {
-    if (!tripData) {
+    if (!actualData) {
       return {
         id: "",
+        busPlate: "",
         departureTime: "--:--",
         arrivalTime: "--:--",
         duration: "0h",
@@ -65,97 +89,126 @@ export default function TripDetailPage() {
       };
     }
 
-    const startTime = dayjs(tripData.startTime);
-    const endTime = dayjs(tripData.endTime);
+    const startTime = dayjs(actualData.startTime);
+    const endTime = dayjs(actualData.endTime);
     const durationHours = endTime.diff(startTime, "hour", true);
     const durationText =
       durationHours >= 1
         ? `${Math.floor(durationHours)}h ${Math.round((durationHours % 1) * 60)}m`
         : `${Math.round(durationHours * 60)}m`;
+
+    // Convert amenities object to object format
     const amenitiesObj: Record<string, boolean> = {};
-    const seatCapacityMap: { [key: string]: number } = {
-      SEAT_16: 16,
-      SEAT_28: 28,
-      SEAT_32: 32,
+    if (actualData.bus?.amenities) {
+      Object.keys(actualData.bus.amenities).forEach((amenity: string) => {
+        amenitiesObj[amenity.toLowerCase()] = true;
+      });
+    }
+
+    // Map bus type to lowercase (case-insensitive)
+    const rawBusType = actualData.bus?.busType || "STANDARD";
+    const busTypeKey = rawBusType.toLowerCase();
+
+    // Get total seats from bus type
+    const getTotalSeatsFromBusType = (busType: string): number => {
+      switch (busType.toLowerCase()) {
+        case "vip":
+          return 18;
+        case "sleeper":
+          return 16;
+        case "limousine":
+          return 16;
+        case "standard":
+        default:
+          return 32;
+      }
     };
 
-    const busTypeKey = "standard"; // hard code
-    const totalSeats = seatCapacityMap[busTypeKey] || 32;
+    const totalSeats = getTotalSeatsFromBusType(busTypeKey);
 
     return {
-      id: tripData.tripId,
+      id: actualData.tripId,
+      busId: actualData.bus?.id,
+      busPlate: actualData.bus?.plate || "",
       departureTime: startTime.format("HH:mm"),
       arrivalTime: endTime.format("HH:mm"),
       duration: durationText,
-      from: tripData.origin,
-      to: tripData.destination,
-      price: tripData.price,
-      availableSeats: Math.floor(totalSeats * 0.6),
+      from: actualData.originCity || actualData.origin,
+      to: actualData.destinationCity || actualData.destination,
+      fromTerminal: actualData.origin,
+      toTerminal: actualData.destination,
+      price: parseFloat(actualData.price),
+      availableSeats: availableSeatsCount,
       totalSeats,
       busType: busTypeKey,
       amenities: amenitiesObj,
       note: undefined,
     };
-  }, [tripData, tripId]);
+  }, [tripData, availableSeatsCount]);
 
-  // Seat management
-  const [seats, setSeats] = useState<Seat[]>(() =>
-    generateSeats(
-      trip.totalSeats,
-      trip.totalSeats - trip.availableSeats,
-      trip.price,
-    ),
-  );
-  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  // Convert string bus type to BusType enum
+  const getBusTypeEnum = (busType?: string): BusType => {
+    if (!busType) return BusType.STANDARD;
+    const normalized = busType.toUpperCase();
+    switch (normalized) {
+      case "VIP":
+        return BusType.VIP;
+      case "SLEEPER":
+        return BusType.SLEEPER;
+      case "LIMOUSINE":
+        return BusType.LIMOUSINE;
+      default:
+        return BusType.STANDARD;
+    }
+  };
 
-  // Update seats when trip data changes
   useEffect(() => {
-    setSeats(
-      generateSeats(
-        trip.totalSeats,
-        trip.totalSeats - trip.availableSeats,
-        trip.price,
-      ),
-    );
-  }, [trip.totalSeats, trip.availableSeats, trip.price]);
+    if (selectedSeats.length === 0) {
+      setTimeLeft(120);
+      return;
+    }
 
-  const handleSeatSelect = (seatId: string) => {
-    setSeats((prevSeats) => {
-      const newSeats = prevSeats.map((seat) => {
-        if (seat.id === seatId) {
-          const newType: Seat["type"] =
-            seat.type === "selected" ? "available" : "selected";
-          return { ...seat, type: newType };
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+
+          resetSelection();
+          handleTimeout().then(() => {
+            refetch();
+          });
+
+          return 0;
         }
-        return seat;
+        return prev - 1;
       });
+    }, 1000);
 
-      const newSelected: string[] = [];
-      for (const s of newSeats) {
-        if (s.type === "selected") newSelected.push(s.id);
-      }
-      setSelectedSeats(() => newSelected);
+    return () => clearInterval(timer);
+  }, [selectedSeats.length === 0]);
 
-      return newSeats;
-    });
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? "0" : ""}${s}`;
   };
 
-  const totalPrice = selectedSeats.length * trip.price;
+  const formatDate = () => dayjs(travelDate).format("dddd, MMMM DD, YYYY");
 
-  const formatDate = () => {
-    return dayjs(travelDate).format("dddd, MMMM DD, YYYY");
-  };
-
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | undefined | null) => {
+    if (amount === undefined || amount === null || isNaN(amount)) return "0đ";
     return amount.toLocaleString("vi-VN") + "đ";
   };
 
   const handleBookTrip = () => {
-    const seat =
-      selectedSeats.length > 0
-        ? seats.find((s) => s.id === selectedSeats[0])?.number || "01"
-        : "01";
-    navigate(`/checkout?tripId=${trip.id}&seat=${seat}&date=${travelDate}`);
+    if (selectedSeats.length === 0) return;
+    const selectedSeatId = selectedSeats[0];
+    const seatObj = seats.find((s) => s.seatId === selectedSeatId);
+    const seatNumber = seatObj?.seatNumber || "";
+
+    navigate(
+      `/checkout?tripId=${tripId}&routeId=${routeId}&seatId=${selectedSeatId}&seat=${seatNumber}&date=${travelDate}`,
+    );
   };
 
   const getAmenityIcon = (amenity: string) => {
@@ -221,21 +274,14 @@ export default function TripDetailPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
-      {/* Navbar */}
       <Navbar />
 
-      {/* Header Section with Background */}
       <div className="pt-40 pb-32 relative">
-        {/* Background Image - only in light mode */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat dark:hidden"
           style={{ backgroundImage: `url(${backgroundImage})` }}
         />
-
-        {/* Dark mode background */}
         <div className="absolute inset-0 bg-black hidden dark:block" />
-
-        {/* Gradient fade overlay at bottom */}
         <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 to-transparent dark:from-black dark:to-transparent pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
@@ -249,8 +295,7 @@ export default function TripDetailPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8 pb-20 -mt-16 relative z-10 dark:bg-black">
-        {/* Loading State */}
-        {isLoading && (
+        {(tripLoading || seatsLoading) && (
           <div className="flex justify-center items-center py-20">
             <div className="text-gray-600 dark:text-gray-400 text-lg">
               Loading trip details...
@@ -258,28 +303,24 @@ export default function TripDetailPage() {
           </div>
         )}
 
-        {/* Error State */}
-        {error && (
+        {tripError && (
           <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-2xl p-6 mb-6">
             <p className="text-yellow-800 dark:text-yellow-200">
-              Unable to load trip details from server. Showing sample data.
+              Unable to load trip details from server. Showing available data.
             </p>
           </div>
         )}
 
-        {/* Trip Content */}
-        {!isLoading && (
+        {!tripLoading && !seatsLoading && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Trip Information */}
+            {/* Left Column */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Trip Route Card */}
+              {/* Route Information */}
               <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                   Route Information
                 </h2>
-
                 <div className="flex items-center justify-between gap-6">
-                  {/* Departure */}
                   <div className="flex-1 text-center">
                     <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                       Departure
@@ -287,12 +328,15 @@ export default function TripDetailPage() {
                     <div className="text-lg font-bold text-gray-900 dark:text-white mb-1">
                       {trip.from}
                     </div>
+                    {trip.fromTerminal && (
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                        {trip.fromTerminal}
+                      </div>
+                    )}
                     <div className="text-3xl font-bold text-foreground">
                       {trip.departureTime}
                     </div>
                   </div>
-
-                  {/* Duration */}
                   <div className="flex flex-col items-center px-4">
                     <div className="flex items-center gap-2 mb-2">
                       <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500" />
@@ -306,8 +350,6 @@ export default function TripDetailPage() {
                       </span>
                     </div>
                   </div>
-
-                  {/* Arrival */}
                   <div className="flex-1 text-center">
                     <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                       Arrival
@@ -315,13 +357,16 @@ export default function TripDetailPage() {
                     <div className="text-lg font-bold text-gray-900 dark:text-white mb-1">
                       {trip.to}
                     </div>
+                    {trip.toTerminal && (
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                        {trip.toTerminal}
+                      </div>
+                    )}
                     <div className="text-3xl font-bold text-foreground">
                       {trip.arrivalTime}
                     </div>
                   </div>
                 </div>
-
-                {/* Travel Date */}
                 <div className="mt-4 p-3 bg-foreground/5 rounded-xl flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-foreground" />
                   <div>
@@ -333,8 +378,6 @@ export default function TripDetailPage() {
                     </div>
                   </div>
                 </div>
-
-                {/* Note */}
                 {trip.note && (
                   <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl border border-blue-200 dark:border-blue-800">
                     <p className="text-xs text-blue-900 dark:text-blue-200">
@@ -344,14 +387,12 @@ export default function TripDetailPage() {
                 )}
               </div>
 
-              {/* Bus Information Card */}
+              {/* Bus Information */}
               <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                   Bus Information
                 </h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Bus Type */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {trip.busType && (
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
@@ -367,8 +408,23 @@ export default function TripDetailPage() {
                       </div>
                     </div>
                   )}
-
-                  {/* Available Seats */}
+                  {trip.busPlate && (
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center flex-shrink-0">
+                        <span className="text-purple-600 dark:text-purple-300 text-xs font-bold">
+                          #
+                        </span>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                          Plate Number
+                        </div>
+                        <div className="text-base font-bold text-gray-900 dark:text-white">
+                          {trip.busPlate}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center flex-shrink-0">
                       <Users className="w-5 h-5 text-green-600 dark:text-green-300" />
@@ -414,12 +470,27 @@ export default function TripDetailPage() {
                 )}
               </div>
 
-              {/* Seat Selection Card */}
+              {/* Seat Selection */}
               <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.7s_forwards]">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                   Choose Your Seats
                 </h2>
-                <SeatMap seats={seats} onSeatSelect={handleSeatSelect} />
+
+                <InteractiveSeatMap
+                  seats={seats.map((seat) => ({
+                    seatId: seat.seatId,
+                    seatNumber: seat.seatNumber,
+                    status: selectedSeats.includes(seat.seatId)
+                      ? "AVAILABLE"
+                      : seat.status === "BOOKED"
+                        ? "BOOKED"
+                        : "AVAILABLE",
+                    price: trip.price,
+                  }))}
+                  busType={getBusTypeEnum(trip.busType)}
+                  onSeatSelect={toggleSeat} // Dùng hàm toggle từ hook
+                  selectedSeats={selectedSeats}
+                />
 
                 {selectedSeats.length > 0 && (
                   <div className="mt-4 p-4 bg-foreground/5 rounded-xl border border-foreground/20">
@@ -430,8 +501,10 @@ export default function TripDetailPage() {
                         </p>
                         <p className="text-base font-bold text-gray-900 dark:text-white">
                           {seats
-                            .filter((seat) => selectedSeats.includes(seat.id))
-                            .map((seat) => seat.number)
+                            .filter((seat) =>
+                              selectedSeats.includes(seat.seatId),
+                            )
+                            .map((seat) => seat.seatNumber)
                             .join(", ")}
                         </p>
                       </div>
@@ -482,14 +555,30 @@ export default function TripDetailPage() {
               </div>
             </div>
 
-            {/* Right Column - Price Summary & Action */}
+            {/* Right Column - Price Summary */}
             <div className="lg:col-span-1">
               <div className="sticky top-32 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.4s_forwards]">
                 <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6">
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                     Price Summary
                   </h2>
-
+                  {selectedSeats.length > 0 && (
+                    <div
+                      className={`mb-4 p-3 rounded-lg flex items-center gap-2 border ${
+                        timeLeft < 60
+                          ? "bg-red-50 border-red-200 text-red-700"
+                          : "bg-blue-50 border-blue-200 text-blue-700"
+                      }`}
+                    >
+                      <Clock className="w-4 h-4" />
+                      <div className="text-sm font-medium">
+                        Giữ ghế trong:{" "}
+                        <span className="font-bold">
+                          {formatTime(timeLeft)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   <div className="space-y-3 mb-6">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -499,7 +588,6 @@ export default function TripDetailPage() {
                         {formatCurrency(trip.price)}
                       </span>
                     </div>
-
                     {selectedSeats.length > 0 && (
                       <>
                         <div className="flex items-center justify-between">
@@ -523,19 +611,12 @@ export default function TripDetailPage() {
                       </>
                     )}
                   </div>
-
                   <button
                     onClick={handleBookTrip}
                     className="w-full py-3 bg-foreground text-white font-semibold rounded-xl hover:bg-foreground/90 active:bg-foreground/80 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
                   >
                     Book Trip
                   </button>
-
-                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-4">
-                    {selectedSeats.length === 0
-                      ? "Select at least one seat to continue"
-                      : "Click to proceed to booking details"}
-                  </p>
                 </div>
               </div>
             </div>
@@ -543,7 +624,6 @@ export default function TripDetailPage() {
         )}
       </div>
 
-      {/* Footer */}
       <Footer />
     </div>
   );

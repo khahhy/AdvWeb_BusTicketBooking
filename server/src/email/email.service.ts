@@ -218,4 +218,171 @@ export class EmailService {
       throw error;
     }
   }
+
+  async sendETicketEmail(
+    email: string,
+    ticketCode: string,
+    passengerName: string,
+    tripDetails: {
+      from: string;
+      to: string;
+      departureTime: string;
+      seatNumber: string;
+    },
+    pdfBuffer: Buffer,
+  ) {
+    const mailOptions = {
+      from: `"Bus Ticket Booking" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: `Your E-Ticket - ${ticketCode}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            .container {
+              background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0f9ff 100%);
+              border-radius: 16px;
+              padding: 40px;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .logo {
+              text-align: center;
+              margin-bottom: 30px;
+            }
+            .logo h1 {
+              color: #134074;
+              font-size: 28px;
+              margin: 0;
+            }
+            .content {
+              background: white;
+              border-radius: 12px;
+              padding: 30px;
+              margin-bottom: 20px;
+            }
+            .ticket-code {
+              background: #134074;
+              color: white;
+              padding: 15px 30px;
+              border-radius: 8px;
+              font-size: 24px;
+              font-weight: bold;
+              text-align: center;
+              margin: 20px 0;
+            }
+            .trip-details {
+              background: #f8fafc;
+              border-radius: 8px;
+              padding: 20px;
+              margin: 20px 0;
+            }
+            .trip-details table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+            .trip-details td {
+              padding: 8px 0;
+            }
+            .trip-details td:first-child {
+              color: #666;
+              width: 120px;
+            }
+            .trip-details td:last-child {
+              font-weight: bold;
+              color: #333;
+            }
+            .footer {
+              text-align: center;
+              color: #666;
+              font-size: 12px;
+              margin-top: 20px;
+            }
+            .info-box {
+              background: #fef3c7;
+              border-left: 4px solid #f59e0b;
+              padding: 12px;
+              margin: 20px 0;
+              border-radius: 4px;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="logo">
+              <h1>Bus Ticket Booking</h1>
+            </div>
+            
+            <div class="content">
+              <h2 style="color: #134074; margin-top: 0;">Your E-Ticket is Ready!</h2>
+              
+              <p>Dear ${passengerName},</p>
+              
+              <p>Thank you for booking with us. Your e-ticket has been confirmed and is attached to this email.</p>
+              
+              <div class="ticket-code">${ticketCode}</div>
+              
+              <div class="trip-details">
+                <table>
+                  <tr>
+                    <td>From:</td>
+                    <td>${tripDetails.from}</td>
+                  </tr>
+                  <tr>
+                    <td>To:</td>
+                    <td>${tripDetails.to}</td>
+                  </tr>
+                  <tr>
+                    <td>Departure:</td>
+                    <td>${tripDetails.departureTime}</td>
+                  </tr>
+                  <tr>
+                    <td>Seat:</td>
+                    <td>${tripDetails.seatNumber}</td>
+                  </tr>
+                </table>
+              </div>
+              
+              <div class="info-box">
+                <strong>Important:</strong> Please arrive at the boarding point at least 15 minutes before departure. Present this e-ticket (printed or on your phone) along with a valid ID.
+              </div>
+              
+              <p>You can also download your e-ticket from our website using your booking code.</p>
+            </div>
+            
+            <div class="footer">
+              <p>© 2025 Bus Ticket Booking. All rights reserved.</p>
+              <p>This is an automated email, please do not reply.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      attachments: [
+        {
+          filename: `eticket-${ticketCode}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf',
+        },
+      ],
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      console.log(`E-ticket email sent to ${email}`);
+      return { success: true };
+    } catch (error) {
+      console.error('Error sending e-ticket email:', error);
+      throw error;
+    }
+  }
 }

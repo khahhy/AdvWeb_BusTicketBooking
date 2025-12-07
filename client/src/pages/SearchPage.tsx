@@ -67,6 +67,8 @@ export default function SearchPage() {
   const tripRouteData =
     searchTripsData?.items?.map((item) => ({
       id: item.id,
+      tripId: item.tripId, // Add tripId from API
+      routeId: item.routeId, // Add routeId from API
       departureTime: item.trip.startTime,
       arrivalTime: item.trip.endTime,
       busType: item.trip.bus?.busType,
@@ -104,20 +106,46 @@ export default function SearchPage() {
         for (const timeSlot of filters.departureTime) {
           switch (timeSlot) {
             case "early-morning":
-              if (departureHour >= 0 && departureHour <= 6)
+              // 00:00 - 06:00 (hour 0-6, excluding minutes after 06:00)
+              if (departureHour >= 0 && departureHour < 6)
                 matchesTimeSlot = true;
+              else if (departureHour === 6) {
+                const date = new Date(trip.departureTime);
+                if (date.getMinutes() === 0) matchesTimeSlot = true;
+              }
               break;
             case "morning":
-              if (departureHour > 6 && departureHour <= 12)
+              // 06:01 - 12:00
+              if (departureHour > 6 && departureHour < 12)
                 matchesTimeSlot = true;
+              else if (departureHour === 6) {
+                const date = new Date(trip.departureTime);
+                if (date.getMinutes() > 0) matchesTimeSlot = true;
+              } else if (departureHour === 12) {
+                const date = new Date(trip.departureTime);
+                if (date.getMinutes() === 0) matchesTimeSlot = true;
+              }
               break;
             case "afternoon":
-              if (departureHour > 12 && departureHour <= 18)
+              // 12:01 - 18:00
+              if (departureHour > 12 && departureHour < 18)
                 matchesTimeSlot = true;
+              else if (departureHour === 12) {
+                const date = new Date(trip.departureTime);
+                if (date.getMinutes() > 0) matchesTimeSlot = true;
+              } else if (departureHour === 18) {
+                const date = new Date(trip.departureTime);
+                if (date.getMinutes() === 0) matchesTimeSlot = true;
+              }
               break;
             case "evening":
+              // 18:01 - 23:59
               if (departureHour > 18 && departureHour <= 23)
                 matchesTimeSlot = true;
+              else if (departureHour === 18) {
+                const date = new Date(trip.departureTime);
+                if (date.getMinutes() > 0) matchesTimeSlot = true;
+              }
               break;
           }
         }
@@ -138,16 +166,42 @@ export default function SearchPage() {
         for (const timeSlot of filters.arrivalTime) {
           switch (timeSlot) {
             case "early-morning":
-              if (arrivalHour >= 0 && arrivalHour <= 6) matchesTimeSlot = true;
+              // 00:00 - 06:00 (hour 0-6, excluding minutes after 06:00)
+              if (arrivalHour >= 0 && arrivalHour < 6) matchesTimeSlot = true;
+              else if (arrivalHour === 6) {
+                const date = new Date(trip.arrivalTime);
+                if (date.getMinutes() === 0) matchesTimeSlot = true;
+              }
               break;
             case "morning":
-              if (arrivalHour > 6 && arrivalHour <= 12) matchesTimeSlot = true;
+              // 06:01 - 12:00
+              if (arrivalHour > 6 && arrivalHour < 12) matchesTimeSlot = true;
+              else if (arrivalHour === 6) {
+                const date = new Date(trip.arrivalTime);
+                if (date.getMinutes() > 0) matchesTimeSlot = true;
+              } else if (arrivalHour === 12) {
+                const date = new Date(trip.arrivalTime);
+                if (date.getMinutes() === 0) matchesTimeSlot = true;
+              }
               break;
             case "afternoon":
-              if (arrivalHour > 12 && arrivalHour <= 18) matchesTimeSlot = true;
+              // 12:01 - 18:00
+              if (arrivalHour > 12 && arrivalHour < 18) matchesTimeSlot = true;
+              else if (arrivalHour === 12) {
+                const date = new Date(trip.arrivalTime);
+                if (date.getMinutes() > 0) matchesTimeSlot = true;
+              } else if (arrivalHour === 18) {
+                const date = new Date(trip.arrivalTime);
+                if (date.getMinutes() === 0) matchesTimeSlot = true;
+              }
               break;
             case "evening":
+              // 18:01 - 23:59
               if (arrivalHour > 18 && arrivalHour <= 23) matchesTimeSlot = true;
+              else if (arrivalHour === 18) {
+                const date = new Date(trip.arrivalTime);
+                if (date.getMinutes() > 0) matchesTimeSlot = true;
+              }
               break;
           }
         }
@@ -370,20 +424,12 @@ export default function SearchPage() {
                         ? `${Math.floor(durationHours)}h ${Math.round((durationHours % 1) * 60)}m`
                         : `${Math.round(durationHours * 60)}m`;
 
-                    // Map seat capacity to total seats number
-                    const seatCapacityMap: { [key: string]: number } = {
-                      SEAT_16: 16,
-                      SEAT_28: 28,
-                      SEAT_32: 32,
-                    };
-
-                    const totalSeats =
-                      seatCapacityMap[
-                        tripRoute?.trip?.bus?.seatCapacity ?? "SEAT_32"
-                      ] || 32;
-
                     const tripData = {
-                      id: tripRoute.id,
+                      ...tripRoute.trip,
+
+                      id: tripRoute.tripId || tripRoute.id,
+                      tripId: tripRoute.tripId,
+                      routeId: tripRoute.routeId,
                       route: tripRoute.route,
                       departureTime: startTime.format("HH:mm"),
                       arrivalTime: endTime.format("HH:mm"),
@@ -393,8 +439,8 @@ export default function SearchPage() {
                       fromTerminal: tripRoute.route.origin.name,
                       toTerminal: tripRoute.route.destination.name,
                       price: Number(tripRoute.price),
-                      availableSeats: Math.floor(totalSeats * 0.6),
-                      totalSeats,
+
+                      // Bus Info
                       busType:
                         tripRoute.trip.bus?.busType?.toLowerCase() ||
                         "standard",
@@ -409,18 +455,6 @@ export default function SearchPage() {
                         key={`trip-${tripData.id}-${index}`}
                         trip={tripData}
                         isOpen={openTripId === tripData.id}
-                        onToggle={(tripId) =>
-                          setOpenTripId(openTripId === tripId ? null : tripId)
-                        }
-                      />
-                    );
-                  } else {
-                    // This is mock data
-                    return (
-                      <TripCard
-                        key={`trip-${tripRoute.id}-${index}`}
-                        trip={tripRoute as Trip}
-                        isOpen={openTripId === tripRoute.id}
                         onToggle={(tripId) =>
                           setOpenTripId(openTripId === tripId ? null : tripId)
                         }

@@ -1,32 +1,75 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Download, Mail, MapPin } from "lucide-react";
+import { Mail, MapPin, Loader2, RefreshCw, Eye } from "lucide-react";
 import Navbar from "@/components/common/Navbar";
 import backgroundImage from "@/assets/images/background.png";
 import Footer from "@/components/dashboard/Footer";
-import { mockTrips } from "@/data/mockTrips";
 import dayjs from "dayjs";
+import { useGetTripRouteMapDetailQuery } from "@/store/api/routesApi";
+import { API_BASE_URL } from "@/lib/api";
 
 export default function ConfirmationPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
   // Get data from URL params
-  const tripId = searchParams.get("tripId") || "1";
-  const selectedSeat = searchParams.get("seat") || "25";
+  const tripId = searchParams.get("tripId") || "";
+  const routeId = searchParams.get("routeId") || "";
+  const selectedSeat = searchParams.get("seat") || "";
   const travelDate = searchParams.get("date") || dayjs().format("YYYY-MM-DD");
-  const passengerName = searchParams.get("passengerName") || "VO LE VIET TU";
+  const passengerName = searchParams.get("passengerName") || "Guest User";
   const passengerId = searchParams.get("passengerId") || "123456789012";
   const email = searchParams.get("email") || "example@gmail.com";
-  const bookingCode =
-    searchParams.get("bookingCode") ||
-    "BUS" + Math.random().toString(36).substr(2, 9).toUpperCase();
+  const ticketCode = searchParams.get("ticketCode") || searchParams.get("bookingCode") || "PENDING";
 
-  const trip = mockTrips.find((t) => t.id === tripId) || mockTrips[0];
+  // Fetch trip details from API
+  const {
+    data: tripData,
+    isLoading: tripLoading,
+  } = useGetTripRouteMapDetailQuery(
+    { tripId, routeId },
+    { skip: !tripId || !routeId },
+  );
+
+  // Transform API data to component format
+  const trip = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const actualData = (tripData as any)?.data || tripData;
+    if (!actualData) {
+      return {
+        id: tripId,
+        departureTime: "--:--",
+        arrivalTime: "--:--",
+        duration: "0h",
+        from: "",
+        to: "",
+        price: 0,
+      };
+    }
+
+    const startTime = dayjs(actualData.startTime);
+    const endTime = dayjs(actualData.endTime);
+    const durationHours = endTime.diff(startTime, "hour", true);
+    const durationText =
+      durationHours >= 1
+        ? `${Math.floor(durationHours)}h ${Math.round((durationHours % 1) * 60)}m`
+        : `${Math.round(durationHours * 60)}m`;
+
+    return {
+      id: actualData.tripId,
+      departureTime: startTime.format("HH:mm"),
+      arrivalTime: endTime.format("HH:mm"),
+      duration: durationText,
+      from: actualData.originCity || actualData.origin,
+      to: actualData.destinationCity || actualData.destination,
+      price: parseFloat(actualData.price) || 0,
+    };
+  }, [tripData, tripId]);
 
   const ticketPrice = trip.price;
   const insuranceFee = 1000;
@@ -41,10 +84,58 @@ export default function ConfirmationPage() {
     return amount.toLocaleString("vi-VN") + "VND";
   };
 
-  const handleDownloadTicket = () => {
-    console.log("Downloading ticket...");
-    // Implement download logic
+  const handleViewTicket = () => {
+    if (!ticketCode || ticketCode === "PENDING") {
+      alert("Invalid ticket code");
+      return;
+    }
+    navigate(`/eticket/${ticketCode}`);
   };
+
+  const handleResendEmail = async () => {
+    if (!ticketCode || ticketCode === "PENDING") {
+      alert("Invalid ticket code");
+      return;
+    }
+
+    setIsResending(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/bookings/eticket/${ticketCode}/resend`,
+        { method: "POST" }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to resend e-ticket email");
+      }
+
+      alert("E-ticket has been sent to your email!");
+    } catch (error) {
+      console.error("Resend error:", error);
+      alert("Failed to resend e-ticket. Please try again.");
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+
+  // Loading state
+  if (tripLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-100 dark:bg-black dark:bg-none">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-pink-500 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-300">
+              Loading confirmation...
+            </p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-100 dark:bg-black dark:bg-none">
@@ -85,7 +176,7 @@ export default function ConfirmationPage() {
               Booking Code
             </p>
             <p className="text-4xl font-bold text-primary dark:text-blue-400 tracking-wider">
-              {bookingCode}
+              {ticketCode}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
               Please save this code for ticket pickup
@@ -241,15 +332,30 @@ export default function ConfirmationPage() {
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.9s_forwards]">
           <div className="flex flex-col sm:flex-row gap-4">
             <button
-              onClick={handleDownloadTicket}
-              className="flex-1 bg-primary hover:bg-primary/90 dark:bg-blue-600 dark:hover:bg-blue-700 text-primary-foreground dark:text-white py-4 rounded-2xl transition-all duration-300 font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+              onClick={handleViewTicket}
+              disabled={ticketCode === "PENDING"}
+              className="flex-1 bg-rose-400 hover:bg-rose-500 dark:bg-blue-600 dark:hover:bg-blue-700 text-white py-4 rounded-2xl transition-all duration-300 font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Download className="w-5 h-5" />
-              Download Ticket
+              <Eye className="w-5 h-5" />
+              View & Download E-Ticket
             </button>
             <button
+              onClick={handleResendEmail}
+              disabled={isResending || ticketCode === "PENDING"}
+              className="flex-1 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white border-2 border-gray-300 dark:border-gray-600 py-4 rounded-2xl transition-all duration-300 font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isResending ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <RefreshCw className="w-5 h-5" />
+              )}
+              {isResending ? "Sending..." : "Resend Email"}
+            </button>
+          </div>
+          <div className="mt-4">
+            <button
               onClick={() => navigate("/dashboard")}
-              className="flex-1 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white border-2 border-gray-300 dark:border-gray-600 py-4 rounded-2xl transition-all duration-300 font-semibold"
+              className="w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-900 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 py-3 rounded-2xl transition-all duration-300 font-medium"
             >
               Back to Home
             </button>

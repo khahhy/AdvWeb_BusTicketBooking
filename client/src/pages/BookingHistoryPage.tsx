@@ -7,102 +7,97 @@ import {
   Ticket,
   Download,
   Eye,
-  Star,
   Edit,
+  XCircle,
 } from "lucide-react";
 import Navbar from "@/components/common/Navbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Footer from "@/components/dashboard/Footer";
+import { toast } from "sonner";
 import backgroundImage from "@/assets/images/background.png";
 import dayjs from "dayjs";
 
-interface BookingHistoryItem {
+interface Booking {
   id: string;
-  bookingCode: string;
-  from: string;
-  to: string;
-  date: string;
-  departureTime: string;
-  arrivalTime: string;
-  seat: string;
+  ticketCode: string;
+  status: "pendingPayment" | "confirmed" | "cancelled";
   price: number;
-  status: "completed" | "upcoming" | "cancelled";
-  passengerName: string;
-  duration: string;
+  customerInfo: {
+    fullName: string;
+    phoneNumber: string;
+    email: string;
+    idNumber?: string;
+  };
+  createdAt: string;
+  trip: {
+    tripName: string;
+    startTime: string;
+  };
+  route: {
+    name: string;
+  };
+  seat: {
+    seatNumber: string;
+  };
+  pickupStop: {
+    location: {
+      name: string;
+      city: string;
+    };
+  };
+  dropoffStop: {
+    location: {
+      name: string;
+      city: string;
+    };
+  };
 }
-
-// Mock data for booking history
-const mockBookingHistory: BookingHistoryItem[] = [
-  {
-    id: "1",
-    bookingCode: "BUS123456",
-    from: "Ho Chi Minh City",
-    to: "Da Lat",
-    date: "2024-11-15",
-    departureTime: "08:00",
-    arrivalTime: "14:30",
-    seat: "A12",
-    price: 280000,
-    status: "completed",
-    passengerName: "Nguyen Van A",
-    duration: "6h 30m",
-  },
-  {
-    id: "2",
-    bookingCode: "BUS789012",
-    from: "Ho Chi Minh City",
-    to: "Nha Trang",
-    date: "2024-12-01",
-    departureTime: "22:00",
-    arrivalTime: "06:30",
-    seat: "B08",
-    price: 320000,
-    status: "upcoming",
-    passengerName: "Nguyen Van A",
-    duration: "8h 30m",
-  },
-  {
-    id: "3",
-    bookingCode: "BUS345678",
-    from: "Da Lat",
-    to: "Ho Chi Minh City",
-    date: "2024-10-20",
-    departureTime: "15:00",
-    arrivalTime: "21:30",
-    seat: "C15",
-    price: 280000,
-    status: "cancelled",
-    passengerName: "Nguyen Van A",
-    duration: "6h 30m",
-  },
-  {
-    id: "4",
-    bookingCode: "BUS901234",
-    from: "Hanoi",
-    to: "Sapa",
-    date: "2024-09-10",
-    departureTime: "07:00",
-    arrivalTime: "12:30",
-    seat: "D05",
-    price: 180000,
-    status: "completed",
-    passengerName: "Nguyen Van A",
-    duration: "5h 30m",
-  },
-];
 
 export default function BookingHistoryPage() {
   const navigate = useNavigate();
-  const [bookings, setBookings] = useState<BookingHistoryItem[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<
-    "all" | "completed" | "upcoming" | "cancelled"
+    "all" | "confirmed" | "pendingPayment" | "cancelled"
   >("all");
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    setBookings(mockBookingHistory);
+    fetchBookings();
   }, []);
+
+  const fetchBookings = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        toast.error("Please login to view booking history");
+        navigate("/login");
+        return;
+      }
+
+      const response = await fetch(
+        "http://localhost:3000/bookings/my-bookings",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch bookings");
+      }
+
+      const result = await response.json();
+      setBookings(result.data || []);
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+      toast.error("Unable to load booking history");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatCurrency = (amount: number) => {
     return amount.toLocaleString("vi-VN") + " VND";
@@ -114,16 +109,16 @@ export default function BookingHistoryPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "completed":
+      case "confirmed":
         return (
           <Badge className="bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900 dark:text-green-300">
-            Completed
+            Confirmed
           </Badge>
         );
-      case "upcoming":
+      case "pendingPayment":
         return (
-          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900 dark:text-blue-300">
-            Upcoming
+          <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-300">
+            Pending Payment
           </Badge>
         );
       case "cancelled":
@@ -140,26 +135,62 @@ export default function BookingHistoryPage() {
   const filteredBookings = bookings.filter((booking) =>
     filter === "all" ? true : booking.status === filter,
   );
+
   const handleDownloadTicket = (bookingCode: string) => {
     console.log("Downloading ticket for:", bookingCode);
-    // Implement download logic
+    toast.info("Download ticket feature is under development");
   };
 
   const handleViewDetails = (bookingId: string) => {
     navigate(`/booking-details/${bookingId}`);
   };
 
-  const handleRateTrip = (bookingId: string) => {
-    navigate(`/feedback/${bookingId}`);
-  };
-
   const handleModifyBooking = (bookingId: string) => {
     navigate(`/modify-booking/${bookingId}`);
   };
 
+  const handleCancelBooking = async (bookingId: string) => {
+    if (!confirm("Are you sure you want to cancel this booking?")) return;
+
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(
+        `http://localhost:3000/bookings/${bookingId}/cancel`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to cancel booking");
+      }
+
+      toast.success("Booking cancelled successfully");
+      fetchBookings(); // Refresh list
+    } catch (error) {
+      console.error("Error cancelling booking:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Unable to cancel booking",
+      );
+    }
+  };
+
+  const canModifyOrCancel = (booking: Booking) => {
+    const now = new Date();
+    const tripStartTime = new Date(booking.trip.startTime);
+    return (
+      booking.status !== "cancelled" &&
+      booking.status !== "pendingPayment" &&
+      tripStartTime > now
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
-      {/* Navbar */}
       <Navbar />
 
       {/* Header Section */}
@@ -199,18 +230,18 @@ export default function BookingHistoryPage() {
                 All Bookings
               </Button>
               <Button
-                variant={filter === "upcoming" ? "default" : "outline"}
-                onClick={() => setFilter("upcoming")}
+                variant={filter === "confirmed" ? "default" : "outline"}
+                onClick={() => setFilter("confirmed")}
                 className="rounded-full"
               >
-                Upcoming
+                Confirmed
               </Button>
               <Button
-                variant={filter === "completed" ? "default" : "outline"}
-                onClick={() => setFilter("completed")}
+                variant={filter === "pendingPayment" ? "default" : "outline"}
+                onClick={() => setFilter("pendingPayment")}
                 className="rounded-full"
               >
-                Completed
+                Pending Payment
               </Button>
               <Button
                 variant={filter === "cancelled" ? "default" : "outline"}
@@ -223,156 +254,175 @@ export default function BookingHistoryPage() {
           </div>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && filteredBookings.length === 0 && (
+          <div className="text-center py-12">
+            <Ticket className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">No bookings found</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              {filter === "all"
+                ? "You don't have any bookings yet. Start searching for trips!"
+                : "No bookings found with this filter"}
+            </p>
+            {filter === "all" && (
+              <Button onClick={() => navigate("/")}>Search Trips</Button>
+            )}
+          </div>
+        )}
+
         {/* Booking Cards */}
-        <div className="space-y-6">
-          {filteredBookings.map((booking) => (
-            <div
-              key={booking.id}
-              className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]"
-            >
-              <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                      Booking Code: {booking.bookingCode}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      Passenger: {booking.passengerName}
-                    </p>
-                  </div>
-                  {getStatusBadge(booking.status)}
-                </div>
-
-                {/* Trip Info */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="w-48 flex-shrink-0">
-                    <div className="text-xl font-bold text-gray-900 dark:text-white">
-                      {booking.from}
+        {!loading && filteredBookings.length > 0 && (
+          <div className="space-y-6">
+            {filteredBookings.map((booking) => (
+              <div
+                key={booking.id}
+                className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]"
+              >
+                <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                        Booking Code: {booking.ticketCode}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        Passenger: {booking.customerInfo.fullName}
+                      </p>
                     </div>
-                    <div className="text-lg font-semibold text-gray-900 dark:text-gray-300 mt-1">
-                      {booking.departureTime}
-                    </div>
+                    {getStatusBadge(booking.status)}
                   </div>
 
-                  <div className="flex-1 px-8 text-center">
-                    <div className="flex items-center justify-center gap-3 mb-1">
-                      <MapPin className="w-4 h-4 text-gray-400" />
-                      <div className="h-0.5 w-40 border-t-2 border-dashed border-gray-300"></div>
-                      <MapPin className="w-4 h-4 text-gray-400" />
+                  {/* Trip Info */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="w-48 flex-shrink-0">
+                      <div className="text-xl font-bold text-gray-900 dark:text-white">
+                        {booking.pickupStop.location.city}
+                      </div>
+                      <div className="text-lg font-semibold text-gray-900 dark:text-gray-300 mt-1">
+                        {dayjs(booking.trip.startTime).format("HH:mm")}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-500 flex items-center justify-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {booking.duration}
+
+                    <div className="flex-1 px-8 text-center">
+                      <div className="flex items-center justify-center gap-3 mb-1">
+                        <MapPin className="w-4 h-4 text-gray-400" />
+                        <div className="h-0.5 w-40 border-t-2 border-dashed border-gray-300"></div>
+                        <MapPin className="w-4 h-4 text-gray-400" />
+                      </div>
+                      <div className="text-sm text-gray-500 flex items-center justify-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {booking.route.name}
+                      </div>
+                    </div>
+
+                    <div className="text-right w-48 flex-shrink-0">
+                      <div className="text-xl font-bold text-gray-900 dark:text-white">
+                        {booking.dropoffStop.location.city}
+                      </div>
+                      <div className="text-lg font-semibold text-gray-900 dark:text-gray-300 mt-1">
+                        Arrival
+                      </div>
                     </div>
                   </div>
 
-                  <div className="text-right w-48 flex-shrink-0">
-                    <div className="text-xl font-bold text-gray-900 dark:text-white">
-                      {booking.to}
+                  {/* Details */}
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                          Travel Date
+                        </p>
+                        <p className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          {formatDate(booking.trip.startTime)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                          Seat
+                        </p>
+                        <p className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-1">
+                          <Ticket className="w-4 h-4" />
+                          {booking.seat.seatNumber}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                          Price
+                        </p>
+                        <p className="text-base font-semibold text-green-600">
+                          {formatCurrency(booking.price)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-lg font-semibold text-gray-900 dark:text-gray-300 mt-1">
-                      {booking.arrivalTime}
-                    </div>
-                  </div>
-                </div>
 
-                {/* Details */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700 mb-6">
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                      Travel Date
-                    </p>
-                    <p className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      {formatDate(booking.date)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                      Seat
-                    </p>
-                    <p className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-1">
-                      <Ticket className="w-4 h-4" />
-                      {booking.seat}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                      Price
-                    </p>
-                    <p className="text-base font-semibold text-green-600">
-                      {formatCurrency(booking.price)}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleViewDetails(booking.id)}
-                      className="flex items-center gap-1"
-                    >
-                      <Eye className="w-4 h-4" />
-                      Details
-                    </Button>
-                    {booking.status === "upcoming" && (
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap gap-2 justify-end">
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleModifyBooking(booking.id)}
-                        className="flex items-center gap-1 border-blue-300 text-blue-600 hover:bg-blue-50"
-                      >
-                        <Edit className="w-4 h-4" />
-                        Modify
-                      </Button>
-                    )}
-                    {booking.status === "completed" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleRateTrip(booking.id)}
-                        className="flex items-center gap-1 border-yellow-300 text-yellow-600 hover:bg-yellow-50"
-                      >
-                        <Star className="w-4 h-4" />
-                        Rate
-                      </Button>
-                    )}
-                    {booking.status !== "cancelled" && (
-                      <Button
-                        size="sm"
-                        onClick={() =>
-                          handleDownloadTicket(booking.bookingCode)
-                        }
+                        onClick={() => handleViewDetails(booking.id)}
                         className="flex items-center gap-1"
                       >
-                        <Download className="w-4 h-4" />
-                        Download
+                        <Eye className="w-4 h-4" />
+                        Details
                       </Button>
-                    )}
+                      {booking.status === "pendingPayment" && (
+                        <Button
+                          size="sm"
+                          onClick={() => navigate(`/payment/${booking.id}`)}
+                          className="flex items-center gap-1"
+                        >
+                          Pay Now
+                        </Button>
+                      )}
+                      {canModifyOrCancel(booking) && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleModifyBooking(booking.id)}
+                            className="flex items-center gap-1 border-blue-300 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
+                          >
+                            <Edit className="w-4 h-4" />
+                            Modify
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleCancelBooking(booking.id)}
+                            className="flex items-center gap-1 border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                          >
+                            <XCircle className="w-4 h-4" />
+                            Cancel
+                          </Button>
+                        </>
+                      )}
+                      {booking.status !== "cancelled" && (
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            handleDownloadTicket(booking.ticketCode)
+                          }
+                          className="flex items-center gap-1"
+                        >
+                          <Download className="w-4 h-4" />
+                          Download
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Empty State */}
-        {filteredBookings.length === 0 && (
-          <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]">
-            <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
-              <Ticket className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                No bookings found
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                {filter === "all"
-                  ? "You haven't made any bookings yet."
-                  : `No ${filter} bookings found.`}
-              </p>
-              <Button onClick={() => setFilter("all")} className="rounded-full">
-                View All Bookings
-              </Button>
-            </div>
+            ))}
           </div>
         )}
       </div>

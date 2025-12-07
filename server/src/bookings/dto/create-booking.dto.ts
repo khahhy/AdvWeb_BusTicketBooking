@@ -1,16 +1,16 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID, IsNotEmpty, ValidateNested } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsUUID, IsNotEmpty, ValidateNested, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CustomerInfoDto } from './customer-info.dto';
 
 export class CreateBookingDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-    description: 'Unique identifier of the user',
+    description: 'Unique identifier of the user (optional for guest checkout)',
   })
   @IsUUID()
-  @IsNotEmpty()
-  userId: string;
+  @IsOptional()
+  userId?: string;
 
   @ApiProperty({
     example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',

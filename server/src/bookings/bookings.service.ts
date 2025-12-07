@@ -5,21 +5,51 @@ import {
   BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { BookingsGateway } from './bookings.gateway';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { RedisCacheService } from 'src/cache/redis-cache.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { LookupBookingDto } from './dto/lookup-booking.dto';
 import { Prisma, BookingStatus } from '@prisma/client';
 import { QueryBookingDto } from './dto/query-booking.dto';
+import { generateBookingReference } from 'src/common/utils/generateBookingReference';
+import { ETicketService } from 'src/eticket/eticket.service';
+import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class BookingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cacheManager: RedisCacheService,
+    private readonly bookingsGateway: BookingsGateway,
+    private readonly eTicketService: ETicketService,
+    private readonly emailService: EmailService,
+  ) {}
+
+  private async generateUniqueTicketCode(): Promise<string> {
+    const maxAttempts = 10;
+    for (let i = 0; i < maxAttempts; i++) {
+      const code = generateBookingReference();
+      const existing = await this.prisma.bookings.findUnique({
+        where: { ticketCode: code },
+      });
+      if (!existing) return code;
+    }
+    throw new InternalServerErrorException(
+      'Failed to generate unique booking reference',
+    );
+  }
 
   private async calculateDetailsFromRoute(tripId: string, routeId: string) {
+    console.log('=== CALCULATE DETAILS FROM ROUTE ===');
+    console.log('tripId:', tripId, 'routeId:', routeId);
+
     const route = await this.prisma.routes.findUnique({
       where: { id: routeId },
       select: { originLocationId: true, destinationLocationId: true },
     });
     if (!route) throw new NotFoundException('Route not found');
+    console.log('Route:', route);
 
     const stops = await this.prisma.tripStops.findMany({
       where: {
@@ -30,6 +60,7 @@ export class BookingsService {
       },
       select: { id: true, sequence: true, locationId: true },
     });
+    console.log('Stops found:', stops);
 
     const startStop = stops.find(
       (s) => s.locationId === route.originLocationId,
@@ -37,6 +68,7 @@ export class BookingsService {
     const endStop = stops.find(
       (s) => s.locationId === route.destinationLocationId,
     );
+    console.log('startStop:', startStop, 'endStop:', endStop);
 
     if (!startStop || !endStop) {
       throw new BadRequestException(
@@ -47,6 +79,20 @@ export class BookingsService {
       throw new BadRequestException('Invalid route direction');
     }
 
+    // Get ALL segments for this trip first to debug
+    const allSegments = await this.prisma.tripSegments.findMany({
+      where: { tripId },
+      include: { fromStop: true, toStop: true },
+    });
+    console.log(
+      'All trip segments:',
+      allSegments.map((s) => ({
+        id: s.id,
+        fromStopSeq: s.fromStop.sequence,
+        toStopSeq: s.toStop.sequence,
+      })),
+    );
+
     const segments = await this.prisma.tripSegments.findMany({
       where: {
         tripId,
@@ -55,6 +101,8 @@ export class BookingsService {
       },
       select: { id: true },
     });
+    console.log('Filtered segments:', segments);
+    console.log('=====================================');
 
     return {
       segmentIds: segments.map((s) => s.id),
@@ -63,7 +111,82 @@ export class BookingsService {
     };
   }
 
+  // bookings.service.ts
+
+  async lockSeat(
+    userId: string,
+    tripId: string,
+    seatId: string,
+    routeId: string,
+  ) {
+    const { segmentIds } = await this.calculateDetailsFromRoute(
+      tripId,
+      routeId,
+    );
+    const TTL = 120; // 2m
+
+    const isBookedInDb = await this.prisma.seatSegmentLocks.findFirst({
+      where: { tripId, seatId, segmentId: { in: segmentIds } },
+    });
+    if (isBookedInDb)
+      throw new ConflictException(
+        'Seat is already booked for this route segment.',
+      );
+
+    for (const segId of segmentIds) {
+      const lockKey = `lock:trip:${tripId}:segment:${segId}:seat:${seatId}`;
+      const holder = await this.cacheManager.get(lockKey);
+
+      if (holder && holder !== userId) {
+        throw new ConflictException(
+          `Ghế đang được giữ bởi người khác ở đoạn ${segId}`,
+        );
+      }
+    }
+
+    const lockPromises = segmentIds.map((segId) => {
+      const lockKey = `lock:trip:${tripId}:segment:${segId}:seat:${seatId}`;
+      return this.cacheManager.set(lockKey, userId, TTL);
+    });
+
+    await Promise.all(lockPromises);
+
+    this.bookingsGateway.emitSeatLocked(tripId, seatId, segmentIds);
+
+    return { message: 'Seat locked successfully', expiresIn: TTL };
+  }
+
+  async unlockSeat(
+    userId: string,
+    tripId: string,
+    seatId: string,
+    routeId: string,
+  ) {
+    const { segmentIds } = await this.calculateDetailsFromRoute(
+      tripId,
+      routeId,
+    );
+
+    const unlockPromises = segmentIds.map(async (segId) => {
+      const lockKey = `lock:trip:${tripId}:segment:${segId}:seat:${seatId}`;
+      const holderId = await this.cacheManager.get<string>(lockKey);
+
+      if (holderId && holderId === userId) {
+        await this.cacheManager.del(lockKey);
+      }
+    });
+
+    await Promise.all(unlockPromises);
+
+    this.bookingsGateway.emitSeatUnlocked(tripId, seatId, segmentIds);
+
+    return { message: 'Seat unlocked successfully' };
+  }
+
   async create(createBookingDto: CreateBookingDto) {
+    console.log('=== BOOKING CREATE CALLED ===');
+    console.log('DTO:', JSON.stringify(createBookingDto, null, 2));
+
     try {
       const { userId, tripId, seatId, routeId, customerInfo } =
         createBookingDto;
@@ -71,19 +194,52 @@ export class BookingsService {
       const { segmentIds, pickupStopId, dropoffStopId } =
         await this.calculateDetailsFromRoute(tripId, routeId);
 
+      const lockIdentifier = userId || 'guest-temp-id';
+      for (const segId of segmentIds) {
+        const lockKey = `lock:trip:${tripId}:segment:${segId}:seat:${seatId}`;
+        const lockHolder = await this.cacheManager.get<string>(lockKey);
+
+        if (lockHolder && lockHolder !== lockIdentifier) {
+          throw new ConflictException(
+            `Seat at segment ${segId} is being held by another user.`,
+          );
+        }
+      }
+
+      const ticketCode = await this.generateUniqueTicketCode();
+
       const result = await this.prisma.$transaction(
         async (tx: Prisma.TransactionClient) => {
-          const conflictLock = await tx.seatSegmentLocks.findFirst({
+          // Check for conflicts in SeatSegmentLocks (if segments exist)
+          if (segmentIds.length > 0) {
+            const conflictLock = await tx.seatSegmentLocks.findFirst({
+              where: {
+                tripId,
+                seatId,
+                segmentId: { in: segmentIds },
+              },
+            });
+
+            if (conflictLock) {
+              throw new ConflictException(
+                'Selected seat is already booked or reserved for this segment.',
+              );
+            }
+          }
+
+          // Also check Bookings table directly for conflicts
+          const existingBooking = await tx.bookings.findFirst({
             where: {
               tripId,
+              routeId,
               seatId,
-              segmentId: { in: segmentIds },
+              status: { in: ['confirmed', 'pendingPayment'] },
             },
           });
 
-          if (conflictLock) {
+          if (existingBooking) {
             throw new ConflictException(
-              'Selected seat is already booked or reserved for this segment.',
+              'Selected seat is already booked for this route.',
             );
           }
 
@@ -103,39 +259,80 @@ export class BookingsService {
             );
           }
 
+          // Build booking data with proper relation connections
+          const bookingCreateInput: any = {
+            customerInfo: customerInfo as unknown as Prisma.InputJsonValue,
+            price: tripRoute.price,
+            status: BookingStatus.confirmed, // Set to confirmed since payment is bypassed
+            ticketCode,
+            trip: { connect: { id: tripId } },
+            route: { connect: { id: routeId } },
+            seat: { connect: { id: seatId } },
+            pickupStop: { connect: { id: pickupStopId } },
+            dropoffStop: { connect: { id: dropoffStopId } },
+          };
+
+          if (userId) {
+            Object.assign(bookingCreateInput, {
+              user: { connect: { id: userId } },
+            });
+          }
+
           const booking = await tx.bookings.create({
-            data: {
-              userId,
-              tripId,
-              routeId,
-              seatId,
-              pickupStopId,
-              dropoffStopId,
-              customerInfo: customerInfo as unknown as Prisma.InputJsonValue,
-              price: tripRoute.price,
-              status: BookingStatus.pendingPayment,
-            },
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            data: bookingCreateInput,
           });
 
-          await tx.seatSegmentLocks.createMany({
-            data: segmentIds.map((segId) => ({
+          // Only create segment locks if segments exist
+          if (segmentIds.length > 0) {
+            console.log('Creating seat locks for segments:', segmentIds);
+            const lockData = segmentIds.map((segId) => ({
               tripId,
               seatId,
               segmentId: segId,
               bookingId: booking.id,
-            })),
+            }));
+
+            await tx.seatSegmentLocks.createMany({
+              data: lockData,
+            });
+            console.log('Seat locks created successfully');
+          } else {
+            console.log('No segments - seat tracked via Bookings table only');
+          }
+
+          const deleteLockPromises = segmentIds.map((segId) => {
+            const lockKey = `lock:trip:${tripId}:segment:${segId}:seat:${seatId}`;
+            return this.cacheManager.del(lockKey);
           });
+          await Promise.all(deleteLockPromises);
 
           return {
             bookingId: booking.id,
+            ticketCode: booking.ticketCode,
             status: booking.status,
             expiresAt: new Date(Date.now() + 15 * 60 * 1000),
           };
         },
       );
 
+      this.bookingsGateway.emitSeatSold(tripId, seatId, segmentIds);
+
+      // Send e-ticket email asynchronously (don't block the response)
+      if (result.ticketCode) {
+        this.sendETicketEmail(result.ticketCode).catch((err) => {
+          console.error('Failed to send e-ticket email:', err);
+        });
+      }
+
       return { message: 'Booking initiated successfully', data: result };
     } catch (err) {
+      console.error('=== BOOKING CREATE ERROR ===');
+      console.error('Input DTO:', JSON.stringify(createBookingDto, null, 2));
+      console.error('Error:', err);
+      console.error('Stack:', err instanceof Error ? err.stack : 'No stack');
+      console.error('============================');
+
       if (
         err instanceof ConflictException ||
         err instanceof NotFoundException ||
@@ -154,7 +351,23 @@ export class BookingsService {
       const booking = await this.prisma.bookings.findUnique({
         where: { id },
         include: {
-          trip: { select: { tripName: true, startTime: true } },
+          trip: {
+            select: {
+              tripName: true,
+              startTime: true,
+              bus: {
+                select: {
+                  plate: true,
+                  busType: true,
+                },
+              },
+            },
+          },
+          route: {
+            select: {
+              name: true,
+            },
+          },
           seat: { select: { seatNumber: true } },
           pickupStop: { include: { location: true } },
           dropoffStop: { include: { location: true } },
@@ -262,18 +475,101 @@ export class BookingsService {
     }
   }
 
-  async cancel(id: string, userId: string) {
+  async findByGuestInfo(lookupDto: LookupBookingDto) {
+    try {
+      const { email, phoneNumber } = lookupDto;
+
+      const bookings = await this.prisma.bookings.findMany({
+        where: {
+          customerInfo: {
+            path: ['email'],
+            equals: email,
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          trip: { select: { tripName: true, startTime: true, endTime: true } },
+          route: {
+            select: {
+              name: true,
+              origin: { select: { name: true, city: true } },
+              destination: { select: { name: true, city: true } },
+            },
+          },
+          seat: { select: { seatNumber: true } },
+          pickupStop: { include: { location: true } },
+          dropoffStop: { include: { location: true } },
+        },
+      });
+
+      const filteredBookings = bookings.filter((booking) => {
+        const info = booking.customerInfo as { phoneNumber?: string };
+        return info?.phoneNumber === phoneNumber;
+      });
+
+      return {
+        message: 'Fetched guest bookings successfully',
+        data: filteredBookings,
+      };
+    } catch (err) {
+      throw new InternalServerErrorException('Failed to fetch guest bookings', {
+        cause: err,
+      });
+    }
+  }
+
+  async findByTicketCode(ticketCode: string, email: string) {
     try {
       const booking = await this.prisma.bookings.findUnique({
-        where: { id },
-        select: { status: true, userId: true },
+        where: { ticketCode },
+        include: {
+          trip: { select: { tripName: true, startTime: true, endTime: true } },
+          route: {
+            select: {
+              name: true,
+              origin: { select: { name: true, city: true } },
+              destination: { select: { name: true, city: true } },
+            },
+          },
+          seat: { select: { seatNumber: true } },
+          pickupStop: { include: { location: true } },
+          dropoffStop: { include: { location: true } },
+        },
       });
 
       if (!booking) {
         throw new NotFoundException('Booking not found');
       }
 
-      if (booking.userId !== userId) {
+      const customerInfo = booking.customerInfo as { email?: string };
+      if (customerInfo?.email !== email) {
+        throw new NotFoundException('Booking not found');
+      }
+
+      return {
+        message: 'Fetched booking successfully',
+        data: booking,
+      };
+    } catch (err) {
+      if (err instanceof NotFoundException) throw err;
+      throw new InternalServerErrorException('Failed to fetch booking', {
+        cause: err,
+      });
+    }
+  }
+
+  async cancel(id: string, userId?: string) {
+    try {
+      const booking = await this.prisma.bookings.findUnique({
+        where: { id },
+        select: { status: true, userId: true, tripId: true, seatId: true },
+      });
+
+      if (!booking) {
+        throw new NotFoundException('Booking not found');
+      }
+
+      if (userId && booking.userId && booking.userId !== userId) {
         throw new BadRequestException(
           'You do not have permission to cancel this booking',
         );
@@ -289,8 +585,68 @@ export class BookingsService {
           data: { status: BookingStatus.cancelled },
         });
 
+        const locks = await tx.seatSegmentLocks.findMany({
+          where: { bookingId: id },
+          select: { segmentId: true },
+        });
+
         await tx.seatSegmentLocks.deleteMany({
           where: { bookingId: id },
+        });
+
+        // Notify via WebSocket
+        const segmentIds = locks.map((lock) => lock.segmentId);
+        this.bookingsGateway.emitSeatUnlocked(
+          booking.tripId,
+          booking.seatId,
+          segmentIds,
+        );
+
+        return updatedBooking;
+      });
+
+      return { message: 'Booking cancelled successfully', data: result };
+    } catch (err) {
+      if (
+        err instanceof NotFoundException ||
+        err instanceof BadRequestException
+      ) {
+        throw err;
+      }
+      throw new InternalServerErrorException('Failed to cancel booking', {
+        cause: err,
+      });
+    }
+  }
+
+  async cancelByTicketCode(ticketCode: string, email: string) {
+    try {
+      const booking = await this.prisma.bookings.findUnique({
+        where: { ticketCode },
+        select: { id: true, status: true, customerInfo: true },
+      });
+
+      if (!booking) {
+        throw new NotFoundException('Booking not found');
+      }
+
+      const customerInfo = booking.customerInfo as { email?: string };
+      if (customerInfo?.email !== email) {
+        throw new NotFoundException('Booking not found');
+      }
+
+      if (booking.status === BookingStatus.cancelled) {
+        throw new BadRequestException('Booking is already cancelled');
+      }
+
+      const result = await this.prisma.$transaction(async (tx) => {
+        const updatedBooking = await tx.bookings.update({
+          where: { id: booking.id },
+          data: { status: BookingStatus.cancelled },
+        });
+
+        await tx.seatSegmentLocks.deleteMany({
+          where: { bookingId: booking.id },
         });
 
         return updatedBooking;
@@ -305,6 +661,182 @@ export class BookingsService {
         throw err;
       }
       throw new InternalServerErrorException('Failed to cancel booking', {
+        cause: err,
+      });
+    }
+  }
+
+  async modify(
+    id: string,
+    userId: string,
+    modifyData: {
+      tripId?: string;
+      seatId?: string;
+      routeId?: string;
+      customerInfo?: any;
+    },
+  ) {
+    try {
+      const booking = await this.prisma.bookings.findUnique({
+        where: { id },
+        include: {
+          trip: true,
+          seatLocks: true,
+        },
+      });
+
+      if (!booking) {
+        throw new NotFoundException('Booking not found');
+      }
+
+      if (booking.userId !== userId) {
+        throw new BadRequestException(
+          'You do not have permission to modify this booking',
+        );
+      }
+
+      if (booking.status === BookingStatus.cancelled) {
+        throw new BadRequestException('Cannot modify a cancelled booking');
+      }
+
+      // Check if trip has already departed
+      if (new Date() > booking.trip.startTime) {
+        throw new BadRequestException(
+          'Cannot modify booking for a trip that has already departed',
+        );
+      }
+
+      const result = await this.prisma.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          const updatedData: Prisma.BookingsUpdateInput = {}; // If changing seat or trip, handle seat locks
+          if (modifyData.seatId || modifyData.tripId || modifyData.routeId) {
+            const newTripId = modifyData.tripId || booking.tripId;
+            const newSeatId = modifyData.seatId || booking.seatId;
+            const newRouteId = modifyData.routeId || booking.routeId;
+
+            // Calculate new segments
+            const { segmentIds, pickupStopId, dropoffStopId } =
+              await this.calculateDetailsFromRoute(newTripId, newRouteId);
+
+            // Check if new seat is available
+            const conflictLock = await tx.seatSegmentLocks.findFirst({
+              where: {
+                tripId: newTripId,
+                seatId: newSeatId,
+                segmentId: { in: segmentIds },
+                bookingId: { not: id },
+              },
+            });
+
+            if (conflictLock) {
+              throw new ConflictException(
+                'Selected seat is already booked for this segment',
+              );
+            }
+
+            // Get new price if route changed
+            let newPrice = booking.price;
+            if (modifyData.routeId || modifyData.tripId) {
+              const tripRoute = await tx.tripRouteMap.findUnique({
+                where: {
+                  tripId_routeId: {
+                    tripId: newTripId,
+                    routeId: newRouteId,
+                  },
+                },
+                select: { price: true },
+              });
+
+              if (!tripRoute) {
+                throw new NotFoundException(
+                  'Route not available for selected trip',
+                );
+              }
+              newPrice = tripRoute.price;
+            }
+
+            // Remove old locks
+            await tx.seatSegmentLocks.deleteMany({
+              where: { bookingId: id },
+            });
+
+            // Create new locks
+            await tx.seatSegmentLocks.createMany({
+              data: segmentIds.map((segId) => ({
+                tripId: newTripId,
+                seatId: newSeatId,
+                segmentId: segId,
+                bookingId: id,
+              })),
+            });
+
+            Object.assign(updatedData, {
+              ...(modifyData.tripId && {
+                trip: { connect: { id: newTripId } },
+              }),
+              ...(modifyData.seatId && {
+                seat: { connect: { id: newSeatId } },
+              }),
+              ...(modifyData.routeId && {
+                route: { connect: { id: newRouteId } },
+              }),
+              pickupStop: { connect: { id: pickupStopId } },
+              dropoffStop: { connect: { id: dropoffStopId } },
+              price: newPrice,
+            });
+
+            // Emit WebSocket events
+            if (booking.tripId !== newTripId || booking.seatId !== newSeatId) {
+              // Unlock old seat
+              const oldSegmentIds = booking.seatLocks.map((l) => l.segmentId);
+              this.bookingsGateway.emitSeatUnlocked(
+                booking.tripId,
+                booking.seatId,
+                oldSegmentIds,
+              );
+              // Lock new seat
+              this.bookingsGateway.emitSeatSold(
+                newTripId,
+                newSeatId,
+                segmentIds,
+              );
+            }
+          }
+
+          // Update customer info if provided
+          if (modifyData.customerInfo) {
+            Object.assign(updatedData, {
+              customerInfo:
+                modifyData.customerInfo as unknown as Prisma.InputJsonValue,
+            });
+          }
+
+          const updatedBooking = await tx.bookings.update({
+            where: { id },
+            data: updatedData,
+            include: {
+              trip: { select: { tripName: true, startTime: true } },
+              seat: { select: { seatNumber: true } },
+              route: { select: { name: true } },
+              pickupStop: { include: { location: true } },
+              dropoffStop: { include: { location: true } },
+            },
+          });
+
+          return updatedBooking;
+        },
+      );
+
+      return { message: 'Booking modified successfully', data: result };
+    } catch (err) {
+      if (
+        err instanceof NotFoundException ||
+        err instanceof BadRequestException ||
+        err instanceof ConflictException
+      ) {
+        throw err;
+      }
+      throw new InternalServerErrorException('Failed to modify booking', {
         cause: err,
       });
     }
@@ -356,6 +888,33 @@ export class BookingsService {
       };
     } catch (err) {
       throw new InternalServerErrorException('Failed to fetch booking stats', {
+        cause: err,
+      });
+    }
+  }
+
+  async sendETicketEmail(ticketCode: string) {
+    try {
+      const ticketData = await this.eTicketService.getBookingData(ticketCode);
+      const pdfBuffer = await this.eTicketService.generatePDF(ticketCode);
+
+      await this.emailService.sendETicketEmail(
+        ticketData.email,
+        ticketCode,
+        ticketData.passengerName,
+        {
+          from: ticketData.from,
+          to: ticketData.to,
+          departureTime: ticketData.departureTime,
+          seatNumber: ticketData.seatNumber,
+        },
+        pdfBuffer,
+      );
+
+      return { message: 'E-ticket email sent successfully' };
+    } catch (err) {
+      console.error('Failed to send e-ticket email:', err);
+      throw new InternalServerErrorException('Failed to send e-ticket email', {
         cause: err,
       });
     }

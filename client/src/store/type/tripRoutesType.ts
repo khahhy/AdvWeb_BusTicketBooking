@@ -46,7 +46,6 @@ export interface QueryTripRouteMapParams extends PaginationParams {
   departureTimeEnd?: string;
   busType?: BusType[];
   amenities?: string[];
-  seatCapacity?: string[];
 }
 
 export interface CreateTripRouteMapDto {

@@ -23,11 +23,14 @@ import {
 import InteractiveSeatMap from "@/components/search/InteractiveSeatMap";
 import { BusType } from "@/store/type/busType";
 import { useSeatBooking } from "@/hooks/useSeatBooking";
+import { useGetBookingRulesQuery } from "@/store/api/settingApi";
 
 export default function TripDetailPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [timeLeft, setTimeLeft] = useState<number>(120);
+
+  const { data: bookingRules } = useGetBookingRulesQuery();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -526,32 +529,55 @@ export default function TripDetailPage() {
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                   Booking Policy
                 </h2>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0"></div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      Please arrive at the departure point 15 minutes early.
-                    </p>
+                {bookingRules ? (
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0"></div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        Please arrive at the departure point 30 minutes early.
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0"></div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        Free cancellation{" "}
+                        <strong>
+                          {bookingRules.minCancellationHours} hours
+                        </strong>{" "}
+                        before departure.
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0"></div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        Cancellation within {bookingRules.minCancellationHours}{" "}
+                        hours will incur a{" "}
+                        <strong>{100 - bookingRules.refundPercentage}%</strong>{" "}
+                        fee.
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0"></div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        Unpaid seats will be held for{" "}
+                        <strong>
+                          {bookingRules.paymentHoldTimeMinutes} minutes
+                        </strong>
+                        .
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0"></div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        Tickets cannot be transferred to others.
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0"></div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      Free cancellation 24 hours before departure.
-                    </p>
+                ) : (
+                  <div className="text-gray-500 italic">
+                    Loading policy details...
                   </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0"></div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      Cancellation within 24 hours will incur a 20% fee.
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0"></div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      Tickets cannot be transferred to others.
-                    </p>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -572,7 +598,7 @@ export default function TripDetailPage() {
                     >
                       <Clock className="w-4 h-4" />
                       <div className="text-sm font-medium">
-                        Giữ ghế trong:{" "}
+                        Keep the seat in:{" "}
                         <span className="font-bold">
                           {formatTime(timeLeft)}
                         </span>

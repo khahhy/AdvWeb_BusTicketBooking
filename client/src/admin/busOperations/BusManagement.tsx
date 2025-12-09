@@ -10,6 +10,7 @@ import {
   Zap,
   Snowflake,
   Trash2,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,8 +27,12 @@ import {
   useGetBusesQuery,
   useDeleteBusMutation,
   useCreateBusMutation,
+  useUpdateBusMutation,
 } from "@/store/api/busApi";
-import { BusType, BusAmenities } from "@/store/type/busType";
+import { useGetBusAmenitiesQuery } from "@/store/api/settingApi";
+import { useGetTripsQuery } from "@/store/api/tripsApi";
+import { BusType, Bus, BusAmenities } from "@/store/type/busType";
+import { Trip } from "@/store/type/tripsType";
 import BusLayoutVisualization from "@/components/admin/BusLayoutVisualization";
 import SeatLayoutPreview from "@/components/admin/SeatLayoutPreview";
 import {
@@ -46,27 +51,53 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { BusDetailsDrawer } from "@/components/admin";
 
 const BusManagement = () => {
+  const [selectedBus, setSelectedBus] = useState<Bus | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+
   const [plate, setPlate] = useState("");
   const [selectedBusType, setSelectedBusType] = useState<BusType>(
     BusType.STANDARD,
   );
-  const [selectedAmenities, setSelectedAmenities] = useState<BusAmenities>({
-    tv: false,
-    wifi: false,
-    snack: false,
-    water: false,
-    toilet: false,
-    blanket: false,
-    charger: false,
-    airCondition: false,
-  });
+  const [selectedAmenities, setSelectedAmenities] = useState<
+    Record<string, boolean>
+  >({});
+
+  const [editingPlate, setEditingPlate] = useState("");
+  const [editingAmenities, setEditingAmenities] = useState<string[]>([]);
 
   const { data: buses = [], isLoading, error, refetch } = useGetBusesQuery();
+  const { data: settingsAmenitiesData } = useGetBusAmenitiesQuery();
+  const availableAmenities = settingsAmenitiesData?.amenities || [];
+
+  const { data: relatedTrips = [] } = useGetTripsQuery(
+    { busId: selectedBus?.id },
+    { skip: !selectedBus?.id },
+  );
+
   const [deleteBus] = useDeleteBusMutation();
   const [createBus] = useCreateBusMutation();
+  const [updateBus] = useUpdateBusMutation();
+
+  const convertAmenitiesObjToArray = (amenitiesObj: BusAmenities): string[] => {
+    return Object.entries(amenitiesObj)
+      .filter(([, enabled]) => enabled)
+      .map(([key]) => key);
+  };
+
+  const convertAmenitiesArrayToObj = (amenitiesArr: string[]): BusAmenities => {
+    const result: Record<string, boolean> = {};
+    availableAmenities.forEach((key) => {
+      result[key] = false;
+    });
+    amenitiesArr.forEach((key) => {
+      result[key] = true;
+    });
+    return result as unknown as BusAmenities;
+  };
 
   const handleDeleteBus = async (busId: string) => {
     if (window.confirm("Are you sure you want to delete this bus?")) {
@@ -78,29 +109,99 @@ const BusManagement = () => {
       }
     }
   };
-  const getAmenityIcon = (amenity: keyof BusAmenities, enabled: boolean) => {
-    const iconClass = `w-4 h-4 ${enabled ? "text-green-600" : "text-gray-300"}`;
 
-    switch (amenity) {
-      case "tv":
-        return <Tv className={iconClass} />;
-      case "wifi":
-        return <Wifi className={iconClass} />;
-      case "snack":
-        return <Coffee className={iconClass} />;
-      case "water":
-        return <Droplets className={iconClass} />;
-      case "toilet":
-        return <Bath className={iconClass} />;
-      case "blanket":
-        return <ShirtIcon className={iconClass} />;
-      case "charger":
-        return <Zap className={iconClass} />;
-      case "airCondition":
-        return <Snowflake className={iconClass} />;
-      default:
-        return null;
+  const handleOpenCreate = () => {
+    setPlate("");
+    setSelectedBusType(BusType.STANDARD);
+
+    const initialAmenities: Record<string, boolean> = {};
+    availableAmenities.forEach((item) => {
+      initialAmenities[item] = false;
+    });
+    setSelectedAmenities(initialAmenities);
+    setIsCreateOpen(true);
+  };
+
+  const handleCreateBus = async () => {
+    if (!plate.trim()) {
+      alert("Please enter a license plate");
+      return;
     }
+
+    try {
+      await createBus({
+        plate: plate.trim(),
+        busType: selectedBusType,
+        amenities: selectedAmenities as unknown as BusAmenities,
+      }).unwrap();
+
+      setIsCreateOpen(false);
+      refetch();
+    } catch (error) {
+      console.error("Failed to create bus:", error);
+      alert("Failed to create bus. Please try again.");
+    }
+  };
+
+  const handleAmenityToggle = (amenity: string) => {
+    setSelectedAmenities((prev) => ({
+      ...prev,
+      [amenity]: !prev[amenity],
+    }));
+  };
+
+  const handleViewDetails = (bus: Bus) => {
+    setSelectedBus(bus);
+    setEditingPlate(bus.plate);
+    setEditingAmenities(convertAmenitiesObjToArray(bus.amenities));
+    setIsSheetOpen(true);
+  };
+
+  const handleDrawerAmenityChange = (id: string, checked: boolean) => {
+    setEditingAmenities((prev) =>
+      checked ? [...prev, id] : prev.filter((item) => item !== id),
+    );
+  };
+
+  const handleDrawerSave = async () => {
+    if (!selectedBus) return;
+    try {
+      await updateBus({
+        id: selectedBus.id,
+        plate: editingPlate,
+        busType: selectedBus.busType,
+        amenities: convertAmenitiesArrayToObj(editingAmenities),
+      }).unwrap();
+
+      setIsSheetOpen(false);
+      refetch();
+    } catch (err) {
+      console.error("Failed to update bus", err);
+    }
+  };
+
+  const getAmenityIcon = (amenityName: string, enabled: boolean) => {
+    const iconClass = `w-4 h-4 ${enabled ? "text-green-600" : "text-gray-300"}`;
+    const key = amenityName.toLowerCase().replace(/\s/g, "");
+
+    if (key.includes("tv") || key.includes("lcd"))
+      return <Tv className={iconClass} />;
+    if (key.includes("wifi") || key.includes("internet"))
+      return <Wifi className={iconClass} />;
+    if (key.includes("snack") || key.includes("food"))
+      return <Coffee className={iconClass} />;
+    if (key.includes("water") || key.includes("drink"))
+      return <Droplets className={iconClass} />;
+    if (key.includes("toilet") || key.includes("wc"))
+      return <Bath className={iconClass} />;
+    if (key.includes("blanket") || key.includes("pillow"))
+      return <ShirtIcon className={iconClass} />;
+    if (key.includes("charger") || key.includes("usb") || key.includes("power"))
+      return <Zap className={iconClass} />;
+    if (key.includes("air") || key.includes("cool"))
+      return <Snowflake className={iconClass} />;
+
+    return <Star className={iconClass} />;
   };
 
   const getBusTypeColor = (busType: BusType) => {
@@ -125,50 +226,6 @@ const BusManagement = () => {
       <div className="text-red-500 text-center py-8">Error loading buses</div>
     );
 
-  function handleOpenCreate() {
-    setPlate("");
-    setSelectedBusType(BusType.STANDARD);
-    setSelectedAmenities({
-      tv: false,
-      wifi: false,
-      snack: false,
-      water: false,
-      toilet: false,
-      blanket: false,
-      charger: false,
-      airCondition: false,
-    });
-    setIsCreateOpen(true);
-  }
-
-  const handleCreateBus = async () => {
-    if (!plate.trim()) {
-      alert("Please enter a license plate");
-      return;
-    }
-
-    try {
-      await createBus({
-        plate: plate.trim(),
-        busType: selectedBusType,
-        amenities: selectedAmenities,
-      }).unwrap();
-
-      setIsCreateOpen(false);
-      refetch();
-    } catch (error) {
-      console.error("Failed to create bus:", error);
-      alert("Failed to create bus. Please try again.");
-    }
-  };
-
-  const handleAmenityToggle = (amenity: keyof BusAmenities) => {
-    setSelectedAmenities((prev) => ({
-      ...prev,
-      [amenity]: !prev[amenity],
-    }));
-  };
-
   return (
     <div className="flex flex-1 flex-col gap-4 md:gap-8 md:p-2">
       <div className="flex items-center justify-between">
@@ -181,12 +238,10 @@ const BusManagement = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Left side - Interactive Bus Layout Visualization */}
         <div className="lg:col-span-1">
           <BusLayoutVisualization />
         </div>
 
-        {/* Right side - Bus Table */}
         <div className="lg:col-span-2 flex flex-col gap-4">
           <Card className="border shadow-sm">
             <CardContent className="p-0">
@@ -212,13 +267,15 @@ const BusManagement = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2 flex-wrap">
-                          {Object.entries(bus.amenities).map(
-                            ([amenity, enabled]) =>
-                              getAmenityIcon(
-                                amenity as keyof BusAmenities,
-                                enabled,
-                              ),
-                          )}
+                          {bus.amenities &&
+                            Object.entries(bus.amenities).map(
+                              ([amenity, enabled]) =>
+                                enabled ? (
+                                  <div key={amenity} title={amenity}>
+                                    {getAmenityIcon(amenity, true)}
+                                  </div>
+                                ) : null,
+                            )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -226,7 +283,7 @@ const BusManagement = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => console.log("View details:", bus)}
+                            onClick={() => handleViewDetails(bus)}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -279,44 +336,14 @@ const BusManagement = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={BusType.STANDARD}>
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-blue-100 text-blue-800">
-                          Standard
-                        </Badge>
-                        <span className="text-sm text-gray-600">
-                          2-2 Layout
-                        </span>
-                      </div>
+                      Standard (2-2)
                     </SelectItem>
-                    <SelectItem value={BusType.VIP}>
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-purple-100 text-purple-800">
-                          VIP
-                        </Badge>
-                        <span className="text-sm text-gray-600">
-                          2-1 Layout
-                        </span>
-                      </div>
-                    </SelectItem>
+                    <SelectItem value={BusType.VIP}>VIP (2-1)</SelectItem>
                     <SelectItem value={BusType.SLEEPER}>
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-green-100 text-green-800">
-                          Sleeper
-                        </Badge>
-                        <span className="text-sm text-gray-600">
-                          1-1 Layout
-                        </span>
-                      </div>
+                      Sleeper (1-1)
                     </SelectItem>
                     <SelectItem value={BusType.LIMOUSINE}>
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-yellow-100 text-yellow-800">
-                          Limousine
-                        </Badge>
-                        <span className="text-sm text-gray-600">
-                          3-1 Layout
-                        </span>
-                      </div>
+                      Limousine (3-1)
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -332,28 +359,35 @@ const BusManagement = () => {
 
             <div className="grid gap-4">
               <Label>Amenities</Label>
-              <div className="grid grid-cols-2 gap-4">
-                {Object.entries(selectedAmenities).map(([amenity, enabled]) => (
-                  <div key={amenity} className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id={amenity}
-                      checked={enabled}
-                      onChange={() =>
-                        handleAmenityToggle(amenity as keyof BusAmenities)
-                      }
-                      className="rounded"
-                    />
-                    <Label
-                      htmlFor={amenity}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      {getAmenityIcon(amenity as keyof BusAmenities, enabled)}
-                      {amenity.charAt(0).toUpperCase() + amenity.slice(1)}
-                    </Label>
-                  </div>
-                ))}
-              </div>
+              {availableAmenities.length === 0 ? (
+                <p className="text-sm text-gray-500 italic">
+                  No amenities configured in System Settings.
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  {availableAmenities.map((amenityName) => (
+                    <div key={amenityName} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id={amenityName}
+                        checked={selectedAmenities[amenityName] || false}
+                        onChange={() => handleAmenityToggle(amenityName)}
+                        className="rounded"
+                      />
+                      <Label
+                        htmlFor={amenityName}
+                        className="flex items-center gap-2 cursor-pointer capitalize"
+                      >
+                        {getAmenityIcon(
+                          amenityName,
+                          selectedAmenities[amenityName] || false,
+                        )}
+                        {amenityName}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -365,6 +399,19 @@ const BusManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Bus Details Drawer */}
+      <BusDetailsDrawer
+        open={isSheetOpen}
+        onOpenChange={setIsSheetOpen}
+        bus={selectedBus as Bus}
+        plate={editingPlate}
+        amenities={editingAmenities}
+        setPlate={setEditingPlate}
+        onAmenityChange={handleDrawerAmenityChange}
+        relatedTrips={relatedTrips as Trip[]}
+        onSave={handleDrawerSave}
+      />
     </div>
   );
 };

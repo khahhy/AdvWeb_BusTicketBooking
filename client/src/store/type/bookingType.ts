@@ -97,12 +97,18 @@ export interface Booking {
 }
 
 export interface BookingStats {
-  totalBookings: number;
-  bookingsToday: number;
-  breakdown: {
-    pendingPayment: number;
-    confirmed: number;
-    cancelled: number;
+  bookings: {
+    total: number;
+    today: number;
+    breakdown: {
+      pendingPayment: number;
+      confirmed: number;
+      cancelled: number;
+    };
+  };
+  revenue: {
+    total: number;
+    today: number;
   };
 }
 
@@ -126,4 +132,19 @@ export interface TicketLookupParams {
 
 export interface GuestCancelRequest {
   email: string;
+}
+
+export interface RevenueChartData {
+  date: string; // YYYY-MM-DD
+  revenue: number;
+}
+
+export interface BookingTrendData {
+  hour: string; // "0:00", "1:00", ...
+  bookings: number;
+}
+
+export interface OccupancyRateData {
+  averageOccupancy: number;
+  totalTrips: number;
 }

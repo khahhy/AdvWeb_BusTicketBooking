@@ -1023,4 +1023,69 @@ export class TripsService {
       });
     }
   }
+
+  async getUpcomingTrips(limit: number = 5) {
+    try {
+      const trips = await this.prisma.trips.findMany({
+        where: {
+          startTime: { gte: new Date() },
+          status: { not: TripStatus.cancelled },
+        },
+        orderBy: { startTime: 'asc' },
+        take: limit,
+        include: {
+          bus: {
+            select: {
+              plate: true,
+              _count: { select: { seats: true } },
+            },
+          },
+          _count: {
+            select: {
+              bookings: { where: { status: 'confirmed' } },
+            },
+          },
+          tripStops: {
+            orderBy: { sequence: 'asc' },
+            include: { location: true },
+          },
+        },
+      });
+
+      return trips.map((trip) => {
+        const origin = trip.tripStops[0]?.location?.city || 'Unknown';
+        const destination =
+          trip.tripStops[trip.tripStops.length - 1]?.location?.city ||
+          'Unknown';
+
+        const totalSeats = trip.bus?._count?.seats || 0;
+        const bookedSeats = trip._count?.bookings || 0;
+
+        let displayStatus: string = trip.status;
+        if (bookedSeats >= totalSeats) {
+          displayStatus = 'Full';
+        } else if (
+          new Date(trip.startTime).getTime() - new Date().getTime() <
+          30 * 60 * 1000
+        ) {
+          displayStatus = 'Boarding';
+        }
+
+        return {
+          id: trip.id,
+          route: `${origin} - ${destination}`,
+          startTime: trip.startTime,
+          busPlate: trip.bus?.plate || 'N/A',
+          totalSeats,
+          bookedSeats,
+          seatsInfo: `${bookedSeats}/${totalSeats}`,
+          status: displayStatus,
+        };
+      });
+    } catch (error: unknown) {
+      throw new InternalServerErrorException('Failed to fetch upcoming trips', {
+        cause: error,
+      });
+    }
+  }
 }

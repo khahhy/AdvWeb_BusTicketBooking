@@ -851,20 +851,37 @@ export class BookingsService {
         now.getDate(),
       );
 
-      const [totalBookings, bookingsToday, statusBreakdown] = await Promise.all(
-        [
-          this.prisma.bookings.count(),
+      const [
+        totalBookings,
+        bookingsToday,
+        statusBreakdown,
+        revenueTotal,
+        revenueToday,
+      ] = await Promise.all([
+        this.prisma.bookings.count(),
 
-          this.prisma.bookings.count({
-            where: { createdAt: { gte: startOfToday } },
-          }),
+        this.prisma.bookings.count({
+          where: { createdAt: { gte: startOfToday } },
+        }),
 
-          this.prisma.bookings.groupBy({
-            by: ['status'],
-            _count: { id: true },
-          }),
-        ],
-      );
+        this.prisma.bookings.groupBy({
+          by: ['status'],
+          _count: { id: true },
+        }),
+
+        this.prisma.bookings.aggregate({
+          where: { status: BookingStatus.confirmed },
+          _sum: { price: true },
+        }),
+
+        this.prisma.bookings.aggregate({
+          where: {
+            status: BookingStatus.confirmed,
+            createdAt: { gte: startOfToday },
+          },
+          _sum: { price: true },
+        }),
+      ]);
 
       const breakdown = statusBreakdown.reduce(
         (acc, curr) => {
@@ -875,19 +892,150 @@ export class BookingsService {
       );
 
       return {
-        message: 'Fetched booking stats successfully',
+        message: 'Fetched dashboard stats successfully',
         data: {
-          totalBookings,
-          bookingsToday,
-          breakdown: {
-            pendingPayment: breakdown[BookingStatus.pendingPayment] || 0,
-            confirmed: breakdown[BookingStatus.confirmed] || 0,
-            cancelled: breakdown[BookingStatus.cancelled] || 0,
+          bookings: {
+            total: totalBookings,
+            today: bookingsToday,
+            breakdown: {
+              pendingPayment: breakdown[BookingStatus.pendingPayment] || 0,
+              confirmed: breakdown[BookingStatus.confirmed] || 0,
+              cancelled: breakdown[BookingStatus.cancelled] || 0,
+            },
+          },
+          revenue: {
+            total: Number(revenueTotal._sum.price) || 0,
+            today: Number(revenueToday._sum.price) || 0,
           },
         },
       };
     } catch (err) {
       throw new InternalServerErrorException('Failed to fetch booking stats', {
+        cause: err,
+      });
+    }
+  }
+
+  async getRevenueChart() {
+    try {
+      const result = await this.prisma.$queryRaw`
+        SELECT 
+          TO_CHAR("createdAt", 'YYYY-MM-DD') as date, 
+          COALESCE(SUM(price), 0) as revenue
+        FROM "Bookings"
+        WHERE status = 'confirmed'
+          AND "createdAt" >= NOW() - INTERVAL '30 days'
+        GROUP BY TO_CHAR("createdAt", 'YYYY-MM-DD')
+        ORDER BY date ASC;
+      `;
+
+      const formattedData = (
+        result as {
+          date: string;
+          revenue: number | string;
+        }[]
+      ).map((item) => ({
+        date: item.date,
+        revenue: Number(item.revenue),
+      }));
+
+      return {
+        message: 'Fetched revenue chart successfully',
+        data: formattedData,
+      };
+    } catch (err) {
+      console.error(err);
+      throw new InternalServerErrorException('Failed to get revenue chart');
+    }
+  }
+
+  async getBookingTrends() {
+    try {
+      const result = await this.prisma.$queryRaw`
+        SELECT 
+          EXTRACT(HOUR FROM t."startTime") as hour, 
+          COUNT(b.id) as count
+        FROM "Bookings" b
+        JOIN "Trips" t ON b."tripId" = t.id
+        WHERE b.status = 'confirmed'
+        GROUP BY EXTRACT(HOUR FROM t."startTime")
+        ORDER BY hour ASC;
+      `;
+
+      const fullDayStats = Array.from({ length: 24 }, (_, i) => ({
+        hour: `${i}:00`,
+        bookings: 0,
+      }));
+
+      (
+        result as {
+          hour: number | string;
+          count: bigint | number;
+        }[]
+      ).forEach((item) => {
+        const hourIndex = Number(item.hour);
+        if (fullDayStats[hourIndex]) {
+          fullDayStats[hourIndex].bookings = Number(item.count);
+        }
+      });
+
+      return {
+        message: 'Fetched booking trends successfully',
+        data: fullDayStats,
+      };
+    } catch (err) {
+      console.error(err);
+      throw new InternalServerErrorException('Failed to get booking trends');
+    }
+  }
+
+  async getOccupancyRate() {
+    try {
+      const trips = await this.prisma.trips.findMany({
+        where: {
+          startTime: {
+            gte: new Date(new Date().setDate(new Date().getDate() - 30)),
+          },
+        },
+        include: {
+          _count: {
+            select: { bookings: { where: { status: 'confirmed' } } },
+          },
+          bus: {
+            include: {
+              _count: { select: { seats: true } },
+            },
+          },
+        },
+      });
+
+      if (trips.length === 0) {
+        return {
+          message: 'Fetched occupancy rate successfully',
+          data: { averageOccupancy: 0, totalTrips: 0 },
+        };
+      }
+
+      let totalPercentage = 0;
+
+      trips.forEach((trip) => {
+        const totalSeats = trip.bus._count.seats || 1;
+        const bookedSeats = trip._count.bookings;
+        const occupancy = (bookedSeats / totalSeats) * 100;
+        totalPercentage += occupancy;
+      });
+
+      const averageOccupancy = totalPercentage / trips.length;
+
+      return {
+        message: 'Fetched occupancy rate successfully',
+        data: {
+          averageOccupancy: Math.round(averageOccupancy * 100) / 100,
+          totalTrips: trips.length,
+        },
+      };
+    } catch (err) {
+      throw new InternalServerErrorException('Failed to get occupancy rate', {
         cause: err,
       });
     }

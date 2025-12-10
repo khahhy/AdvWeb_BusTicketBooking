@@ -8,6 +8,7 @@ import {
   CreateTripRequest,
   UpdateTripRequest,
   TripStatus,
+  UpcomingTrip,
 } from "@/store/type/tripsType";
 import { SeatStatus, TripSeatResult } from "@/store/type/seatsType";
 
@@ -40,6 +41,21 @@ export const tripsApi = createApi({
       }),
       transformResponse: (response: ApiResponse<Trip[]>) => response.data,
       providesTags: [{ type: "Trips", id: "SEARCH_LIST" }],
+    }),
+
+    getUpcomingTrips: builder.query<UpcomingTrip[], number | void>({
+      query: (limit) => ({
+        url: "/trips/upcoming",
+        method: "GET",
+        params: { limit: limit || 5 },
+      }),
+      transformResponse: (
+        response: ApiResponse<UpcomingTrip[]> | UpcomingTrip[],
+      ) => {
+        if (Array.isArray(response)) return response;
+        return (response as ApiResponse<UpcomingTrip[]>).data;
+      },
+      providesTags: [{ type: "Trips", id: "LIST" }],
     }),
 
     getTripById: builder.query<Trip, string>({
@@ -133,4 +149,5 @@ export const {
   useUpdateTripStatusMutation,
   useDeleteTripMutation,
   useGetTripSeatsQuery, // realtime seats status (trip + route)
+  useGetUpcomingTripsQuery,
 } = tripsApi;

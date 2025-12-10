@@ -90,3 +90,14 @@ export interface SearchTripParams {
   includeStops?: boolean;
   includeRoutes?: boolean;
 }
+
+export interface UpcomingTrip {
+  id: string;
+  route: string;
+  startTime: string;
+  busPlate: string;
+  totalSeats: number;
+  bookedSeats: number;
+  seatsInfo: string;
+  status: string;
+}

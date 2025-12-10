@@ -12,6 +12,9 @@ import {
   GuestLookupRequest,
   TicketLookupParams,
   GuestCancelRequest,
+  RevenueChartData,
+  BookingTrendData,
+  OccupancyRateData,
 } from "@/store/type/bookingType";
 
 export const bookingApi = createApi({
@@ -141,6 +144,30 @@ export const bookingApi = createApi({
         body: { email },
       }),
     }),
+
+    getRevenueChart: builder.query<ApiResponse<RevenueChartData[]>, void>({
+      query: () => ({
+        url: "/bookings/revenue-chart",
+        method: "GET",
+      }),
+      providesTags: ["BookingStats"],
+    }),
+
+    getBookingTrends: builder.query<ApiResponse<BookingTrendData[]>, void>({
+      query: () => ({
+        url: "/bookings/booking-trends",
+        method: "GET",
+      }),
+      providesTags: ["BookingStats"],
+    }),
+
+    getOccupancyRate: builder.query<ApiResponse<OccupancyRateData>, void>({
+      query: () => ({
+        url: "/bookings/occupancy-rate",
+        method: "GET",
+      }),
+      providesTags: ["BookingStats"],
+    }),
   }),
 });
 
@@ -157,4 +184,7 @@ export const {
   useLookupByTicketCodeQuery,
   useLazyLookupByTicketCodeQuery,
   useCancelGuestBookingMutation,
+  useGetRevenueChartQuery,
+  useGetBookingTrendsQuery,
+  useGetOccupancyRateQuery,
 } = bookingApi;

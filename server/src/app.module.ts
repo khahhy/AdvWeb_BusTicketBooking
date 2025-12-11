@@ -15,6 +15,7 @@ import { SettingModule } from './setting/setting.module';
 import { ActivityLogsModule } from './activity-logs/activity-logs.module';
 import { RedisModule } from './redis/redis.module';
 import { RedisCacheModule } from './cache/redis-cache.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { RedisCacheModule } from './cache/redis-cache.module';
     ActivityLogsModule,
     RedisModule,
     RedisCacheModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

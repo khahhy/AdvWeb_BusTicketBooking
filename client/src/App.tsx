@@ -24,6 +24,7 @@ import {
   ReviewManagement,
   NotificationManagement,
   SystemSettings,
+  SystemHealth,
 } from "@/admin";
 import UserDashboard from "./user/UserDashboard";
 import SearchPage from "./pages/SearchPage";
@@ -105,6 +106,7 @@ function AppContent() {
         </Route>
         <Route path="system">
           <Route path="settings" element={<SystemSettings />} />
+          <Route path="health" element={<SystemHealth />} />
         </Route>
       </Route>
       {/* Dashboard/Landing page - accessible to everyone */}

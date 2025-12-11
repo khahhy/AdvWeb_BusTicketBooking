@@ -13,6 +13,7 @@ import {
   Star,
   Bell,
   Settings,
+  Activity,
   type LucideIcon,
 } from "lucide-react";
 
@@ -122,6 +123,11 @@ export const sidebarNavItems: NavItem[] = [
         label: "Settings",
         icon: Settings,
         path: "/admin/system/settings",
+      },
+      {
+        label: "System Health",
+        icon: Activity,
+        path: "/admin/system/health",
       },
     ],
   },

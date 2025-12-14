@@ -7,7 +7,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
-
+import { Toaster } from "@/components/ui/sonner";
 function HomeRedirect() {
   const userStr = localStorage.getItem("user");
 
@@ -222,6 +222,7 @@ function AppContent() {
       <ThemeProvider>
         {routeContent}
         {!hideChatbot && <Chatbot />}
+        <Toaster />
       </ThemeProvider>
     </>
   );

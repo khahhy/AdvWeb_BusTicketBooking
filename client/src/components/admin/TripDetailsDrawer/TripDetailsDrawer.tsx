@@ -10,8 +10,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { format } from "date-fns";
-import { Calendar, Clock, MapPin, Bus } from "lucide-react";
+import { Calendar, Clock, MapPin, Bus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import {
   useGetTripByIdQuery,
   useUpdateTripStatusMutation,
@@ -31,17 +39,54 @@ const TripDetailsDrawer = ({
   tripId,
   onEdit,
 }: TripDetailsDrawerProps) => {
-  const { data: trip, isLoading } = useGetTripByIdQuery(tripId || "", {
+  const {
+    data: trip,
+    isLoading,
+    refetch,
+  } = useGetTripByIdQuery(tripId || "", {
     skip: !tripId,
   });
 
-  const [updateStatus] = useUpdateTripStatusMutation();
+  const [updateStatus, { isLoading: isUpdating }] =
+    useUpdateTripStatusMutation();
 
-  const handleCancelTrip = async () => {
+  const handleStatusChange = async (newStatus: string) => {
     if (!tripId) return;
-    if (confirm("Are you sure you want to cancel this trip?")) {
-      await updateStatus({ id: tripId, status: "cancelled" as TripStatus });
-      onOpenChange(false);
+
+    if (
+      newStatus === "cancelled" &&
+      !confirm("Are you sure you want to cancel this trip?")
+    ) {
+      return;
+    }
+
+    try {
+      await updateStatus({
+        id: tripId,
+        status: newStatus as TripStatus,
+      }).unwrap();
+      refetch();
+      toast.success(`Trip status updated to ${newStatus}`);
+    } catch (error) {
+      console.error("Failed to update status", error);
+      toast.error("Failed to update trip status");
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "scheduled":
+        return "default";
+      case "ongoing":
+        return "secondary";
+      case "completed":
+        return "outline";
+      case "cancelled":
+        return "destructive";
+      case "delayed":
+        return "destructive";
+      default:
+        return "default";
     }
   };
 
@@ -59,11 +104,7 @@ const TripDetailsDrawer = ({
             <SheetHeader className="mb-4">
               <SheetTitle className="flex items-center gap-3">
                 {trip.tripName}
-                <Badge
-                  variant={
-                    trip.status === "cancelled" ? "destructive" : "default"
-                  }
-                >
+                <Badge variant={getStatusColor(trip.status)}>
                   {trip.status}
                 </Badge>
               </SheetTitle>
@@ -117,18 +158,48 @@ const TripDetailsDrawer = ({
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 mt-6">
-                  {trip.status === "scheduled" && (
-                    <Button
-                      variant="outline"
-                      className="text-destructive border-destructive hover:bg-destructive/10"
-                      onClick={handleCancelTrip}
-                    >
-                      Cancel Trip
-                    </Button>
-                  )}
-                  <Button onClick={() => onEdit(trip.id)}>
-                    Edit Configuration
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-4 items-end">
+                    <div className="space-y-2">
+                      <Label htmlFor="status-select">Current Status</Label>
+                      <Select
+                        value={trip.status}
+                        onValueChange={handleStatusChange}
+                        disabled={isUpdating}
+                      >
+                        <SelectTrigger id="status-select" className="w-full">
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="scheduled">Scheduled</SelectItem>
+                          <SelectItem value="ongoing">Ongoing</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="delayed">Delayed</SelectItem>
+                          <SelectItem
+                            value="cancelled"
+                            className="text-destructive focus:text-destructive"
+                          >
+                            Cancelled
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="text-xs text-muted-foreground pb-2">
+                      {isUpdating && (
+                        <span className="flex items-center gap-1 text-primary">
+                          <Loader2 className="h-3 w-3 animate-spin" />{" "}
+                          Updating...
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="flex justify-end pt-2">
+                  <Button variant="outline" onClick={() => onEdit(trip.id)}>
+                    Edit Full Configuration
                   </Button>
                 </div>
               </TabsContent>

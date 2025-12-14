@@ -15,7 +15,7 @@ import { SeatStatus, TripSeatResult } from "@/store/type/seatsType";
 export const tripsApi = createApi({
   reducerPath: "tripsApi",
   baseQuery: baseQuery,
-  tagTypes: ["Trips", "TripDetail", "Seats"],
+  tagTypes: ["Trips", "Seats"],
 
   endpoints: (builder) => ({
     getTrips: builder.query<Trip[], TripQueryParams | void>({
@@ -60,7 +60,7 @@ export const tripsApi = createApi({
 
     getTripById: builder.query<Trip, string>({
       query: (id) => `/trips/${id}`,
-      providesTags: (_, __, id) => [{ type: "TripDetail", id }],
+      providesTags: (_, __, id) => [{ type: "Trips", id }],
     }),
 
     createTrip: builder.mutation<Trip, CreateTripRequest>({
@@ -80,7 +80,7 @@ export const tripsApi = createApi({
       }),
       invalidatesTags: (_, __, { id }) => [
         { type: "Trips", id: "LIST" },
-        { type: "TripDetail", id },
+        { type: "Trips", id },
         { type: "Trips", id: "SEARCH_LIST" },
       ],
     }),
@@ -96,7 +96,7 @@ export const tripsApi = createApi({
       }),
       invalidatesTags: (_, __, { id }) => [
         { type: "Trips", id: "LIST" },
-        { type: "TripDetail", id },
+        { type: "Trips", id },
         { type: "Trips", id: "SEARCH_LIST" },
       ],
     }),
@@ -108,7 +108,7 @@ export const tripsApi = createApi({
       }),
       invalidatesTags: (_, __, id) => [
         { type: "Trips", id: "LIST" },
-        { type: "TripDetail", id },
+        { type: "Trips", id },
         { type: "Trips", id: "SEARCH_LIST" },
       ],
     }),

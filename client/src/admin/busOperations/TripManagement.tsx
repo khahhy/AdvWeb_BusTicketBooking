@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { Plus, Search, Calendar as CalendarIcon, Eye } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Calendar as CalendarIcon,
+  Eye,
+  Copy,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -83,6 +89,11 @@ const TripManagement = () => {
       t.tripName?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
       t.bus?.plate.toLowerCase().includes(debouncedSearch.toLowerCase()),
   );
+
+  const handleDuplicateTrip = (e: React.MouseEvent, tripId: string) => {
+    e.stopPropagation();
+    navigate(`/admin/bus-operations/trips/new?duplicateFrom=${tripId}`);
+  };
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-2 md:p-2 border-0 shadow-none">
@@ -192,16 +203,27 @@ const TripManagement = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewDetails(trip.id);
-                          }}
-                        >
-                          <Eye className="h-4 w-4 text-muted-foreground" />
-                        </Button>
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Duplicate Route"
+                            onClick={(e) => handleDuplicateTrip(e, trip.id)}
+                          >
+                            <Copy className="h-4 w-4 text-blue-600" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewDetails(trip.id);
+                            }}
+                          >
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))

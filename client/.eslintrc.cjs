@@ -9,7 +9,7 @@ module.exports = {
   ignorePatterns: [
     "dist",
     ".eslintrc.cjs",
-    "src/components/ui",
+    // "src/components/ui",
     "**/*.test.tsx",
     "src/test",
   ],
@@ -23,4 +23,12 @@ module.exports = {
     "@typescript-eslint/no-unused-vars": ["warn"],
     "@typescript-eslint/no-explicit-any": "warn",
   },
+  overrides: [
+    {
+      files: ["src/components/ui/**/*.tsx"],
+      rules: {
+        "react-refresh/only-export-components": "off",
+      },
+    },
+  ],
 };

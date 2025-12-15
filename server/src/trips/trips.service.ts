@@ -26,7 +26,7 @@ export class TripsService {
     await this.cacheManager.delByPattern('trips:search*');
 
     if (tripId) {
-      await this.cacheManager.del(`trips:detail:${tripId}`);
+      await this.cacheManager.delByPattern(`trips:detail:${tripId}*`);
     }
   }
 
@@ -297,7 +297,7 @@ export class TripsService {
 
     // 5. SET CACHE (Lưu 300s = 5 phút)
     await this.cacheManager.set(cacheKey, result, 300);
-    return trips;
+    return result;
   }
 
   async findOne(id: string, includeRoutes?: string) {

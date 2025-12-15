@@ -119,8 +119,8 @@ export default function CheckoutPage() {
 
   // Calculate prices
   const ticketPrice = trip.price;
-  const insuranceFee = 1000;
-  const serviceFee = 14000;
+  const insuranceFee = 0;
+  const serviceFee = 0;
   const totalPrice = ticketPrice + insuranceFee + serviceFee;
 
   const [fullName, setFullName] = useState("");

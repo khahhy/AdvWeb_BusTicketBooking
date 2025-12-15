@@ -25,16 +25,17 @@ export default function ConfirmationPage() {
   const passengerName = searchParams.get("passengerName") || "Guest User";
   const passengerId = searchParams.get("passengerId") || "123456789012";
   const email = searchParams.get("email") || "example@gmail.com";
-  const ticketCode = searchParams.get("ticketCode") || searchParams.get("bookingCode") || "PENDING";
+  const ticketCode =
+    searchParams.get("ticketCode") ||
+    searchParams.get("bookingCode") ||
+    "PENDING";
 
   // Fetch trip details from API
-  const {
-    data: tripData,
-    isLoading: tripLoading,
-  } = useGetTripRouteMapDetailQuery(
-    { tripId, routeId },
-    { skip: !tripId || !routeId },
-  );
+  const { data: tripData, isLoading: tripLoading } =
+    useGetTripRouteMapDetailQuery(
+      { tripId, routeId },
+      { skip: !tripId || !routeId },
+    );
 
   // Transform API data to component format
   const trip = useMemo(() => {
@@ -72,9 +73,9 @@ export default function ConfirmationPage() {
   }, [tripData, tripId]);
 
   const ticketPrice = trip.price;
-  const insuranceFee = 1000;
-  const serviceFee = 14000;
-  const totalPrice = ticketPrice + insuranceFee + serviceFee;
+  const insuranceFee = 0;
+  const serviceFee = 0;
+  const totalPrice = ticketPrice;
 
   const formatDate = () => {
     return dayjs(travelDate).format("ddd, MMM DD, YYYY");
@@ -102,7 +103,7 @@ export default function ConfirmationPage() {
     try {
       const response = await fetch(
         `${API_BASE_URL}/bookings/eticket/${ticketCode}/resend`,
-        { method: "POST" }
+        { method: "POST" },
       );
 
       if (!response.ok) {
@@ -117,7 +118,6 @@ export default function ConfirmationPage() {
       setIsResending(false);
     }
   };
-
 
   // Loading state
   if (tripLoading) {

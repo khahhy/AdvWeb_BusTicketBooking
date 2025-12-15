@@ -53,6 +53,7 @@ import Chatbot from "./components/ui/chatbot";
 import "./index.css";
 import CheckoutPage from "./pages/CheckoutPage";
 import PaymentPage from "./pages/PaymentPage";
+import PaymentResultPage from "./pages/PaymentResultPage";
 import ConfirmationPage from "./pages/ConfirmationPage";
 import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
@@ -204,6 +205,7 @@ function AppContent() {
       {/* Guest checkout flow - accessible without login */}
       <Route path="/checkout" element={<CheckoutPage />} />
       <Route path="/payment" element={<PaymentPage />} />
+      <Route path="/payment-result" element={<PaymentResultPage />} />
       <Route path="/confirmation" element={<ConfirmationPage />} />
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/login" element={<LoginPage />} />

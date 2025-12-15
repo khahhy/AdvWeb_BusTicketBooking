@@ -195,14 +195,40 @@ export class BookingsService {
         await this.calculateDetailsFromRoute(tripId, routeId);
 
       const lockIdentifier = userId || 'guest-temp-id';
+
+      console.log('Lock identifier:', lockIdentifier);
+      console.log('Checking locks for segments:', segmentIds);
+
+      // Clear any existing locks by this user before creating booking
+      // Also clear guest locks if user is now logged in
       for (const segId of segmentIds) {
         const lockKey = `lock:trip:${tripId}:segment:${segId}:seat:${seatId}`;
         const lockHolder = await this.cacheManager.get<string>(lockKey);
 
-        if (lockHolder && lockHolder !== lockIdentifier) {
+        console.log(`Segment ${segId} - Lock holder:`, lockHolder);
+
+        // Allow if:
+        // 1. Lock is held by the current user
+        // 2. Lock is held by guest and user is now logged in (guest → authenticated flow)
+        const isOwnLock = lockHolder === lockIdentifier;
+        const isGuestToAuthFlow = lockHolder === 'guest-temp-id' && userId;
+
+        if (isOwnLock || isGuestToAuthFlow) {
+          // Remove lock since we're creating the actual booking
+          console.log(
+            `Removing lock for segment ${segId} (holder: ${lockHolder})`,
+          );
+          await this.cacheManager.del(lockKey);
+        } else if (lockHolder) {
+          // Someone else is holding the lock
+          console.warn(
+            `Lock conflict - Expected: ${lockIdentifier}, Got: ${lockHolder}`,
+          );
           throw new ConflictException(
             `Seat at segment ${segId} is being held by another user.`,
           );
+        } else {
+          console.log(`No lock found for segment ${segId}, proceeding...`);
         }
       }
 
@@ -263,7 +289,7 @@ export class BookingsService {
           const bookingCreateInput: any = {
             customerInfo: customerInfo as unknown as Prisma.InputJsonValue,
             price: tripRoute.price,
-            status: BookingStatus.confirmed, // Set to confirmed since payment is bypassed
+            status: BookingStatus.pendingPayment, // Set to pendingPayment until payment is confirmed
             ticketCode,
             trip: { connect: { id: tripId } },
             route: { connect: { id: routeId } },
@@ -318,12 +344,8 @@ export class BookingsService {
 
       this.bookingsGateway.emitSeatSold(tripId, seatId, segmentIds);
 
-      // Send e-ticket email asynchronously (don't block the response)
-      if (result.ticketCode) {
-        this.sendETicketEmail(result.ticketCode).catch((err) => {
-          console.error('Failed to send e-ticket email:', err);
-        });
-      }
+      // NOTE: E-ticket email will be sent after successful payment via PaymentService
+      // Do not send email here as booking is in pendingPayment status
 
       return { message: 'Booking initiated successfully', data: result };
     } catch (err) {

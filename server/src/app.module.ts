@@ -16,9 +16,13 @@ import { ActivityLogsModule } from './activity-logs/activity-logs.module';
 import { RedisModule } from './redis/redis.module';
 import { RedisCacheModule } from './cache/redis-cache.module';
 import { HealthModule } from './health/health.module';
+import { PaymentModule } from './payment/payment.module';
+import { PayOSModule } from './payos/payos.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     UserModule,
     LocationModule,
@@ -33,6 +37,8 @@ import { HealthModule } from './health/health.module';
     RedisModule,
     RedisCacheModule,
     HealthModule,
+    PaymentModule,
+    PayOSModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

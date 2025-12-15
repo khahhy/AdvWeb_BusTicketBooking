@@ -4,10 +4,12 @@ import { BookingsController } from './bookings.controller';
 import { BookingsGateway } from './bookings.gateway';
 import { ETicketModule } from 'src/eticket/eticket.module';
 import { EmailModule } from 'src/email/email.module';
+import { PaymentModule } from 'src/payment/payment.module';
 
 @Module({
-  imports: [ETicketModule, EmailModule],
+  imports: [ETicketModule, EmailModule, PaymentModule],
   controllers: [BookingsController],
   providers: [BookingsService, BookingsGateway],
+  exports: [BookingsService],
 })
 export class BookingsModule {}

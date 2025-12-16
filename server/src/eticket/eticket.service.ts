@@ -47,7 +47,9 @@ export interface FullETicketData {
 export class ETicketService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getFullBookingData(ticketCode: string): Promise<{ message: string; data: FullETicketData }> {
+  async getFullBookingData(
+    ticketCode: string,
+  ): Promise<{ message: string; data: FullETicketData }> {
     const booking = await this.prisma.bookings.findUnique({
       where: { ticketCode },
       include: {
@@ -83,10 +85,13 @@ export class ETicketService {
     const endTime = new Date(booking.trip.endTime);
     const durationMs = endTime.getTime() - startTime.getTime();
     const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
-    const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-    const duration = durationHours > 0 
-      ? `${durationHours}h ${durationMinutes}m` 
-      : `${durationMinutes}m`;
+    const durationMinutes = Math.floor(
+      (durationMs % (1000 * 60 * 60)) / (1000 * 60),
+    );
+    const duration =
+      durationHours > 0
+        ? `${durationHours}h ${durationMinutes}m`
+        : `${durationMinutes}m`;
 
     const formatTime = (date: Date) => {
       const hours = date.getHours();
@@ -100,7 +105,9 @@ export class ETicketService {
       return date.toISOString().split('T')[0];
     };
 
-    const mapStatus = (status: string): 'CONFIRMED' | 'PENDING' | 'CANCELLED' => {
+    const mapStatus = (
+      status: string,
+    ): 'CONFIRMED' | 'PENDING' | 'CANCELLED' => {
       switch (status) {
         case 'confirmed':
           return 'CONFIRMED';
@@ -127,8 +134,10 @@ export class ETicketService {
         phone: customerInfo.phoneNumber,
         tripFrom: booking.route.origin.city,
         tripTo: booking.route.destination.city,
-        fromTerminal: booking.pickupStop?.location?.name || booking.route.origin.name,
-        toTerminal: booking.dropoffStop?.location?.name || booking.route.destination.name,
+        fromTerminal:
+          booking.pickupStop?.location?.name || booking.route.origin.name,
+        toTerminal:
+          booking.dropoffStop?.location?.name || booking.route.destination.name,
         departureTime: formatTime(startTime),
         arrivalTime: formatTime(endTime),
         travelDate: formatDate(startTime),
@@ -271,7 +280,10 @@ export class ETicketService {
       doc.fillColor('#333333').fontSize(11).font('Helvetica-Bold');
       doc.text('TRIP DETAILS', 50, contentY);
 
-      doc.moveTo(50, contentY + 18).lineTo(280, contentY + 18).stroke('#e5e7eb');
+      doc
+        .moveTo(50, contentY + 18)
+        .lineTo(280, contentY + 18)
+        .stroke('#e5e7eb');
 
       doc.font('Helvetica').fontSize(10).fillColor('#666666');
       const leftColX = 50;
@@ -279,7 +291,10 @@ export class ETicketService {
 
       const addField = (label: string, value: string) => {
         doc.fillColor('#666666').text(label, leftColX, y);
-        doc.fillColor('#333333').font('Helvetica-Bold').text(value, leftColX, y + 14);
+        doc
+          .fillColor('#333333')
+          .font('Helvetica-Bold')
+          .text(value, leftColX, y + 14);
         doc.font('Helvetica');
         y += 38;
       };
@@ -298,25 +313,44 @@ export class ETicketService {
       doc.fillColor('#333333').fontSize(11).font('Helvetica-Bold');
       doc.text('PASSENGER DETAILS', rightColX, y);
 
-      doc.moveTo(rightColX, y + 18).lineTo(550, y + 18).stroke('#e5e7eb');
+      doc
+        .moveTo(rightColX, y + 18)
+        .lineTo(550, y + 18)
+        .stroke('#e5e7eb');
 
       y += 30;
       doc.font('Helvetica').fontSize(10);
 
       doc.fillColor('#666666').text('Passenger Name', rightColX, y);
-      doc.fillColor('#333333').font('Helvetica-Bold').text(data.passengerName, rightColX, y + 14);
+      doc
+        .fillColor('#333333')
+        .font('Helvetica-Bold')
+        .text(data.passengerName, rightColX, y + 14);
       y += 38;
 
       doc.font('Helvetica').fillColor('#666666').text('Email', rightColX, y);
-      doc.fillColor('#333333').font('Helvetica-Bold').text(data.email, rightColX, y + 14);
+      doc
+        .fillColor('#333333')
+        .font('Helvetica-Bold')
+        .text(data.email, rightColX, y + 14);
       y += 38;
 
       doc.font('Helvetica').fillColor('#666666').text('Phone', rightColX, y);
-      doc.fillColor('#333333').font('Helvetica-Bold').text(data.phoneNumber, rightColX, y + 14);
+      doc
+        .fillColor('#333333')
+        .font('Helvetica-Bold')
+        .text(data.phoneNumber, rightColX, y + 14);
       y += 38;
 
-      doc.font('Helvetica').fillColor('#666666').text('Total Price', rightColX, y);
-      doc.fillColor('#134074').fontSize(14).font('Helvetica-Bold').text(data.price, rightColX, y + 14);
+      doc
+        .font('Helvetica')
+        .fillColor('#666666')
+        .text('Total Price', rightColX, y);
+      doc
+        .fillColor('#134074')
+        .fontSize(14)
+        .font('Helvetica-Bold')
+        .text(data.price, rightColX, y + 14);
       y += 50;
 
       // QR Code
@@ -335,16 +369,31 @@ export class ETicketService {
       doc.fillColor('#666666').fontSize(9).font('Helvetica');
       doc.text('Important Information:', 50, footerY + 15);
       doc.fontSize(8);
-      doc.text('• Please arrive at the boarding point at least 15 minutes before departure.', 50, footerY + 30);
-      doc.text('• Present this e-ticket (printed or digital) along with a valid ID at boarding.', 50, footerY + 42);
-      doc.text('• This ticket is non-transferable and valid only for the specified trip.', 50, footerY + 54);
+      doc.text(
+        '• Please arrive at the boarding point at least 15 minutes before departure.',
+        50,
+        footerY + 30,
+      );
+      doc.text(
+        '• Present this e-ticket (printed or digital) along with a valid ID at boarding.',
+        50,
+        footerY + 42,
+      );
+      doc.text(
+        '• This ticket is non-transferable and valid only for the specified trip.',
+        50,
+        footerY + 54,
+      );
 
       doc.fillColor('#999999').fontSize(8);
       doc.text(`Booking Date: ${data.bookingDate}`, 50, footerY + 75);
-      doc.text('© 2025 Bus Ticket Booking. All rights reserved.', 350, footerY + 75);
+      doc.text(
+        '© 2025 Bus Ticket Booking. All rights reserved.',
+        350,
+        footerY + 75,
+      );
 
       doc.end();
     });
   }
 }
-

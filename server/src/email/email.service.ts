@@ -579,12 +579,16 @@ export class EmailService {
                 <span class="detail-value">${pickupLocation}</span>
               </div>
               
-              ${pickupAddress ? `
+              ${
+                pickupAddress
+                  ? `
               <div class="detail-row">
                 <span class="detail-label">Address:</span>
                 <span class="detail-value">${pickupAddress}</span>
               </div>
-              ` : ''}
+              `
+                  : ''
+              }
               
               <div class="detail-row">
                 <span class="detail-label">Seat Number:</span>
@@ -628,7 +632,9 @@ export class EmailService {
 
     try {
       await this.transporter.sendMail(mailOptions);
-      console.log(`Trip reminder email sent to ${email} for trip departing in ${hoursUntilTrip} hours`);
+      console.log(
+        `Trip reminder email sent to ${email} for trip departing in ${hoursUntilTrip} hours`,
+      );
       return { success: true };
     } catch (error) {
       console.error('Error sending trip reminder email:', error);
@@ -636,4 +642,3 @@ export class EmailService {
     }
   }
 }
-

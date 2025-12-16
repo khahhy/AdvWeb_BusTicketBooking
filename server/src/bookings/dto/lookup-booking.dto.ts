@@ -18,4 +18,3 @@ export class LookupBookingDto {
   @IsString()
   phoneNumber: string;
 }
-

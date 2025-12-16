@@ -1,5 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsUUID, IsNotEmpty, ValidateNested, IsOptional } from 'class-validator';
+import {
+  IsUUID,
+  IsNotEmpty,
+  ValidateNested,
+  IsOptional,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { CustomerInfoDto } from './customer-info.dto';
 

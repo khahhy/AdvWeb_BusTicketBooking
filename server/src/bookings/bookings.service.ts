@@ -325,7 +325,7 @@ export class BookingsService {
         this.sendETicketEmail(result.ticketCode).catch((err) => {
           console.error('Failed to send e-ticket email:', err);
         });
-        
+
         this.sendBookingConfirmationSms(result.ticketCode).catch((err) => {
           console.error('Failed to send booking confirmation SMS:', err);
         });
@@ -1083,7 +1083,7 @@ export class BookingsService {
       }
 
       const ticketData = await this.eTicketService.getBookingData(ticketCode);
-      
+
       // Extract phone number from customerInfo
       const booking = await this.prisma.bookings.findUnique({
         where: { ticketCode },
@@ -1095,21 +1095,28 @@ export class BookingsService {
       }
 
       const customerInfo = booking.customerInfo as Record<string, any>;
-      const phoneNumber = (customerInfo?.phone || customerInfo?.phoneNumber) as string | undefined;
+      const phoneNumber = (customerInfo?.phone || customerInfo?.phoneNumber) as
+        | string
+        | undefined;
 
       if (!phoneNumber) {
         console.log('No phone number found in booking, skipping SMS');
         return;
       }
 
-      await this.smsService.sendBookingConfirmationSms(phoneNumber as string, {
+      await this.smsService.sendBookingConfirmationSms(phoneNumber, {
         customerName: ticketData.passengerName,
         ticketCode,
-        tripDate: new Date(ticketData.departureTime).toLocaleDateString('vi-VN'),
-        tripTime: new Date(ticketData.departureTime).toLocaleTimeString('vi-VN', {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
+        tripDate: new Date(ticketData.departureTime).toLocaleDateString(
+          'vi-VN',
+        ),
+        tripTime: new Date(ticketData.departureTime).toLocaleTimeString(
+          'vi-VN',
+          {
+            hour: '2-digit',
+            minute: '2-digit',
+          },
+        ),
         origin: ticketData.from,
         destination: ticketData.to,
         seatNumber: ticketData.seatNumber,

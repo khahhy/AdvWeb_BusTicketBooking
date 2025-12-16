@@ -385,4 +385,255 @@ export class EmailService {
       throw error;
     }
   }
+
+  async sendTripReminderEmail(
+    email: string,
+    reminderDetails: {
+      customerName: string;
+      ticketCode: string;
+      tripDate: string;
+      tripTime: string;
+      origin: string;
+      destination: string;
+      pickupLocation: string;
+      pickupAddress: string;
+      seatNumber: string;
+      busPlate: string;
+      hoursUntilTrip: number;
+    },
+  ) {
+    const {
+      customerName,
+      ticketCode,
+      tripDate,
+      tripTime,
+      origin,
+      destination,
+      pickupLocation,
+      pickupAddress,
+      seatNumber,
+      busPlate,
+      hoursUntilTrip,
+    } = reminderDetails;
+
+    const mailOptions = {
+      from: `"Bus Ticket Booking" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: `🚌 Trip Reminder: ${origin} → ${destination} - Departing Soon!`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            .container {
+              background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 50%, #fdf2f8 100%);
+              border-radius: 16px;
+              padding: 40px;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+            }
+            .header h1 {
+              color: #ec4899;
+              margin: 0 0 10px 0;
+              font-size: 28px;
+            }
+            .alert-box {
+              background: #fff3cd;
+              border-left: 4px solid #ffc107;
+              padding: 15px;
+              margin: 20px 0;
+              border-radius: 8px;
+            }
+            .alert-box h3 {
+              margin: 0 0 10px 0;
+              color: #856404;
+              font-size: 18px;
+            }
+            .trip-details {
+              background: white;
+              padding: 20px;
+              border-radius: 12px;
+              margin: 20px 0;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            }
+            .detail-row {
+              display: flex;
+              justify-content: space-between;
+              padding: 12px 0;
+              border-bottom: 1px solid #f0f0f0;
+            }
+            .detail-row:last-child {
+              border-bottom: none;
+            }
+            .detail-label {
+              font-weight: bold;
+              color: #666;
+            }
+            .detail-value {
+              color: #333;
+              text-align: right;
+            }
+            .highlight {
+              background: #fef3c7;
+              padding: 2px 8px;
+              border-radius: 4px;
+              font-weight: bold;
+            }
+            .route {
+              text-align: center;
+              font-size: 24px;
+              color: #ec4899;
+              margin: 20px 0;
+              font-weight: bold;
+            }
+            .checklist {
+              background: #f0fdf4;
+              padding: 20px;
+              border-radius: 12px;
+              margin: 20px 0;
+            }
+            .checklist h3 {
+              color: #166534;
+              margin: 0 0 15px 0;
+            }
+            .checklist ul {
+              margin: 0;
+              padding-left: 20px;
+            }
+            .checklist li {
+              margin: 8px 0;
+              color: #166534;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 2px solid #f0f0f0;
+              color: #666;
+              font-size: 14px;
+            }
+            .button {
+              display: inline-block;
+              padding: 12px 30px;
+              background: #ec4899;
+              color: white;
+              text-decoration: none;
+              border-radius: 25px;
+              margin: 20px 0;
+              font-weight: bold;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🚌 Trip Reminder</h1>
+              <p>Don't forget about your upcoming trip!</p>
+            </div>
+
+            <div class="alert-box">
+              <h3>⏰ Your trip departs in ${hoursUntilTrip} hours!</h3>
+              <p style="margin: 0;">Please arrive at least <strong>30 minutes early</strong> for check-in.</p>
+            </div>
+
+            <div class="route">
+              ${origin} → ${destination}
+            </div>
+
+            <div class="trip-details">
+              <h3 style="margin-top: 0; color: #ec4899;">Trip Information</h3>
+              
+              <div class="detail-row">
+                <span class="detail-label">Passenger Name:</span>
+                <span class="detail-value">${customerName}</span>
+              </div>
+              
+              <div class="detail-row">
+                <span class="detail-label">Ticket Code:</span>
+                <span class="detail-value highlight">${ticketCode}</span>
+              </div>
+              
+              <div class="detail-row">
+                <span class="detail-label">Departure Date:</span>
+                <span class="detail-value">${tripDate}</span>
+              </div>
+              
+              <div class="detail-row">
+                <span class="detail-label">Departure Time:</span>
+                <span class="detail-value highlight">${tripTime}</span>
+              </div>
+              
+              <div class="detail-row">
+                <span class="detail-label">Pickup Location:</span>
+                <span class="detail-value">${pickupLocation}</span>
+              </div>
+              
+              ${pickupAddress ? `
+              <div class="detail-row">
+                <span class="detail-label">Address:</span>
+                <span class="detail-value">${pickupAddress}</span>
+              </div>
+              ` : ''}
+              
+              <div class="detail-row">
+                <span class="detail-label">Seat Number:</span>
+                <span class="detail-value highlight">${seatNumber}</span>
+              </div>
+              
+              <div class="detail-row">
+                <span class="detail-label">Bus License Plate:</span>
+                <span class="detail-value">${busPlate}</span>
+              </div>
+            </div>
+
+            <div class="checklist">
+              <h3>✓ Pre-Departure Checklist</h3>
+              <ul>
+                <li>Arrive at pickup location <strong>30 minutes before departure</strong></li>
+                <li>Bring your e-ticket (printed or on mobile device)</li>
+                <li>Carry a valid ID (passport or national ID card)</li>
+                <li>Check weather conditions and dress appropriately</li>
+                <li>Bring any necessary medications or personal items</li>
+                <li>Save our contact number for emergencies: <strong>1900-xxxx</strong></li>
+              </ul>
+            </div>
+
+            <div style="text-align: center;">
+              <a href="${process.env.FRONTEND_URL}/booking-details/${ticketCode}" class="button">
+                View Booking Details
+              </a>
+            </div>
+
+            <div class="footer">
+              <p><strong>Need to make changes?</strong> Contact us or manage your booking online.</p>
+              <p>© 2025 Bus Ticket Booking. All rights reserved.</p>
+              <p style="font-size: 12px; color: #999;">This is an automated reminder email.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      console.log(`Trip reminder email sent to ${email} for trip departing in ${hoursUntilTrip} hours`);
+      return { success: true };
+    } catch (error) {
+      console.error('Error sending trip reminder email:', error);
+      throw error;
+    }
+  }
 }
+

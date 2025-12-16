@@ -38,6 +38,13 @@ export const API_ENDPOINTS = {
     tripMaps: "/routes/trip-maps",
     details: "/routes/{id}",
   },
+  notifications: {
+    list: "/notifications",
+    details: "/notifications/{id}",
+    markAsRead: "/notifications/{id}/read",
+    markAllAsRead: "/notifications/mark-all-read",
+    delete: "/notifications/{id}",
+  },
 } as const;
 
 // Helper function to build full URL

@@ -22,6 +22,7 @@ import Footer from "@/components/dashboard/Footer";
 import backgroundImage from "@/assets/images/background.png";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
 
 dayjs.extend(relativeTime);
 
@@ -172,12 +173,43 @@ export default function NotificationsPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
 
-    // Simulate API call
-    setTimeout(() => {
-      setNotifications(mockNotifications);
-      setLoading(false);
-    }, 500);
-  }, []);
+    const loadNotifications = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+          navigate("/login");
+          return;
+        }
+
+        const response = await fetch(buildApiUrl(API_ENDPOINTS.notifications.list), {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("user");
+            navigate("/login");
+            return;
+          }
+          throw new Error("Failed to fetch notifications");
+        }
+
+        const data = await response.json();
+        setNotifications(data);
+      } catch (error) {
+        console.error("Error loading notifications:", error);
+        // Use mock data as fallback
+        setNotifications(mockNotifications);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadNotifications();
+  }, [navigate]);
 
   const getNotificationIcon = (type: string, priority: string) => {
     const iconClass = `w-5 h-5 ${
@@ -221,8 +253,26 @@ export default function NotificationsPage() {
     }
   };
 
-  const handleNotificationClick = (notification: Notification) => {
-    // Mark as read
+  const handleNotificationClick = async (notification: Notification) => {
+    // Mark as read via API
+    if (!notification.isRead) {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (token) {
+          const url = API_ENDPOINTS.notifications.markAsRead.replace("{id}", notification.id);
+          await fetch(buildApiUrl(url), {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+        }
+      } catch (error) {
+        console.error("Error marking notification as read:", error);
+      }
+    }
+
+    // Update local state
     setNotifications((prev) =>
       prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n)),
     );
@@ -233,23 +283,75 @@ export default function NotificationsPage() {
     }
   };
 
-  const handleMarkAsRead = (
+  const handleMarkAsRead = async (
     notificationId: string,
     event: React.MouseEvent,
   ) => {
     event.stopPropagation();
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)),
-    );
+
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
+
+      const url = API_ENDPOINTS.notifications.markAsRead.replace("{id}", notificationId);
+      const response = await fetch(buildApiUrl(url), {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)),
+        );
+      }
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
   };
 
-  const handleMarkAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+  const handleMarkAllAsRead = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
+
+      const response = await fetch(buildApiUrl(API_ENDPOINTS.notifications.markAllAsRead), {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      }
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+    }
   };
 
-  const handleDelete = (notificationId: string, event: React.MouseEvent) => {
+  const handleDelete = async (notificationId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
+
+      const url = API_ENDPOINTS.notifications.delete.replace("{id}", notificationId);
+      const response = await fetch(buildApiUrl(url), {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+      }
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+    }
   };
 
   const filteredNotifications = notifications.filter((notification) => {

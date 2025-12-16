@@ -15,6 +15,7 @@ import { QueryBookingDto } from './dto/query-booking.dto';
 import { generateBookingReference } from 'src/common/utils/generateBookingReference';
 import { ETicketService } from 'src/eticket/eticket.service';
 import { EmailService } from 'src/email/email.service';
+import { SmsService } from 'src/notifications/sms.service';
 
 @Injectable()
 export class BookingsService {
@@ -24,6 +25,7 @@ export class BookingsService {
     private readonly bookingsGateway: BookingsGateway,
     private readonly eTicketService: ETicketService,
     private readonly emailService: EmailService,
+    private readonly smsService: SmsService,
   ) {}
 
   private async generateUniqueTicketCode(): Promise<string> {
@@ -318,10 +320,14 @@ export class BookingsService {
 
       this.bookingsGateway.emitSeatSold(tripId, seatId, segmentIds);
 
-      // Send e-ticket email asynchronously (don't block the response)
+      // Send e-ticket email and SMS confirmation asynchronously (don't block the response)
       if (result.ticketCode) {
         this.sendETicketEmail(result.ticketCode).catch((err) => {
           console.error('Failed to send e-ticket email:', err);
+        });
+        
+        this.sendBookingConfirmationSms(result.ticketCode).catch((err) => {
+          console.error('Failed to send booking confirmation SMS:', err);
         });
       }
 
@@ -1065,6 +1071,59 @@ export class BookingsService {
       throw new InternalServerErrorException('Failed to send e-ticket email', {
         cause: err,
       });
+    }
+  }
+
+  async sendBookingConfirmationSms(ticketCode: string) {
+    try {
+      // Check if SMS service is available
+      if (!this.smsService.isServiceAvailable()) {
+        console.log('SMS service not configured, skipping confirmation SMS');
+        return;
+      }
+
+      const ticketData = await this.eTicketService.getBookingData(ticketCode);
+      
+      // Extract phone number from customerInfo
+      const booking = await this.prisma.bookings.findUnique({
+        where: { ticketCode },
+        select: { customerInfo: true, price: true },
+      });
+
+      if (!booking) {
+        throw new NotFoundException('Booking not found');
+      }
+
+      const customerInfo = booking.customerInfo as Record<string, any>;
+      const phoneNumber = (customerInfo?.phone || customerInfo?.phoneNumber) as string | undefined;
+
+      if (!phoneNumber) {
+        console.log('No phone number found in booking, skipping SMS');
+        return;
+      }
+
+      await this.smsService.sendBookingConfirmationSms(phoneNumber as string, {
+        customerName: ticketData.passengerName,
+        ticketCode,
+        tripDate: new Date(ticketData.departureTime).toLocaleDateString('vi-VN'),
+        tripTime: new Date(ticketData.departureTime).toLocaleTimeString('vi-VN', {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        origin: ticketData.from,
+        destination: ticketData.to,
+        seatNumber: ticketData.seatNumber,
+        price: new Intl.NumberFormat('vi-VN', {
+          style: 'currency',
+          currency: 'VND',
+        }).format(booking.price),
+      });
+
+      console.log(`Booking confirmation SMS sent to ${phoneNumber}`);
+      return { message: 'Booking confirmation SMS sent successfully' };
+    } catch (err) {
+      console.error('Failed to send booking confirmation SMS:', err);
+      // Don't throw error, just log it so it doesn't block the booking
     }
   }
 }

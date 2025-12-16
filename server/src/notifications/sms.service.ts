@@ -87,7 +87,9 @@ Have a safe trip! 🚌`;
         to: formattedPhone,
       });
 
-      this.logger.log(`SMS sent successfully to ${formattedPhone}. SID: ${result.sid}`);
+      this.logger.log(
+        `SMS sent successfully to ${formattedPhone}. SID: ${result.sid}`,
+      );
 
       return {
         success: true,

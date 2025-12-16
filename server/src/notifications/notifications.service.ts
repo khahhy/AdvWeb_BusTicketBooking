@@ -1,5 +1,13 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+
+interface NotificationData {
+  template?: string | null;
+}
 
 @Injectable()
 export class NotificationsService {
@@ -55,7 +63,9 @@ export class NotificationsService {
       isRead: notification.status === 'sent',
       priority: 'medium',
       bookingCode: notification.booking?.ticketCode || undefined,
-      actionUrl: notification.bookingId ? `/booking-details/${notification.bookingId}` : undefined,
+      actionUrl: notification.bookingId
+        ? `/booking-details/${notification.bookingId}`
+        : undefined,
     }));
   }
 
@@ -77,7 +87,9 @@ export class NotificationsService {
     }
 
     if (notification.userId !== userId) {
-      throw new ForbiddenException('You do not have permission to access this notification');
+      throw new ForbiddenException(
+        'You do not have permission to access this notification',
+      );
     }
 
     return notification;
@@ -122,9 +134,9 @@ export class NotificationsService {
     return 'system';
   }
 
-  private generateTitle(notification: any): string {
+  private generateTitle(notification: NotificationData): string {
     // Generate a user-friendly title based on notification content
-    const template = notification.template as string | null;
+    const template = notification.template;
     if (template?.includes('booking')) {
       return 'Booking Notification';
     }

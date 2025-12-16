@@ -5,6 +5,42 @@ import { EmailService } from 'src/email/email.service';
 import { SmsService } from './sms.service';
 import { NotificationsService } from './notifications.service';
 
+interface BookingData {
+  id: string;
+  userId: string | null;
+  ticketCode: string;
+  customerInfo: Record<string, string | undefined>;
+  user: {
+    email?: string;
+    phoneNumber?: string;
+    fullName?: string;
+  } | null;
+  trip: {
+    startTime: Date;
+    bus: {
+      plate: string;
+    };
+  };
+  route: {
+    origin: {
+      name: string;
+    };
+    destination: {
+      name: string;
+    };
+  };
+  pickupStop: {
+    location: {
+      name: string;
+      address?: string;
+    };
+  };
+  dropoffStop: any;
+  seat: {
+    seatNumber: string;
+  };
+}
+
 @Injectable()
 export class NotificationsSchedulerService {
   private readonly logger = new Logger(NotificationsSchedulerService.name);
@@ -27,7 +63,9 @@ export class NotificationsSchedulerService {
     try {
       // Get current time and 24 hours from now
       const now = new Date();
-      const twentyFourHoursLater = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      const twentyFourHoursLater = new Date(
+        now.getTime() + 24 * 60 * 60 * 1000,
+      );
 
       // Find all bookings with trips departing in the next 24 hours
       const upcomingBookings = await this.prisma.bookings.findMany({
@@ -68,27 +106,35 @@ export class NotificationsSchedulerService {
         },
       });
 
-      this.logger.log(`Found ${upcomingBookings.length} upcoming trips to send reminders for`);
+      this.logger.log(
+        `Found ${upcomingBookings.length} upcoming trips to send reminders for`,
+      );
 
       for (const booking of upcomingBookings) {
         try {
           // Check if reminder notification already sent
-          const existingNotification = await this.prisma.notifications.findFirst({
-            where: {
-              bookingId: booking.id,
-              template: 'trip_reminder',
-              status: 'sent',
-            },
-          });
+          const existingNotification =
+            await this.prisma.notifications.findFirst({
+              where: {
+                bookingId: booking.id,
+                template: 'trip_reminder',
+                status: 'sent',
+              },
+            });
 
           if (existingNotification) {
-            this.logger.debug(`Reminder already sent for booking ${booking.ticketCode}`);
+            this.logger.debug(
+              `Reminder already sent for booking ${booking.ticketCode}`,
+            );
             continue;
           }
 
           const customerInfo = booking.customerInfo as Record<string, any>;
-          const userEmail = (booking.user?.email || customerInfo?.email) as string | undefined;
-          const userPhone = (booking.user?.phoneNumber || customerInfo?.phoneNumber) as string | undefined;
+          const userEmail = (booking.user?.email || customerInfo?.email) as
+            | string
+            | undefined;
+          const userPhone = (booking.user?.phoneNumber ||
+            customerInfo?.phoneNumber) as string | undefined;
 
           let emailSent = false;
           let smsSent = false;
@@ -112,9 +158,14 @@ export class NotificationsSchedulerService {
                 },
               });
 
-              this.logger.log(`Email reminder sent for booking ${booking.ticketCode}`);
+              this.logger.log(
+                `Email reminder sent for booking ${booking.ticketCode}`,
+              );
             } catch (error) {
-              this.logger.error(`Failed to send email for booking ${booking.ticketCode}:`, error);
+              this.logger.error(
+                `Failed to send email for booking ${booking.ticketCode}:`,
+                error,
+              );
             }
           }
 
@@ -143,10 +194,15 @@ export class NotificationsSchedulerService {
                   },
                 });
 
-                this.logger.log(`SMS reminder sent for booking ${booking.ticketCode}`);
+                this.logger.log(
+                  `SMS reminder sent for booking ${booking.ticketCode}`,
+                );
               }
             } catch (error) {
-              this.logger.error(`Failed to send SMS for booking ${booking.ticketCode}:`, error);
+              this.logger.error(
+                `Failed to send SMS for booking ${booking.ticketCode}:`,
+                error,
+              );
             }
           }
 
@@ -172,9 +228,10 @@ export class NotificationsSchedulerService {
   /**
    * Sends a trip reminder email to the passenger
    */
-  private async sendTripReminderEmail(booking: any) {
+  private async sendTripReminderEmail(booking: BookingData) {
     const reminderDetails = this.prepareTripReminderDetails(booking);
-    const email = (booking.user?.email || (booking.customerInfo as Record<string, any>)?.email) as string;
+    const email = (booking.user?.email ||
+      booking.customerInfo?.email) as string;
 
     await this.emailService.sendTripReminderEmail(email, reminderDetails);
   }
@@ -182,12 +239,12 @@ export class NotificationsSchedulerService {
   /**
    * Prepare trip reminder details for email and SMS
    */
-  private prepareTripReminderDetails(booking: any) {
-    const customerInfo = booking.customerInfo as Record<string, any>;
+  private prepareTripReminderDetails(booking: BookingData) {
+    const customerInfo = booking.customerInfo;
     const customerName =
-      (booking.user?.fullName || customerInfo?.fullName || 'Valued Customer') as string;
+      booking.user?.fullName || customerInfo?.fullName || 'Valued Customer';
 
-    const tripDate = new Date(booking.trip.startTime as Date);
+    const tripDate = new Date(booking.trip.startTime);
     const formattedDate = tripDate.toLocaleDateString('vi-VN', {
       weekday: 'long',
       year: 'numeric',

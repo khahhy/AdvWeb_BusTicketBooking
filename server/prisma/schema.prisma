@@ -203,12 +203,14 @@ model Payments {
   amount               Decimal
   gateway              GatewayType?
   gatewayTransactionId String?
+  orderCode            BigInt?       @unique
   status               PaymentStatus
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
   booking              Bookings      @relation(fields: [bookingId], references: [id])
 
   @@index([bookingId])
+  @@index([orderCode])
 }
 
 model Reviews {

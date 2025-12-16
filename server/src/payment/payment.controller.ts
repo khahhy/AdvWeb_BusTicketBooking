@@ -28,9 +28,7 @@ export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @Post('create')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Tạo link thanh toán cho booking' })
+  @ApiOperation({ summary: 'Tạo link thanh toán cho booking (public for guest checkout)' })
   @ApiBody({ type: CreatePaymentDto })
   @ApiResponse({
     status: 201,

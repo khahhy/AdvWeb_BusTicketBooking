@@ -4,16 +4,17 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { EmailService } from 'src/email/email.service';
 import { SmsService } from './sms.service';
 import { NotificationsService } from './notifications.service';
+import { Prisma } from '@prisma/client';
 
 interface BookingData {
   id: string;
   userId: string | null;
-  ticketCode: string;
-  customerInfo: Record<string, string | undefined>;
+  ticketCode: string | null;
+  customerInfo: Prisma.JsonValue;
   user: {
     email?: string;
-    phoneNumber?: string;
-    fullName?: string;
+    phoneNumber?: string | null;
+    fullName?: string | null;
   } | null;
   trip: {
     startTime: Date;
@@ -32,7 +33,7 @@ interface BookingData {
   pickupStop: {
     location: {
       name: string;
-      address?: string;
+      address?: string | null;
     };
   };
   dropoffStop: any;
@@ -230,8 +231,8 @@ export class NotificationsSchedulerService {
    */
   private async sendTripReminderEmail(booking: BookingData) {
     const reminderDetails = this.prepareTripReminderDetails(booking);
-    const email = (booking.user?.email ||
-      booking.customerInfo?.email) as string;
+    const customerInfo = booking.customerInfo as Record<string, unknown> | null;
+    const email = (booking.user?.email || customerInfo?.email) as string;
 
     await this.emailService.sendTripReminderEmail(email, reminderDetails);
   }
@@ -240,9 +241,10 @@ export class NotificationsSchedulerService {
    * Prepare trip reminder details for email and SMS
    */
   private prepareTripReminderDetails(booking: BookingData) {
-    const customerInfo = booking.customerInfo;
-    const customerName =
-      booking.user?.fullName || customerInfo?.fullName || 'Valued Customer';
+    const customerInfo = booking.customerInfo as Record<string, unknown> | null;
+    const customerName = (booking.user?.fullName ||
+      customerInfo?.fullName ||
+      'Valued Customer') as string;
 
     const tripDate = new Date(booking.trip.startTime);
     const formattedDate = tripDate.toLocaleDateString('vi-VN', {

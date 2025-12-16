@@ -120,8 +120,8 @@ export class ETicketService {
     };
 
     const ticketPrice = Number(booking.price);
-    const insuranceFee = 1000;
-    const serviceFee = 14000;
+    const insuranceFee = 0;
+    const serviceFee = 0;
     const totalPrice = ticketPrice + insuranceFee + serviceFee;
 
     return {
@@ -254,6 +254,8 @@ export class ETicketService {
       });
 
       const chunks: Buffer[] = [];
+      // PDFKit chunk type is compatible with Buffer
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       doc.on('data', (chunk) => chunks.push(chunk));
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);

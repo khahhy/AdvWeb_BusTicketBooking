@@ -1,12 +1,27 @@
+import { useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
-
+import { Toaster } from "@/components/ui/sonner";
 function HomeRedirect() {
+  const userStr = localStorage.getItem("user");
+
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr);
+      if (user.role === "admin") {
+        return <Navigate to="/admin" replace />;
+      }
+    } catch (error) {
+      console.error("Error parsing user data:", error);
+    }
+  }
+
   return <Navigate to="/dashboard" replace />;
 }
 import {
@@ -38,6 +53,7 @@ import Chatbot from "./components/ui/chatbot";
 import "./index.css";
 import CheckoutPage from "./pages/CheckoutPage";
 import PaymentPage from "./pages/PaymentPage";
+import PaymentResultPage from "./pages/PaymentResultPage";
 import ConfirmationPage from "./pages/ConfirmationPage";
 import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
@@ -58,6 +74,25 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 
 function AppContent() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Listen for logout events from other tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      // If accessToken is removed in another tab, logout this tab too
+      if (e.key === "accessToken" && e.newValue === null) {
+        // Navigate to login page
+        navigate("/login", { replace: true });
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [navigate]);
+
   const hideChatbot = [
     "/signup",
     "/login",
@@ -170,6 +205,7 @@ function AppContent() {
       {/* Guest checkout flow - accessible without login */}
       <Route path="/checkout" element={<CheckoutPage />} />
       <Route path="/payment" element={<PaymentPage />} />
+      <Route path="/payment-result" element={<PaymentResultPage />} />
       <Route path="/confirmation" element={<ConfirmationPage />} />
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/login" element={<LoginPage />} />
@@ -188,6 +224,7 @@ function AppContent() {
       <ThemeProvider>
         {routeContent}
         {!hideChatbot && <Chatbot />}
+        <Toaster />
       </ThemeProvider>
     </>
   );

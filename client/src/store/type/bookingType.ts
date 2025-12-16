@@ -29,13 +29,18 @@ export interface CreateBookingRequest {
   userId?: string;
   tripId: string;
   routeId: string;
-  seatId: string;
+  seatId?: string; // For single seat (backward compatibility)
+  seatIds?: string[]; // For multiple seats
   customerInfo: CustomerInfo;
 }
 
 export interface CreateBookingResult {
   bookingId: string;
+  bookingIds?: string[]; // All booking IDs for multiple seats
   ticketCode: string;
+  ticketCodes?: string[]; // All ticket codes for multiple seats
+  seatCount?: number;
+  totalPrice?: number;
   status: BookingStatus;
   expiresAt: string;
 }

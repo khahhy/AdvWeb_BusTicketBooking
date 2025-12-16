@@ -3,6 +3,8 @@ import { baseQuery } from "./baseQuery";
 
 export interface CreatePaymentRequest {
   bookingId: string;
+  bookingIds?: string[]; // For multiple seat bookings
+  totalAmount?: number; // Total amount for all bookings
   buyerName?: string;
   buyerEmail?: string;
   buyerPhone?: string;
@@ -16,12 +18,19 @@ export interface CreatePaymentResponse {
   amount: number;
 }
 
+export interface BookingInfo {
+  bookingId: string;
+  ticketCode?: string;
+  seatNumber?: string;
+  price: number;
+}
+
 export interface PaymentStatusResponse {
   bookingId: string;
   paymentId?: string;
   status: "pending" | "successful" | "failed";
   amount: number;
-  gateway: string;
+  gateway?: string;
   ticketCode?: string;
   paymentInfo?: Record<string, unknown>;
   // Additional fields for confirmation page redirect
@@ -31,6 +40,9 @@ export interface PaymentStatusResponse {
   passengerName?: string;
   email?: string;
   travelDate?: string;
+  // Multi-seat booking support
+  bookingCount?: number;
+  bookings?: BookingInfo[];
 }
 
 export interface ApiResponse<T> {

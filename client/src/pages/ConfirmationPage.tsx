@@ -17,18 +17,26 @@ export default function ConfirmationPage() {
     window.scrollTo(0, 0);
   }, []);
 
-  // Get data from URL params
+  // Get data from URL params - support multiple tickets
   const tripId = searchParams.get("tripId") || "";
   const routeId = searchParams.get("routeId") || "";
-  const selectedSeat = searchParams.get("seat") || "";
   const travelDate = searchParams.get("date") || dayjs().format("YYYY-MM-DD");
   const passengerName = searchParams.get("passengerName") || "Guest User";
   const passengerId = searchParams.get("passengerId") || "123456789012";
   const email = searchParams.get("email") || "example@gmail.com";
-  const ticketCode =
-    searchParams.get("ticketCode") ||
-    searchParams.get("bookingCode") ||
-    "PENDING";
+  const totalAmount = Number(searchParams.get("totalAmount") || 0);
+  const bookingCount = Number(searchParams.get("bookingCount") || 1);
+
+  // Support multiple tickets (comma-separated)
+  const ticketCodesParam = searchParams.get("ticketCodes") || searchParams.get("ticketCode") || searchParams.get("bookingCode") || "";
+  const seatsParam = searchParams.get("seats") || searchParams.get("seat") || "";
+  
+  const ticketCodes = ticketCodesParam.split(",").filter(Boolean);
+  const seats = seatsParam.split(",").filter(Boolean);
+  
+  // For backward compatibility
+  const primaryTicketCode = ticketCodes[0] || "PENDING";
+  const selectedSeats = seats.join(", ") || "N/A";
 
   // Fetch trip details from API
   const { data: tripData, isLoading: tripLoading } =
@@ -75,7 +83,8 @@ export default function ConfirmationPage() {
   const ticketPrice = trip.price;
   const insuranceFee = 0;
   const serviceFee = 0;
-  const totalPrice = ticketPrice;
+  // Use totalAmount from URL if available, otherwise calculate from trip price
+  const totalPrice = totalAmount > 0 ? totalAmount : ticketPrice * bookingCount;
 
   const formatDate = () => {
     return dayjs(travelDate).format("ddd, MMM DD, YYYY");
@@ -85,32 +94,36 @@ export default function ConfirmationPage() {
     return amount.toLocaleString("vi-VN") + "VND";
   };
 
-  const handleViewTicket = () => {
-    if (!ticketCode || ticketCode === "PENDING") {
+  const handleViewTicket = (code?: string) => {
+    const ticketToView = code || primaryTicketCode;
+    if (!ticketToView || ticketToView === "PENDING") {
       alert("Invalid ticket code");
       return;
     }
-    navigate(`/eticket/${ticketCode}`);
+    navigate(`/eticket/${ticketToView}`);
   };
 
   const handleResendEmail = async () => {
-    if (!ticketCode || ticketCode === "PENDING") {
+    if (ticketCodes.length === 0 || ticketCodes[0] === "PENDING") {
       alert("Invalid ticket code");
       return;
     }
 
     setIsResending(true);
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/bookings/eticket/${ticketCode}/resend`,
-        { method: "POST" },
-      );
+      // Resend email for all tickets
+      for (const code of ticketCodes) {
+        const response = await fetch(
+          `${API_BASE_URL}/bookings/eticket/${code}/resend`,
+          { method: "POST" },
+        );
 
-      if (!response.ok) {
-        throw new Error("Failed to resend e-ticket email");
+        if (!response.ok) {
+          throw new Error(`Failed to resend e-ticket ${code}`);
+        }
       }
 
-      alert("E-ticket has been sent to your email!");
+      alert(`${ticketCodes.length} E-ticket(s) have been sent to your email!`);
     } catch (error) {
       console.error("Resend error:", error);
       alert("Failed to resend e-ticket. Please try again.");
@@ -173,13 +186,28 @@ export default function ConfirmationPage() {
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
           <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-              Booking Code
+              {ticketCodes.length > 1 ? `Booking Codes (${ticketCodes.length} tickets)` : "Booking Code"}
             </p>
-            <p className="text-4xl font-bold text-primary dark:text-blue-400 tracking-wider">
-              {ticketCode}
-            </p>
+            {ticketCodes.length > 1 ? (
+              <div className="space-y-2">
+                {ticketCodes.map((code, index) => (
+                  <div key={code} className="flex items-center justify-center gap-3">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                      Seat {seats[index] || index + 1}:
+                    </span>
+                    <span className="text-2xl font-bold text-primary dark:text-blue-400 tracking-wider">
+                      {code}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-4xl font-bold text-primary dark:text-blue-400 tracking-wider">
+                {primaryTicketCode}
+              </p>
+            )}
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
-              Please save this code for ticket pickup
+              Please save {ticketCodes.length > 1 ? "these codes" : "this code"} for ticket pickup
             </p>
           </div>
         </div>
@@ -238,10 +266,10 @@ export default function ConfirmationPage() {
               </div>
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  Seat Number
+                  {seats.length > 1 ? "Seat Numbers" : "Seat Number"}
                 </p>
                 <p className="text-base font-semibold text-gray-900 dark:text-white">
-                  {selectedSeat}
+                  {selectedSeats}
                 </p>
               </div>
             </div>
@@ -290,10 +318,22 @@ export default function ConfirmationPage() {
               Payment Summary
             </h2>
             <div className="space-y-3">
-              <div className="flex justify-between text-gray-700 dark:text-gray-300">
-                <span>Ticket Price (Seat {selectedSeat})</span>
-                <span>{formatCurrency(ticketPrice)}</span>
-              </div>
+              {seats.length > 1 ? (
+                <>
+                  <div className="flex justify-between text-gray-700 dark:text-gray-300">
+                    <span>Ticket Price × {seats.length} seats</span>
+                    <span>{formatCurrency(ticketPrice)} × {seats.length}</span>
+                  </div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400 pl-2">
+                    Seats: {selectedSeats}
+                  </div>
+                </>
+              ) : (
+                <div className="flex justify-between text-gray-700 dark:text-gray-300">
+                  <span>Ticket Price (Seat {selectedSeats})</span>
+                  <span>{formatCurrency(ticketPrice)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-gray-700 dark:text-gray-300">
                 <span>Insurance Fee</span>
                 <span>{formatCurrency(insuranceFee)}</span>
@@ -330,18 +370,42 @@ export default function ConfirmationPage() {
 
         {/* Action Buttons */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.9s_forwards]">
+          {/* Multiple ticket view buttons */}
+          {ticketCodes.length > 1 ? (
+            <div className="mb-4 space-y-3">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 text-center">
+                View Individual E-Tickets:
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {ticketCodes.map((code, index) => (
+                  <button
+                    key={code}
+                    onClick={() => handleViewTicket(code)}
+                    disabled={code === "PENDING"}
+                    className="bg-rose-400 hover:bg-rose-500 dark:bg-blue-600 dark:hover:bg-blue-700 text-white py-3 px-4 rounded-xl transition-all duration-300 font-medium flex items-center justify-center gap-2 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    <Eye className="w-4 h-4" />
+                    Seat {seats[index] || index + 1}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-4 mb-4">
+              <button
+                onClick={() => handleViewTicket()}
+                disabled={primaryTicketCode === "PENDING"}
+                className="flex-1 bg-rose-400 hover:bg-rose-500 dark:bg-blue-600 dark:hover:bg-blue-700 text-white py-4 rounded-2xl transition-all duration-300 font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Eye className="w-5 h-5" />
+                View & Download E-Ticket
+              </button>
+            </div>
+          )}
           <div className="flex flex-col sm:flex-row gap-4">
             <button
-              onClick={handleViewTicket}
-              disabled={ticketCode === "PENDING"}
-              className="flex-1 bg-rose-400 hover:bg-rose-500 dark:bg-blue-600 dark:hover:bg-blue-700 text-white py-4 rounded-2xl transition-all duration-300 font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Eye className="w-5 h-5" />
-              View & Download E-Ticket
-            </button>
-            <button
               onClick={handleResendEmail}
-              disabled={isResending || ticketCode === "PENDING"}
+              disabled={isResending || primaryTicketCode === "PENDING"}
               className="flex-1 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white border-2 border-gray-300 dark:border-gray-600 py-4 rounded-2xl transition-all duration-300 font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isResending ? (
@@ -349,7 +413,7 @@ export default function ConfirmationPage() {
               ) : (
                 <RefreshCw className="w-5 h-5" />
               )}
-              {isResending ? "Sending..." : "Resend Email"}
+              {isResending ? "Sending..." : `Resend ${ticketCodes.length > 1 ? "All Emails" : "Email"}`}
             </button>
           </div>
           <div className="mt-4">

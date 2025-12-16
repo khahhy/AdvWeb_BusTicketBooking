@@ -12,6 +12,7 @@ import { Prisma } from '@prisma/client';
 import { BookingStatus, GatewayType, PaymentStatus } from '@prisma/client';
 import { EmailService } from 'src/email/email.service';
 import { ETicketService } from 'src/eticket/eticket.service';
+import { SmsService } from 'src/notifications/sms.service';
 
 @Injectable()
 export class PaymentService {
@@ -22,6 +23,7 @@ export class PaymentService {
     private readonly payosService: PayOSService,
     private readonly emailService: EmailService,
     private readonly eticketService: ETicketService,
+    private readonly smsService: SmsService,
   ) {}
 
   /**
@@ -266,7 +268,17 @@ export class PaymentService {
 
         // Gửi email xác nhận và e-ticket
         try {
-          if (booking.user?.email && booking.ticketCode) {
+          const customerInfo = booking.customerInfo as Record<string, unknown>;
+          const customerEmail =
+            booking.user?.email || (customerInfo?.email as string);
+          const customerPhone =
+            booking.user?.phoneNumber || (customerInfo?.phoneNumber as string);
+          const customerName =
+            booking.user?.fullName ||
+            (customerInfo?.fullName as string) ||
+            'Khách hàng';
+
+          if (customerEmail && booking.ticketCode) {
             // Tạo PDF e-ticket
             const pdfBuffer = await this.eticketService.generatePDF(
               booking.ticketCode,
@@ -274,9 +286,9 @@ export class PaymentService {
 
             // Gửi email với attachment
             await this.emailService.sendETicketEmail(
-              booking.user.email,
+              customerEmail,
               booking.ticketCode,
-              booking.user.fullName || 'Khách hàng',
+              customerName,
               {
                 from: booking.route.origin.name,
                 to: booking.route.destination.name,
@@ -286,12 +298,45 @@ export class PaymentService {
               pdfBuffer,
             );
 
-            this.logger.log(
-              `Confirmation email sent to: ${booking.user.email}`,
-            );
+            this.logger.log(`Confirmation email sent to: ${customerEmail}`);
           }
-        } catch (emailError) {
-          this.logger.error('Failed to send confirmation email', emailError);
+
+          // Gửi SMS confirmation
+          if (customerPhone && booking.ticketCode) {
+            const tripDate = booking.trip.startTime.toLocaleDateString(
+              'vi-VN',
+              {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              },
+            );
+            const tripTime = booking.trip.startTime.toLocaleTimeString(
+              'vi-VN',
+              {
+                hour: '2-digit',
+                minute: '2-digit',
+              },
+            );
+
+            await this.smsService.sendBookingConfirmationSms(customerPhone, {
+              customerName,
+              ticketCode: booking.ticketCode,
+              tripDate,
+              tripTime,
+              origin: booking.route.origin.name,
+              destination: booking.route.destination.name,
+              seatNumber: booking.seat.seatNumber,
+              price: `${Number(booking.price).toLocaleString('vi-VN')}đ`,
+            });
+            this.logger.log(`Confirmation SMS sent to: ${customerPhone}`);
+          }
+        } catch (notificationError) {
+          this.logger.error(
+            'Failed to send confirmation notifications',
+            notificationError,
+          );
           // Không throw error vì payment đã thành công
         }
       } else {

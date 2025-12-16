@@ -87,7 +87,10 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
   const handleBookTrip = () => {
     if (selectedSeats.length === 0) return;
 
-    const date = dayjs(trip.departureTime).format("YYYY-MM-DD");
+    const departureDate = dayjs(trip.departureTime);
+    const date = departureDate.isValid()
+      ? departureDate.format("YYYY-MM-DD")
+      : dayjs().format("YYYY-MM-DD");
     const selectedSeatId = selectedSeats[0];
     const seatObj = seats.find((s) => s.seatId === selectedSeatId);
     const seatNumber = seatObj?.seatNumber || "";
@@ -98,7 +101,10 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
   };
 
   const handleViewDetail = () => {
-    const date = dayjs(trip.departureTime).format("YYYY-MM-DD");
+    const departureDate = dayjs(trip.departureTime);
+    const date = departureDate.isValid()
+      ? departureDate.format("YYYY-MM-DD")
+      : dayjs().format("YYYY-MM-DD");
     const tId = trip.tripId || trip.id;
     const rId = trip.routeId || "";
     navigate(`/trip-detail?tripId=${tId}&routeId=${rId}&date=${date}`);

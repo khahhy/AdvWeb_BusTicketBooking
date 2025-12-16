@@ -3,7 +3,10 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/common/Navbar";
 import backgroundImage from "@/assets/images/background.png";
 import dayjs from "dayjs";
+import "dayjs/locale/en";
 import Footer from "@/components/dashboard/Footer";
+
+dayjs.locale("en");
 import { useGetTripRouteMapDetailQuery } from "@/store/api/routesApi";
 import {
   Clock,
@@ -39,7 +42,16 @@ export default function TripDetailPage() {
   // Get trip data from URL params
   const tripId = searchParams.get("tripId") || "";
   const routeId = searchParams.get("routeId") || "";
-  const travelDate = searchParams.get("date") || dayjs().format("YYYY-MM-DD");
+  const dateParam = searchParams.get("date");
+
+  // Validate and use date parameter, fallback to today if invalid
+  const travelDate = useMemo(() => {
+    if (!dateParam || dateParam === "Invalid Date") {
+      return dayjs().format("YYYY-MM-DD");
+    }
+    const parsedDate = dayjs(dateParam);
+    return parsedDate.isValid() ? dateParam : dayjs().format("YYYY-MM-DD");
+  }, [dateParam]);
 
   // Fetch trip from API - only skip if both params are missing
   const {
@@ -196,7 +208,10 @@ export default function TripDetailPage() {
     return `${m}:${s < 10 ? "0" : ""}${s}`;
   };
 
-  const formatDate = () => dayjs(travelDate).format("dddd, MMMM DD, YYYY");
+  const formatDate = () => {
+    const date = dayjs(travelDate);
+    return date.isValid() ? date.format("dddd, MMMM DD, YYYY") : "Invalid Date";
+  };
 
   const formatCurrency = (amount: number | undefined | null) => {
     if (amount === undefined || amount === null || isNaN(amount)) return "0đ";

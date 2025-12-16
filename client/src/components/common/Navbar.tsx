@@ -2,7 +2,16 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
 import ResizableNavbar, { NavItem } from "@/components/ui/resizable-navbar";
-import { Bus, Map, Ticket, User, MapPin, Phone, LogOut, Bell } from "lucide-react";
+import {
+  Bus,
+  Map,
+  Ticket,
+  User,
+  MapPin,
+  Phone,
+  LogOut,
+  Bell,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { AppLogo } from "@/components/AppLogo/AppLogo";

@@ -51,39 +51,21 @@ export class SmsService {
     }
 
     try {
-      const {
-        customerName,
-        ticketCode,
-        tripTime,
-        origin,
-        destination,
-        pickupLocation,
-        seatNumber,
-        hoursUntilTrip,
-      } = reminderDetails;
+      const { customerName, tripTime, origin, destination, hoursUntilTrip } =
+        reminderDetails;
 
       // Format phone number (ensure it has country code)
       const formattedPhone = this.formatPhoneNumber(phoneNumber);
 
       // Create SMS message (max 160 characters for single SMS, or use up to 1600 for multi-part)
-      const message = `🚌 Trip Reminder
-Hi ${customerName}!
-
-Your trip departs in ${hoursUntilTrip}h
-${origin} → ${destination}
-
-📅 Time: ${tripTime}
-📍 Pickup: ${pickupLocation}
-💺 Seat: ${seatNumber}
-🎫 Code: ${ticketCode}
-
-⏰ Arrive 30 min early with your ID!
-
-Have a safe trip! 🚌`;
+      const message = `Hi ${customerName}!
+Your trip departs in ${hoursUntilTrip}h ${origin} → ${destination}
+Time: ${tripTime}
+Arrive 30 min early with your ID!`;
 
       const result = await this.twilioClient.messages.create({
         body: message,
-        from: process.env.TWILIO_PHONE_NUMBER,
+        from: '+18168269845', // US number from Three2Go service
         to: formattedPhone,
       });
 
@@ -127,21 +109,15 @@ Have a safe trip! 🚌`;
     try {
       const formattedPhone = this.formatPhoneNumber(phoneNumber);
 
-      const message = `🎫 Booking Confirmed!
+      const message = `Booking Confirmed!
 Hi ${details.customerName}!
-
-Trip: ${details.origin} → ${details.destination}
-Date: ${details.tripDate}
-Time: ${details.tripTime}
-Seat: ${details.seatNumber}
-Code: ${details.ticketCode}
-Price: ${details.price}
-
-Thank you for booking with us! 🚌`;
+Trip: ${details.origin} to ${details.destination}
+Date: ${details.tripDate} at ${details.tripTime}
+Ticket: ${details.ticketCode}`;
 
       const result = await this.twilioClient.messages.create({
         body: message,
-        from: process.env.TWILIO_PHONE_NUMBER,
+        from: '+18168269845', // US number from Three2Go service
         to: formattedPhone,
       });
 
@@ -176,7 +152,7 @@ Thank you for booking with us! 🚌`;
 
       const result = await this.twilioClient.messages.create({
         body: message,
-        from: process.env.TWILIO_PHONE_NUMBER,
+        from: '+18168269845', // US number from Three2Go service
         to: formattedPhone,
       });
 

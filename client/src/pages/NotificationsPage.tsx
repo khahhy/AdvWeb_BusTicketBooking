@@ -181,11 +181,14 @@ export default function NotificationsPage() {
           return;
         }
 
-        const response = await fetch(buildApiUrl(API_ENDPOINTS.notifications.list), {
-          headers: {
-            Authorization: `Bearer ${token}`,
+        const response = await fetch(
+          buildApiUrl(API_ENDPOINTS.notifications.list),
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        });
+        );
 
         if (!response.ok) {
           if (response.status === 401) {
@@ -259,7 +262,10 @@ export default function NotificationsPage() {
       try {
         const token = localStorage.getItem("accessToken");
         if (token) {
-          const url = API_ENDPOINTS.notifications.markAsRead.replace("{id}", notification.id);
+          const url = API_ENDPOINTS.notifications.markAsRead.replace(
+            "{id}",
+            notification.id,
+          );
           await fetch(buildApiUrl(url), {
             method: "PATCH",
             headers: {
@@ -293,7 +299,10 @@ export default function NotificationsPage() {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
 
-      const url = API_ENDPOINTS.notifications.markAsRead.replace("{id}", notificationId);
+      const url = API_ENDPOINTS.notifications.markAsRead.replace(
+        "{id}",
+        notificationId,
+      );
       const response = await fetch(buildApiUrl(url), {
         method: "PATCH",
         headers: {
@@ -303,7 +312,9 @@ export default function NotificationsPage() {
 
       if (response.ok) {
         setNotifications((prev) =>
-          prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)),
+          prev.map((n) =>
+            n.id === notificationId ? { ...n, isRead: true } : n,
+          ),
         );
       }
     } catch (error) {
@@ -316,12 +327,15 @@ export default function NotificationsPage() {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
 
-      const response = await fetch(buildApiUrl(API_ENDPOINTS.notifications.markAllAsRead), {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        buildApiUrl(API_ENDPOINTS.notifications.markAllAsRead),
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       if (response.ok) {
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
@@ -331,14 +345,20 @@ export default function NotificationsPage() {
     }
   };
 
-  const handleDelete = async (notificationId: string, event: React.MouseEvent) => {
+  const handleDelete = async (
+    notificationId: string,
+    event: React.MouseEvent,
+  ) => {
     event.stopPropagation();
 
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
 
-      const url = API_ENDPOINTS.notifications.delete.replace("{id}", notificationId);
+      const url = API_ENDPOINTS.notifications.delete.replace(
+        "{id}",
+        notificationId,
+      );
       const response = await fetch(buildApiUrl(url), {
         method: "DELETE",
         headers: {

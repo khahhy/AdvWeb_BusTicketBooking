@@ -205,6 +205,7 @@ model Payments {
   gatewayTransactionId String?
   orderCode            BigInt?       @unique
   status               PaymentStatus
+  metadata             Json?
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
   booking              Bookings      @relation(fields: [bookingId], references: [id])

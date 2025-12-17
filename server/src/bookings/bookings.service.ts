@@ -4,26 +4,35 @@ import {
   ConflictException,
   BadRequestException,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { BookingsGateway } from './bookings.gateway';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RedisCacheService } from 'src/cache/redis-cache.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { LookupBookingDto } from './dto/lookup-booking.dto';
-import { Prisma, BookingStatus } from '@prisma/client';
+import { BookingRulesSettingsDto } from 'src/setting/dto/booking-rule-setting.dto';
+import { Prisma, BookingStatus, SettingKey } from '@prisma/client';
 import { QueryBookingDto } from './dto/query-booking.dto';
 import { generateBookingReference } from 'src/common/utils/generateBookingReference';
 import { ETicketService } from 'src/eticket/eticket.service';
 import { EmailService } from 'src/email/email.service';
+import { SmsService } from 'src/notifications/sms.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { SettingService } from 'src/setting/setting.service';
 
 @Injectable()
 export class BookingsService {
+  private readonly logger = new Logger(BookingsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly cacheManager: RedisCacheService,
     private readonly bookingsGateway: BookingsGateway,
     private readonly eTicketService: ETicketService,
     private readonly emailService: EmailService,
+    private readonly smsService: SmsService,
+    private readonly settingService: SettingService,
   ) {}
 
   private async generateUniqueTicketCode(): Promise<string> {
@@ -111,8 +120,6 @@ export class BookingsService {
     };
   }
 
-  // bookings.service.ts
-
   async lockSeat(
     userId: string,
     tripId: string,
@@ -188,61 +195,64 @@ export class BookingsService {
     console.log('DTO:', JSON.stringify(createBookingDto, null, 2));
 
     try {
-      const { userId, tripId, seatId, routeId, customerInfo } =
+      const { userId, tripId, seatId, seatIds, routeId, customerInfo } =
         createBookingDto;
+
+      // Support both single seatId and array of seatIds
+      const allSeatIds = seatIds?.length ? seatIds : seatId ? [seatId] : [];
+
+      if (allSeatIds.length === 0) {
+        throw new BadRequestException(
+          'At least one seat must be selected (provide seatId or seatIds)',
+        );
+      }
 
       const { segmentIds, pickupStopId, dropoffStopId } =
         await this.calculateDetailsFromRoute(tripId, routeId);
 
       const lockIdentifier = userId || 'guest-temp-id';
-      for (const segId of segmentIds) {
-        const lockKey = `lock:trip:${tripId}:segment:${segId}:seat:${seatId}`;
-        const lockHolder = await this.cacheManager.get<string>(lockKey);
 
-        if (lockHolder && lockHolder !== lockIdentifier) {
-          throw new ConflictException(
-            `Seat at segment ${segId} is being held by another user.`,
+      console.log('Lock identifier:', lockIdentifier);
+      console.log('Checking locks for segments:', segmentIds);
+      console.log('Processing seats:', allSeatIds);
+
+      // Clear any existing locks by this user before creating booking for all seats
+      for (const currentSeatId of allSeatIds) {
+        for (const segId of segmentIds) {
+          const lockKey = `lock:trip:${tripId}:segment:${segId}:seat:${currentSeatId}`;
+          const lockHolder = await this.cacheManager.get<string>(lockKey);
+
+          console.log(
+            `Seat ${currentSeatId}, Segment ${segId} - Lock holder:`,
+            lockHolder,
           );
+
+          const isOwnLock = lockHolder === lockIdentifier;
+          const isGuestToAuthFlow = lockHolder === 'guest-temp-id' && userId;
+
+          if (isOwnLock || isGuestToAuthFlow) {
+            console.log(
+              `Removing lock for seat ${currentSeatId}, segment ${segId}`,
+            );
+            await this.cacheManager.del(lockKey);
+          } else if (lockHolder) {
+            console.warn(
+              `Lock conflict for seat ${currentSeatId} - Expected: ${lockIdentifier}, Got: ${lockHolder}`,
+            );
+            throw new ConflictException(
+              `Seat ${currentSeatId} at segment ${segId} is being held by another user.`,
+            );
+          } else {
+            console.log(
+              `No lock found for seat ${currentSeatId}, segment ${segId}, proceeding...`,
+            );
+          }
         }
       }
 
-      const ticketCode = await this.generateUniqueTicketCode();
-
+      // Create bookings for all seats in a transaction
       const result = await this.prisma.$transaction(
         async (tx: Prisma.TransactionClient) => {
-          // Check for conflicts in SeatSegmentLocks (if segments exist)
-          if (segmentIds.length > 0) {
-            const conflictLock = await tx.seatSegmentLocks.findFirst({
-              where: {
-                tripId,
-                seatId,
-                segmentId: { in: segmentIds },
-              },
-            });
-
-            if (conflictLock) {
-              throw new ConflictException(
-                'Selected seat is already booked or reserved for this segment.',
-              );
-            }
-          }
-
-          // Also check Bookings table directly for conflicts
-          const existingBooking = await tx.bookings.findFirst({
-            where: {
-              tripId,
-              routeId,
-              seatId,
-              status: { in: ['confirmed', 'pendingPayment'] },
-            },
-          });
-
-          if (existingBooking) {
-            throw new ConflictException(
-              'Selected seat is already booked for this route.',
-            );
-          }
-
           const tripRoute = await tx.tripRouteMap.findUnique({
             where: {
               tripId_routeId: {
@@ -259,71 +269,124 @@ export class BookingsService {
             );
           }
 
-          // Build booking data with proper relation connections
-          const bookingCreateInput: any = {
-            customerInfo: customerInfo as unknown as Prisma.InputJsonValue,
-            price: tripRoute.price,
-            status: BookingStatus.confirmed, // Set to confirmed since payment is bypassed
-            ticketCode,
-            trip: { connect: { id: tripId } },
-            route: { connect: { id: routeId } },
-            seat: { connect: { id: seatId } },
-            pickupStop: { connect: { id: pickupStopId } },
-            dropoffStop: { connect: { id: dropoffStopId } },
-          };
+          const bookings: {
+            bookingId: string;
+            ticketCode: string;
+            seatId: string;
+          }[] = [];
+          let totalPrice = 0;
 
-          if (userId) {
-            Object.assign(bookingCreateInput, {
-              user: { connect: { id: userId } },
+          for (const currentSeatId of allSeatIds) {
+            // Check for conflicts in SeatSegmentLocks (if segments exist)
+            if (segmentIds.length > 0) {
+              const conflictLock = await tx.seatSegmentLocks.findFirst({
+                where: {
+                  tripId,
+                  seatId: currentSeatId,
+                  segmentId: { in: segmentIds },
+                },
+              });
+
+              if (conflictLock) {
+                throw new ConflictException(
+                  `Seat ${currentSeatId} is already booked or reserved for this segment.`,
+                );
+              }
+            }
+
+            // Also check Bookings table directly for conflicts
+            const existingBooking = await tx.bookings.findFirst({
+              where: {
+                tripId,
+                routeId,
+                seatId: currentSeatId,
+                status: { in: ['confirmed', 'pendingPayment'] },
+              },
             });
-          }
 
-          const booking = await tx.bookings.create({
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            data: bookingCreateInput,
-          });
+            if (existingBooking) {
+              throw new ConflictException(
+                `Seat ${currentSeatId} is already booked for this route.`,
+              );
+            }
 
-          // Only create segment locks if segments exist
-          if (segmentIds.length > 0) {
-            console.log('Creating seat locks for segments:', segmentIds);
-            const lockData = segmentIds.map((segId) => ({
-              tripId,
-              seatId,
-              segmentId: segId,
+            const ticketCode = await this.generateUniqueTicketCode();
+
+            // Build booking data with proper relation connections
+            const bookingCreateInput: Prisma.BookingsCreateInput = {
+              customerInfo: customerInfo as unknown as Prisma.InputJsonValue,
+              price: tripRoute.price,
+              status: BookingStatus.pendingPayment,
+              ticketCode,
+              trip: { connect: { id: tripId } },
+              route: { connect: { id: routeId } },
+              seat: { connect: { id: currentSeatId } },
+              pickupStop: { connect: { id: pickupStopId } },
+              dropoffStop: { connect: { id: dropoffStopId } },
+            };
+
+            if (userId) {
+              Object.assign(bookingCreateInput, {
+                user: { connect: { id: userId } },
+              });
+            }
+
+            const booking = await tx.bookings.create({
+              data: bookingCreateInput,
+              include: { seat: true },
+            });
+
+            // Only create segment locks if segments exist
+            if (segmentIds.length > 0) {
+              const lockData = segmentIds.map((segId) => ({
+                tripId,
+                seatId: currentSeatId,
+                segmentId: segId,
+                bookingId: booking.id,
+              }));
+
+              await tx.seatSegmentLocks.createMany({
+                data: lockData,
+              });
+            }
+
+            // Delete Redis locks for this seat
+            const deleteLockPromises = segmentIds.map((segId) => {
+              const lockKey = `lock:trip:${tripId}:segment:${segId}:seat:${currentSeatId}`;
+              return this.cacheManager.del(lockKey);
+            });
+            await Promise.all(deleteLockPromises);
+
+            bookings.push({
               bookingId: booking.id,
-            }));
-
-            await tx.seatSegmentLocks.createMany({
-              data: lockData,
+              ticketCode: booking.ticketCode || ticketCode,
+              seatId: currentSeatId,
             });
-            console.log('Seat locks created successfully');
-          } else {
-            console.log('No segments - seat tracked via Bookings table only');
-          }
 
-          const deleteLockPromises = segmentIds.map((segId) => {
-            const lockKey = `lock:trip:${tripId}:segment:${segId}:seat:${seatId}`;
-            return this.cacheManager.del(lockKey);
-          });
-          await Promise.all(deleteLockPromises);
+            totalPrice += Number(tripRoute.price);
+          }
 
           return {
-            bookingId: booking.id,
-            ticketCode: booking.ticketCode,
-            status: booking.status,
+            bookingId: bookings[0].bookingId, // Primary booking ID for payment
+            bookingIds: bookings.map((b) => b.bookingId),
+            ticketCodes: bookings.map((b) => b.ticketCode),
+            ticketCode: bookings[0].ticketCode, // For backward compatibility
+            seatCount: bookings.length,
+            totalPrice,
+            status: BookingStatus.pendingPayment,
             expiresAt: new Date(Date.now() + 15 * 60 * 1000),
           };
         },
       );
 
-      this.bookingsGateway.emitSeatSold(tripId, seatId, segmentIds);
-
-      // Send e-ticket email asynchronously (don't block the response)
-      if (result.ticketCode) {
-        this.sendETicketEmail(result.ticketCode).catch((err) => {
-          console.error('Failed to send e-ticket email:', err);
-        });
+      // Emit seat sold events for all seats
+      for (const currentSeatId of allSeatIds) {
+        this.bookingsGateway.emitSeatSold(tripId, currentSeatId, segmentIds);
       }
+
+      console.log(
+        `Created ${result.seatCount} booking(s), IDs: ${result.bookingIds.join(', ')}`,
+      );
 
       return { message: 'Booking initiated successfully', data: result };
     } catch (err) {
@@ -851,20 +914,37 @@ export class BookingsService {
         now.getDate(),
       );
 
-      const [totalBookings, bookingsToday, statusBreakdown] = await Promise.all(
-        [
-          this.prisma.bookings.count(),
+      const [
+        totalBookings,
+        bookingsToday,
+        statusBreakdown,
+        revenueTotal,
+        revenueToday,
+      ] = await Promise.all([
+        this.prisma.bookings.count(),
 
-          this.prisma.bookings.count({
-            where: { createdAt: { gte: startOfToday } },
-          }),
+        this.prisma.bookings.count({
+          where: { createdAt: { gte: startOfToday } },
+        }),
 
-          this.prisma.bookings.groupBy({
-            by: ['status'],
-            _count: { id: true },
-          }),
-        ],
-      );
+        this.prisma.bookings.groupBy({
+          by: ['status'],
+          _count: { id: true },
+        }),
+
+        this.prisma.bookings.aggregate({
+          where: { status: BookingStatus.confirmed },
+          _sum: { price: true },
+        }),
+
+        this.prisma.bookings.aggregate({
+          where: {
+            status: BookingStatus.confirmed,
+            createdAt: { gte: startOfToday },
+          },
+          _sum: { price: true },
+        }),
+      ]);
 
       const breakdown = statusBreakdown.reduce(
         (acc, curr) => {
@@ -875,19 +955,150 @@ export class BookingsService {
       );
 
       return {
-        message: 'Fetched booking stats successfully',
+        message: 'Fetched dashboard stats successfully',
         data: {
-          totalBookings,
-          bookingsToday,
-          breakdown: {
-            pendingPayment: breakdown[BookingStatus.pendingPayment] || 0,
-            confirmed: breakdown[BookingStatus.confirmed] || 0,
-            cancelled: breakdown[BookingStatus.cancelled] || 0,
+          bookings: {
+            total: totalBookings,
+            today: bookingsToday,
+            breakdown: {
+              pendingPayment: breakdown[BookingStatus.pendingPayment] || 0,
+              confirmed: breakdown[BookingStatus.confirmed] || 0,
+              cancelled: breakdown[BookingStatus.cancelled] || 0,
+            },
+          },
+          revenue: {
+            total: Number(revenueTotal._sum.price) || 0,
+            today: Number(revenueToday._sum.price) || 0,
           },
         },
       };
     } catch (err) {
       throw new InternalServerErrorException('Failed to fetch booking stats', {
+        cause: err,
+      });
+    }
+  }
+
+  async getRevenueChart() {
+    try {
+      const result = await this.prisma.$queryRaw`
+        SELECT 
+          TO_CHAR("createdAt", 'YYYY-MM-DD') as date, 
+          COALESCE(SUM(price), 0) as revenue
+        FROM "Bookings"
+        WHERE status = 'confirmed'
+          AND "createdAt" >= NOW() - INTERVAL '30 days'
+        GROUP BY TO_CHAR("createdAt", 'YYYY-MM-DD')
+        ORDER BY date ASC;
+      `;
+
+      const formattedData = (
+        result as {
+          date: string;
+          revenue: number | string;
+        }[]
+      ).map((item) => ({
+        date: item.date,
+        revenue: Number(item.revenue),
+      }));
+
+      return {
+        message: 'Fetched revenue chart successfully',
+        data: formattedData,
+      };
+    } catch (err) {
+      console.error(err);
+      throw new InternalServerErrorException('Failed to get revenue chart');
+    }
+  }
+
+  async getBookingTrends() {
+    try {
+      const result = await this.prisma.$queryRaw`
+        SELECT 
+          EXTRACT(HOUR FROM t."startTime") as hour, 
+          COUNT(b.id) as count
+        FROM "Bookings" b
+        JOIN "Trips" t ON b."tripId" = t.id
+        WHERE b.status = 'confirmed'
+        GROUP BY EXTRACT(HOUR FROM t."startTime")
+        ORDER BY hour ASC;
+      `;
+
+      const fullDayStats = Array.from({ length: 24 }, (_, i) => ({
+        hour: `${i}:00`,
+        bookings: 0,
+      }));
+
+      (
+        result as {
+          hour: number | string;
+          count: bigint | number;
+        }[]
+      ).forEach((item) => {
+        const hourIndex = Number(item.hour);
+        if (fullDayStats[hourIndex]) {
+          fullDayStats[hourIndex].bookings = Number(item.count);
+        }
+      });
+
+      return {
+        message: 'Fetched booking trends successfully',
+        data: fullDayStats,
+      };
+    } catch (err) {
+      console.error(err);
+      throw new InternalServerErrorException('Failed to get booking trends');
+    }
+  }
+
+  async getOccupancyRate() {
+    try {
+      const trips = await this.prisma.trips.findMany({
+        where: {
+          startTime: {
+            gte: new Date(new Date().setDate(new Date().getDate() - 30)),
+          },
+        },
+        include: {
+          _count: {
+            select: { bookings: { where: { status: 'confirmed' } } },
+          },
+          bus: {
+            include: {
+              _count: { select: { seats: true } },
+            },
+          },
+        },
+      });
+
+      if (trips.length === 0) {
+        return {
+          message: 'Fetched occupancy rate successfully',
+          data: { averageOccupancy: 0, totalTrips: 0 },
+        };
+      }
+
+      let totalPercentage = 0;
+
+      trips.forEach((trip) => {
+        const totalSeats = trip.bus._count.seats || 1;
+        const bookedSeats = trip._count.bookings;
+        const occupancy = (bookedSeats / totalSeats) * 100;
+        totalPercentage += occupancy;
+      });
+
+      const averageOccupancy = totalPercentage / trips.length;
+
+      return {
+        message: 'Fetched occupancy rate successfully',
+        data: {
+          averageOccupancy: Math.round(averageOccupancy * 100) / 100,
+          totalTrips: trips.length,
+        },
+      };
+    } catch (err) {
+      throw new InternalServerErrorException('Failed to get occupancy rate', {
         cause: err,
       });
     }
@@ -917,6 +1128,141 @@ export class BookingsService {
       throw new InternalServerErrorException('Failed to send e-ticket email', {
         cause: err,
       });
+    }
+  }
+
+  async sendBookingConfirmationSms(ticketCode: string) {
+    try {
+      // Check if SMS service is available
+      if (!this.smsService.isServiceAvailable()) {
+        console.log('SMS service not configured, skipping confirmation SMS');
+        return;
+      }
+
+      const ticketData = await this.eTicketService.getBookingData(ticketCode);
+
+      // Extract phone number from customerInfo
+      const booking = await this.prisma.bookings.findUnique({
+        where: { ticketCode },
+        select: { customerInfo: true, price: true },
+      });
+
+      if (!booking) {
+        throw new NotFoundException('Booking not found');
+      }
+
+      const customerInfo = booking.customerInfo as Record<string, any>;
+      const phoneNumber = (customerInfo?.phone || customerInfo?.phoneNumber) as
+        | string
+        | undefined;
+
+      if (!phoneNumber) {
+        console.log('No phone number found in booking, skipping SMS');
+        return;
+      }
+
+      await this.smsService.sendBookingConfirmationSms(phoneNumber, {
+        customerName: ticketData.passengerName,
+        ticketCode,
+        tripDate: new Date(ticketData.departureTime).toLocaleDateString(
+          'vi-VN',
+        ),
+        tripTime: new Date(ticketData.departureTime).toLocaleTimeString(
+          'vi-VN',
+          {
+            hour: '2-digit',
+            minute: '2-digit',
+          },
+        ),
+        origin: ticketData.from,
+        destination: ticketData.to,
+        seatNumber: ticketData.seatNumber,
+        price: new Intl.NumberFormat('vi-VN', {
+          style: 'currency',
+          currency: 'VND',
+        }).format(Number(booking.price)),
+      });
+
+      console.log(`Booking confirmation SMS sent to ${phoneNumber}`);
+      return { message: 'Booking confirmation SMS sent successfully' };
+    } catch (err) {
+      console.error('Failed to send booking confirmation SMS:', err);
+      // Don't throw error, just log it so it doesn't block the booking
+    }
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleBookingExpiration() {
+    try {
+      const bookingRule = await this.settingService.findOne(
+        SettingKey.BOOKING_RULES,
+      );
+
+      const rules =
+        (bookingRule.data as unknown as BookingRulesSettingsDto) || {
+          refundPercentage: 85,
+          minCancellationHours: 24,
+          paymentHoldTimeMinutes: 15,
+        };
+
+      const holdTime = rules.paymentHoldTimeMinutes ?? 15;
+
+      // Threshold
+      const expirationThreshold = new Date(Date.now() - holdTime * 60 * 1000);
+
+      const expiredBookings = await this.prisma.bookings.findMany({
+        where: {
+          status: BookingStatus.pendingPayment,
+          createdAt: {
+            lt: expirationThreshold,
+          },
+        },
+        select: {
+          id: true,
+          tripId: true,
+          seatId: true,
+          ticketCode: true,
+        },
+      });
+
+      if (expiredBookings.length === 0) return;
+
+      this.logger.log(
+        `Found ${expiredBookings.length} expired bookings. Cancelling...`,
+      );
+
+      for (const booking of expiredBookings) {
+        await this.prisma.$transaction(async (tx) => {
+          // Update CANCELLED
+          await tx.bookings.update({
+            where: { id: booking.id },
+            data: { status: BookingStatus.cancelled },
+          });
+
+          // SeatSegmentLocks
+          const locks = await tx.seatSegmentLocks.findMany({
+            where: { bookingId: booking.id },
+            select: { segmentId: true },
+          });
+
+          await tx.seatSegmentLocks.deleteMany({
+            where: { bookingId: booking.id },
+          });
+
+          const segmentIds = locks.map((lock) => lock.segmentId);
+          this.bookingsGateway.emitSeatUnlocked(
+            booking.tripId,
+            booking.seatId,
+            segmentIds,
+          );
+        });
+
+        this.logger.log(
+          `Auto-cancelled expired booking: ${booking.ticketCode}`,
+        );
+      }
+    } catch (error) {
+      this.logger.error('Error in automated booking expiration job:', error);
     }
   }
 }

@@ -29,13 +29,18 @@ export interface CreateBookingRequest {
   userId?: string;
   tripId: string;
   routeId: string;
-  seatId: string;
+  seatId?: string; // For single seat (backward compatibility)
+  seatIds?: string[]; // For multiple seats
   customerInfo: CustomerInfo;
 }
 
 export interface CreateBookingResult {
   bookingId: string;
+  bookingIds?: string[]; // All booking IDs for multiple seats
   ticketCode: string;
+  ticketCodes?: string[]; // All ticket codes for multiple seats
+  seatCount?: number;
+  totalPrice?: number;
   status: BookingStatus;
   expiresAt: string;
 }
@@ -97,12 +102,18 @@ export interface Booking {
 }
 
 export interface BookingStats {
-  totalBookings: number;
-  bookingsToday: number;
-  breakdown: {
-    pendingPayment: number;
-    confirmed: number;
-    cancelled: number;
+  bookings: {
+    total: number;
+    today: number;
+    breakdown: {
+      pendingPayment: number;
+      confirmed: number;
+      cancelled: number;
+    };
+  };
+  revenue: {
+    total: number;
+    today: number;
   };
 }
 
@@ -126,4 +137,19 @@ export interface TicketLookupParams {
 
 export interface GuestCancelRequest {
   email: string;
+}
+
+export interface RevenueChartData {
+  date: string; // YYYY-MM-DD
+  revenue: number;
+}
+
+export interface BookingTrendData {
+  hour: string; // "0:00", "1:00", ...
+  bookings: number;
+}
+
+export interface OccupancyRateData {
+  averageOccupancy: number;
+  totalTrips: number;
 }

@@ -15,9 +15,21 @@ export default function InteractiveSeatMap({
   onSeatSelect,
   selectedSeats = [],
 }: InteractiveSeatMapProps) {
+  // Detect seat numbering format: grid-based (A1, B1, C1) vs sequential (A1, A2, A3 or B1, B2, B3)
+  // Grid-based has multiple different letter prefixes, sequential has only one letter prefix
+  const uniquePrefixes = new Set(
+    seats.map((s) => s.seatNumber.charAt(0)).filter((c) => /[A-Z]/.test(c)),
+  );
+  const isGridBased = uniquePrefixes.size > 1;
+
   const findSeat = (col: string, row: number) => {
     const label = `${col}${row}`;
     return seats.find((s) => s.seatNumber === label);
+  };
+
+  // For sequential naming (A1, A2, A3...), get seat by index
+  const getSeatByIndex = (index: number) => {
+    return seats[index];
   };
 
   const getSeatStatusStyle = (seat: SeatStatus) => {
@@ -72,6 +84,41 @@ export default function InteractiveSeatMap({
 
   const renderStandardLayout = () => {
     const rows = 8;
+    const cols = 4;
+
+    // For sequential naming (A1, A2, A3...), map index to grid position
+    if (!isGridBased) {
+      return (
+        <div className="space-y-3">
+          <div className="grid grid-cols-5 gap-x-2 mb-2">
+            {["A", "B", "", "C", "D"].map((col, i) => (
+              <div
+                key={i}
+                className={`text-center text-xs font-medium text-gray-500 ${col === "" ? "w-6" : ""}`}
+              >
+                {col}
+              </div>
+            ))}
+          </div>
+          {Array.from({ length: rows }).map((_, rowIdx) => {
+            const r = rowIdx + 1;
+            return (
+              <div key={r} className="grid grid-cols-5 gap-x-2 gap-y-2">
+                {renderSeatItem(getSeatByIndex(rowIdx * cols + 0), `A${r}`)}
+                {renderSeatItem(getSeatByIndex(rowIdx * cols + 1), `B${r}`)}
+                <div className="flex justify-center items-center text-xs text-gray-400 font-mono">
+                  {r}
+                </div>
+                {renderSeatItem(getSeatByIndex(rowIdx * cols + 2), `C${r}`)}
+                {renderSeatItem(getSeatByIndex(rowIdx * cols + 3), `D${r}`)}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // Grid-based naming (A1, B1, C1, D1...)
     return (
       <div className="space-y-3">
         <div className="grid grid-cols-5 gap-x-2 mb-2">
@@ -104,6 +151,40 @@ export default function InteractiveSeatMap({
 
   const renderVIPLayout = () => {
     const rows = 6;
+    const cols = 3;
+
+    // For sequential naming
+    if (!isGridBased) {
+      return (
+        <div className="space-y-3">
+          <div className="grid grid-cols-4 gap-x-3 mb-2">
+            {["A", "B", "", "C"].map((col, i) => (
+              <div
+                key={i}
+                className={`text-center text-xs font-medium text-gray-500 ${col === "" ? "w-6" : ""}`}
+              >
+                {col}
+              </div>
+            ))}
+          </div>
+          {Array.from({ length: rows }).map((_, rowIdx) => {
+            const r = rowIdx + 1;
+            return (
+              <div key={r} className="grid grid-cols-4 gap-x-3 gap-y-2">
+                {renderSeatItem(getSeatByIndex(rowIdx * cols + 0), `A${r}`)}
+                {renderSeatItem(getSeatByIndex(rowIdx * cols + 1), `B${r}`)}
+                <div className="flex justify-center items-center text-xs text-gray-400 font-mono">
+                  {r}
+                </div>
+                {renderSeatItem(getSeatByIndex(rowIdx * cols + 2), `C${r}`)}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // Grid-based naming
     return (
       <div className="space-y-3">
         <div className="grid grid-cols-4 gap-x-3 mb-2">
@@ -135,6 +216,41 @@ export default function InteractiveSeatMap({
 
   const renderLimousineLayout = () => {
     const rows = 4;
+    const cols = 4;
+
+    // For sequential naming
+    if (!isGridBased) {
+      return (
+        <div className="space-y-3">
+          <div className="grid grid-cols-5 gap-x-2 mb-2">
+            {["A", "B", "C", "", "D"].map((col, i) => (
+              <div
+                key={i}
+                className={`text-center text-xs font-medium text-gray-500 ${col === "" ? "w-6" : ""}`}
+              >
+                {col}
+              </div>
+            ))}
+          </div>
+          {Array.from({ length: rows }).map((_, rowIdx) => {
+            const r = rowIdx + 1;
+            return (
+              <div key={r} className="grid grid-cols-5 gap-x-2 gap-y-2">
+                {renderSeatItem(getSeatByIndex(rowIdx * cols + 0), `A${r}`)}
+                {renderSeatItem(getSeatByIndex(rowIdx * cols + 1), `B${r}`)}
+                {renderSeatItem(getSeatByIndex(rowIdx * cols + 2), `C${r}`)}
+                <div className="flex justify-center items-center text-xs text-gray-400 font-mono">
+                  {r}
+                </div>
+                {renderSeatItem(getSeatByIndex(rowIdx * cols + 3), `D${r}`)}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // Grid-based naming
     return (
       <div className="space-y-3">
         <div className="grid grid-cols-5 gap-x-2 mb-2">
@@ -168,6 +284,57 @@ export default function InteractiveSeatMap({
   const renderSleeperLayout = () => {
     const rows = 4;
 
+    // For sequential naming, sleeper has 16 seats total (4 rows x 2 cols x 2 tiers)
+    if (!isGridBased) {
+      const renderSequentialTier = (
+        tierLabel: string,
+        startIndex: number,
+        leftLabel: string,
+        rightLabel: string,
+      ) => (
+        <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 mb-4">
+          <div className="text-center text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+            {tierLabel}
+          </div>
+          <div className="grid grid-cols-3 gap-x-2 mb-2">
+            <div className="text-center text-xs text-gray-500">{leftLabel}</div>
+            <div className="w-6"></div>
+            <div className="text-center text-xs text-gray-500">
+              {rightLabel}
+            </div>
+          </div>
+          {Array.from({ length: rows }).map((_, rowIdx) => {
+            const r = rowIdx + 1;
+            return (
+              <div key={r} className="grid grid-cols-3 gap-x-2 gap-y-2 mb-2">
+                {renderSeatItem(
+                  getSeatByIndex(startIndex + rowIdx * 2),
+                  `${leftLabel}${r}`,
+                  Bed,
+                )}
+                <div className="flex justify-center items-center text-xs text-gray-400 font-mono">
+                  {r}
+                </div>
+                {renderSeatItem(
+                  getSeatByIndex(startIndex + rowIdx * 2 + 1),
+                  `${rightLabel}${r}`,
+                  Bed,
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+
+      return (
+        <div>
+          {renderSequentialTier("Upper Tier", 0, "A", "B")}
+          {renderSequentialTier("Lower Tier", 8, "C", "D")}
+        </div>
+      );
+    }
+
+    // Grid-based naming
     const renderTier = (
       leftCol: string,
       rightCol: string,

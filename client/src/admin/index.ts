@@ -18,3 +18,4 @@ export { default as ReviewManagement } from "./customerCare/ReviewManagement";
 export { default as NotificationManagement } from "./customerCare/NotificationManagement";
 
 export { default as SystemSettings } from "./systemSettings/SystemSettings";
+export { default as SystemHealth } from "./systemSettings/SystemHealth";

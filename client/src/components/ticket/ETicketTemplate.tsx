@@ -295,14 +295,6 @@ export const ETicketTemplate = ({
             <span>Ticket Price (Seat {seatNumber})</span>
             <span className="font-semibold">{formatCurrency(ticketPrice)}</span>
           </div>
-          {totalPrice !== ticketPrice && (
-            <div className="flex justify-between text-gray-700 dark:text-gray-300">
-              <span>Additional Fees</span>
-              <span className="font-semibold">
-                {formatCurrency(totalPrice - ticketPrice)}
-              </span>
-            </div>
-          )}
           <div className="border-t-2 border-gray-300 dark:border-gray-600 pt-3 flex justify-between">
             <span className="text-lg font-bold text-gray-900 dark:text-white">
               Total Paid

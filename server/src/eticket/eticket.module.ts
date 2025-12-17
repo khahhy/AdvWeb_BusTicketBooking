@@ -8,4 +8,3 @@ import { PrismaModule } from 'src/prisma/prisma.module';
   exports: [ETicketService],
 })
 export class ETicketModule {}
-

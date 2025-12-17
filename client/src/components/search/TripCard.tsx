@@ -17,6 +17,7 @@ import { BusType } from "@/store/type/busType";
 import dayjs from "dayjs";
 import type { Trip } from "@/store/type/tripsType";
 import { useSeatBooking } from "@/hooks/useSeatBooking";
+import { useGetBookingRulesQuery } from "@/store/api/settingApi";
 
 export type TripCardData = Trip & {
   tripId?: string;
@@ -47,6 +48,8 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<TabId | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(120);
+
+  const { data: bookingRules } = useGetBookingRulesQuery();
 
   const getBusTypeEnum = (busType?: string): BusType => {
     if (!busType) return BusType.STANDARD;
@@ -84,7 +87,10 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
   const handleBookTrip = () => {
     if (selectedSeats.length === 0) return;
 
-    const date = dayjs(trip.departureTime).format("YYYY-MM-DD");
+    const departureDate = dayjs(trip.departureTime);
+    const date = departureDate.isValid()
+      ? departureDate.format("YYYY-MM-DD")
+      : dayjs().format("YYYY-MM-DD");
     const selectedSeatId = selectedSeats[0];
     const seatObj = seats.find((s) => s.seatId === selectedSeatId);
     const seatNumber = seatObj?.seatNumber || "";
@@ -95,7 +101,10 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
   };
 
   const handleViewDetail = () => {
-    const date = dayjs(trip.departureTime).format("YYYY-MM-DD");
+    const departureDate = dayjs(trip.departureTime);
+    const date = departureDate.isValid()
+      ? departureDate.format("YYYY-MM-DD")
+      : dayjs().format("YYYY-MM-DD");
     const tId = trip.tripId || trip.id;
     const rId = trip.routeId || "";
     navigate(`/trip-detail?tripId=${tId}&routeId=${rId}&date=${date}`);
@@ -510,14 +519,35 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
       )}
 
       {activeTab === "policy" && (
-        <div className="p-6 bg-gray-50 border-t border-gray-200">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Policy</h3>
-          <div className="space-y-3 text-sm text-gray-600">
-            <p>• Please arrive at the departure point 15 minutes early.</p>
-            <p>• Free cancellation 24 hours before departure.</p>
-            <p>• Cancellation within 24 hours will incur a 20% fee.</p>
-            <p>• Tickets cannot be transferred to others.</p>
-          </div>
+        <div className="p-6 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+            Policy
+          </h3>
+          {bookingRules ? (
+            <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+              <p>• Please arrive at the departure point 30 minutes early.</p>
+              <p>
+                • Free cancellation{" "}
+                <strong>{bookingRules.minCancellationHours} hours</strong>{" "}
+                before departure.
+              </p>
+              <p>
+                • Cancellation within {bookingRules.minCancellationHours} hours
+                will incur a{" "}
+                <strong>{100 - bookingRules.refundPercentage}%</strong> fee
+                (Refund {bookingRules.refundPercentage}%).
+              </p>
+              <p>
+                • Unpaid seats will be held for{" "}
+                <strong>{bookingRules.paymentHoldTimeMinutes} minutes</strong>.
+              </p>
+              <p>• Tickets cannot be transferred to others.</p>
+            </div>
+          ) : (
+            <div className="text-sm text-gray-500 italic">
+              Loading policy information...
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -383,7 +383,9 @@ export default function TrackTicketPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleViewTicket(booking.bookingCode)}
+                                onClick={() =>
+                                  handleViewTicket(booking.bookingCode)
+                                }
                                 className="border-pink-300 text-pink-600 hover:bg-pink-50 dark:border-pink-700 dark:text-pink-400 dark:hover:bg-pink-900/20"
                               >
                                 <Eye className="w-4 h-4 mr-1" />

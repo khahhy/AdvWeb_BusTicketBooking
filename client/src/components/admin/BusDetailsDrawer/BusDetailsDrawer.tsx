@@ -1,158 +1,255 @@
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dispatch, SetStateAction } from "react";
+import { Bus } from "@/store/type/busType";
+import { Trip, TripStatus } from "@/store/type/tripsType";
+import { useGetBusAmenitiesQuery } from "@/store/api/settingApi";
+import {
+  Wifi,
+  Tv,
+  Coffee,
+  Droplets,
+  Bath,
+  Shirt,
+  Zap,
+  Snowflake,
+  Star,
+  Calendar,
+  MapPin,
+  Clock,
+} from "lucide-react";
 
-// temporary to fix eslint
 export interface BusDetailsDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   bus: Bus | null;
-  name: string;
   plate: string;
   amenities: string[];
-  setName: Dispatch<SetStateAction<string>>;
   setPlate: Dispatch<SetStateAction<string>>;
   onAmenityChange: (id: string, checked: boolean) => void;
   relatedTrips: Trip[];
   onSave: () => void;
 }
 
-export interface Bus {
-  id: string;
-  name: string;
-  plate: string;
-  amenities: string[];
-  status: string;
-}
-
-export interface Trip {
-  id: string;
-  routeName: string;
-  origin: string;
-  destination: string;
-  departureTime: string;
-  arrivalTime: string;
-}
-
-const allPossibleAmenities = [
-  { id: "wifi", label: "Wifi" },
-  { id: "charging", label: "Cổng sạc USB" },
-  { id: "wc", label: "WC (Nhà vệ sinh)" },
-  { id: "blanket", label: "Chăn đắp" },
-  { id: "water", label: "Nước uống" },
-  { id: "cold_towel", label: "Khăn lạnh" },
-];
-
 const BusDetailsDrawer = ({
   open,
   onOpenChange,
   bus,
-  name,
   plate,
   amenities,
-  setName,
   setPlate,
   onAmenityChange,
   relatedTrips,
   onSave,
 }: BusDetailsDrawerProps) => {
+  const { data: settingsAmenitiesData } = useGetBusAmenitiesQuery();
+  const allPossibleAmenities = settingsAmenitiesData?.amenities || [];
+
+  const formatDateTime = (isoString: string) => {
+    if (!isoString) return "N/A";
+    return new Date(isoString).toLocaleString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  const getAmenityIcon = (amenityName: string) => {
+    const key = amenityName.toLowerCase().replace(/\s/g, "");
+    const className = "w-4 h-4 text-gray-500";
+
+    if (key.includes("tv") || key.includes("lcd"))
+      return <Tv className={className} />;
+    if (key.includes("wifi") || key.includes("internet"))
+      return <Wifi className={className} />;
+    if (key.includes("snack") || key.includes("food"))
+      return <Coffee className={className} />;
+    if (key.includes("water") || key.includes("drink"))
+      return <Droplets className={className} />;
+    if (key.includes("toilet") || key.includes("wc"))
+      return <Bath className={className} />;
+    if (key.includes("blanket") || key.includes("pillow"))
+      return <Shirt className={className} />;
+    if (key.includes("charger") || key.includes("usb") || key.includes("power"))
+      return <Zap className={className} />;
+    if (key.includes("air") || key.includes("cool"))
+      return <Snowflake className={className} />;
+
+    return <Star className={className} />;
+  };
+
+  const getStatusColor = (status: TripStatus) => {
+    switch (status) {
+      case TripStatus.Scheduled:
+        return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+      case TripStatus.Ongoing:
+        return "bg-green-100 text-green-800 hover:bg-green-100";
+      case TripStatus.Completed:
+        return "bg-gray-100 text-gray-800 hover:bg-gray-100";
+      case TripStatus.Cancelled:
+        return "bg-red-100 text-red-800 hover:bg-red-100";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-2xl">
+      <SheetContent className="sm:max-w-2xl flex flex-col h-full">
+        <SheetHeader>
+          <SheetTitle>Bus Details</SheetTitle>
+          <SheetDescription>
+            Manage information and trips for bus {plate}
+          </SheetDescription>
+        </SheetHeader>
+
         {bus && (
-          <Tabs defaultValue="details" className="mt-4">
+          <Tabs defaultValue="details" className="mt-6 flex-1 flex flex-col">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="trips">Trips</TabsTrigger>
+              <TabsTrigger value="details">Details & Amenities</TabsTrigger>
+              <TabsTrigger value="trips">Related Trips</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="details">
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label>Name</Label>
+            <TabsContent value="details" className="flex-1 overflow-y-auto">
+              <div className="grid gap-6 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="plate" className="text-base font-semibold">
+                    License Plate
+                  </Label>
                   <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="col-span-3"
-                  />
-                </div>
-
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label>License</Label>
-                  <Input
+                    id="plate"
                     value={plate}
                     onChange={(e) => setPlate(e.target.value)}
-                    className="col-span-3"
+                    placeholder="e.g. 51B-123.45"
                   />
                 </div>
 
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label>Status</Label>
-
-                  <Badge
-                    className="px-2 py-0.5 col-span-2 justify-center"
-                    variant={
-                      bus.status === "Active" ? "secondary" : "destructive"
-                    }
-                  >
-                    {bus.status}
-                  </Badge>
-                </div>
-
-                <div className="col-span-4">
-                  <Label className="mb-2 block">Amenities</Label>
-                  <div className="grid grid-cols-2 gap-4 rounded-md border p-4">
-                    {allPossibleAmenities.map((amenity) => (
-                      <div
-                        key={amenity.id}
-                        className="flex items-center space-x-2"
-                      >
-                        <Checkbox
-                          id={amenity.id}
-                          checked={amenities.includes(amenity.id)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              onAmenityChange(amenity.id, checked as boolean);
-                            }
-                          }}
-                        />
-                        <label
-                          htmlFor={amenity.id}
-                          className="text-sm font-medium"
-                        >
-                          {amenity.label}
-                        </label>
+                <div className="grid gap-2">
+                  <Label className="text-base font-semibold">
+                    Bus Amenities
+                  </Label>
+                  <div className="rounded-lg border p-4 bg-gray-50 dark:bg-gray-900/50">
+                    {allPossibleAmenities.length === 0 ? (
+                      <p className="text-sm text-gray-500 italic">
+                        No amenities configured in System Settings.
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-4">
+                        {allPossibleAmenities.map((amenityName) => {
+                          const isChecked = amenities.some(
+                            (a) =>
+                              a.toLowerCase() === amenityName.toLowerCase(),
+                          );
+                          return (
+                            <div
+                              key={amenityName}
+                              className="flex items-center space-x-3 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            >
+                              <Checkbox
+                                id={`drawer-${amenityName}`}
+                                checked={isChecked}
+                                onCheckedChange={(checked) =>
+                                  onAmenityChange(
+                                    amenityName,
+                                    checked as boolean,
+                                  )
+                                }
+                              />
+                              <label
+                                htmlFor={`drawer-${amenityName}`}
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 cursor-pointer capitalize"
+                              >
+                                {getAmenityIcon(amenityName)}
+                                {amenityName}
+                              </label>
+                            </div>
+                          );
+                        })}
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6 flex justify-end">
-                <Button onClick={onSave}>Save</Button>
+              <div className="mt-6 flex justify-end sticky bottom-0 bg-white dark:bg-background py-4 border-t">
+                <Button onClick={onSave} className="w-full sm:w-auto">
+                  Save Changes
+                </Button>
               </div>
             </TabsContent>
 
-            <TabsContent value="trips">
-              <div className="mt-4 space-y-4">
-                {relatedTrips.length ? (
-                  relatedTrips.map((trip: Trip) => (
-                    <div key={trip.id} className="p-4 border rounded-md">
-                      <p className="font-semibold">{trip.routeName}</p>
-                      <p className="text-sm">
-                        {trip.departureTime.toLocaleString()}
-                      </p>
+            <TabsContent value="trips" className="flex-1 overflow-hidden">
+              <ScrollArea className="h-[calc(100vh-200px)] pr-4">
+                <div className="space-y-4 py-4">
+                  {relatedTrips.length > 0 ? (
+                    relatedTrips.map((trip: Trip) => (
+                      <div
+                        key={trip.id}
+                        className="flex flex-col gap-3 p-4 border rounded-xl bg-card hover:shadow-sm transition-all"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-blue-500" />
+                            <span className="font-semibold text-base">
+                              {trip.tripName || "Unknown Trip"}
+                            </span>
+                          </div>
+                          <Badge
+                            variant="secondary"
+                            className={getStatusColor(trip.status)}
+                          >
+                            {trip.status}
+                          </Badge>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 text-sm mt-1">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-muted-foreground text-xs uppercase font-bold flex items-center gap-1">
+                              <Calendar className="w-3 h-3" /> Departure
+                            </span>
+                            <span className="font-medium">
+                              {formatDateTime(trip.startTime)}
+                            </span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-muted-foreground text-xs uppercase font-bold flex items-center gap-1">
+                              <Clock className="w-3 h-3" /> Arrival
+                            </span>
+                            <span className="font-medium">
+                              {formatDateTime(trip.endTime)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {trip.tripName && (
+                          <div className="text-xs text-muted-foreground border-t pt-2 mt-1">
+                            Trip Ref: {trip.tripName}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground bg-gray-50 rounded-lg border border-dashed">
+                      <Calendar className="w-10 h-10 mb-2 opacity-20" />
+                      <p>No trips found for this bus.</p>
                     </div>
-                  ))
-                ) : (
-                  <p>No trips.</p>
-                )}
-              </div>
+                  )}
+                </div>
+              </ScrollArea>
             </TabsContent>
           </Tabs>
         )}

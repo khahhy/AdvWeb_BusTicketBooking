@@ -3,7 +3,10 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/common/Navbar";
 import backgroundImage from "@/assets/images/background.png";
 import dayjs from "dayjs";
+import "dayjs/locale/en";
 import Footer from "@/components/dashboard/Footer";
+
+dayjs.locale("en");
 import { useGetTripRouteMapDetailQuery } from "@/store/api/routesApi";
 import {
   Clock,
@@ -23,11 +26,14 @@ import {
 import InteractiveSeatMap from "@/components/search/InteractiveSeatMap";
 import { BusType } from "@/store/type/busType";
 import { useSeatBooking } from "@/hooks/useSeatBooking";
+import { useGetBookingRulesQuery } from "@/store/api/settingApi";
 
 export default function TripDetailPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [timeLeft, setTimeLeft] = useState<number>(120);
+
+  const { data: bookingRules } = useGetBookingRulesQuery();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -36,7 +42,16 @@ export default function TripDetailPage() {
   // Get trip data from URL params
   const tripId = searchParams.get("tripId") || "";
   const routeId = searchParams.get("routeId") || "";
-  const travelDate = searchParams.get("date") || dayjs().format("YYYY-MM-DD");
+  const dateParam = searchParams.get("date");
+
+  // Validate and use date parameter, fallback to today if invalid
+  const travelDate = useMemo(() => {
+    if (!dateParam || dateParam === "Invalid Date") {
+      return dayjs().format("YYYY-MM-DD");
+    }
+    const parsedDate = dayjs(dateParam);
+    return parsedDate.isValid() ? dateParam : dayjs().format("YYYY-MM-DD");
+  }, [dateParam]);
 
   // Fetch trip from API - only skip if both params are missing
   const {
@@ -193,7 +208,15 @@ export default function TripDetailPage() {
     return `${m}:${s < 10 ? "0" : ""}${s}`;
   };
 
-  const formatDate = () => dayjs(travelDate).format("dddd, MMMM DD, YYYY");
+  const formatDate = () => {
+    // Use trip's actual start time if available, fallback to URL param
+    const dateToFormat = actualData?.startTime || travelDate;
+    const parsed = dayjs(dateToFormat);
+    if (!parsed.isValid()) {
+      return dayjs().format("dddd, MMMM DD, YYYY");
+    }
+    return parsed.format("dddd, MMMM DD, YYYY");
+  };
 
   const formatCurrency = (amount: number | undefined | null) => {
     if (amount === undefined || amount === null || isNaN(amount)) return "0đ";
@@ -202,12 +225,16 @@ export default function TripDetailPage() {
 
   const handleBookTrip = () => {
     if (selectedSeats.length === 0) return;
-    const selectedSeatId = selectedSeats[0];
-    const seatObj = seats.find((s) => s.seatId === selectedSeatId);
-    const seatNumber = seatObj?.seatNumber || "";
+
+    // Get all selected seat info
+    const selectedSeatObjects = seats.filter((s) =>
+      selectedSeats.includes(s.seatId),
+    );
+    const seatIds = selectedSeatObjects.map((s) => s.seatId).join(",");
+    const seatNumbers = selectedSeatObjects.map((s) => s.seatNumber).join(",");
 
     navigate(
-      `/checkout?tripId=${tripId}&routeId=${routeId}&seatId=${selectedSeatId}&seat=${seatNumber}&date=${travelDate}`,
+      `/checkout?tripId=${tripId}&routeId=${routeId}&seatIds=${seatIds}&seats=${seatNumbers}&date=${travelDate}`,
     );
   };
 
@@ -526,32 +553,55 @@ export default function TripDetailPage() {
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                   Booking Policy
                 </h2>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0"></div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      Please arrive at the departure point 15 minutes early.
-                    </p>
+                {bookingRules ? (
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0"></div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        Please arrive at the departure point 30 minutes early.
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0"></div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        Free cancellation{" "}
+                        <strong>
+                          {bookingRules.minCancellationHours} hours
+                        </strong>{" "}
+                        before departure.
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0"></div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        Cancellation within {bookingRules.minCancellationHours}{" "}
+                        hours will incur a{" "}
+                        <strong>{100 - bookingRules.refundPercentage}%</strong>{" "}
+                        fee.
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0"></div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        Unpaid seats will be held for{" "}
+                        <strong>
+                          {bookingRules.paymentHoldTimeMinutes} minutes
+                        </strong>
+                        .
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0"></div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        Tickets cannot be transferred to others.
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0"></div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      Free cancellation 24 hours before departure.
-                    </p>
+                ) : (
+                  <div className="text-gray-500 italic">
+                    Loading policy details...
                   </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0"></div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      Cancellation within 24 hours will incur a 20% fee.
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0"></div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      Tickets cannot be transferred to others.
-                    </p>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -572,7 +622,7 @@ export default function TripDetailPage() {
                     >
                       <Clock className="w-4 h-4" />
                       <div className="text-sm font-medium">
-                        Giữ ghế trong:{" "}
+                        Keep the seat in:{" "}
                         <span className="font-bold">
                           {formatTime(timeLeft)}
                         </span>

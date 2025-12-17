@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsUUID, IsNotEmpty, ValidateNested, IsOptional } from 'class-validator';
+import {
+  IsUUID,
+  IsNotEmpty,
+  ValidateNested,
+  IsOptional,
+  IsArray,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { CustomerInfoDto } from './customer-info.dto';
 
@@ -28,13 +34,23 @@ export class CreateBookingDto {
   @IsNotEmpty()
   routeId: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'c2345678-90ab-cdef-1234-567890abcdef',
-    description: 'Unique identifier of the Seat to book',
+    description: 'Unique identifier of the Seat to book (for single seat)',
   })
   @IsUUID()
-  @IsNotEmpty()
-  seatId: string;
+  @IsOptional()
+  seatId?: string;
+
+  @ApiPropertyOptional({
+    example: ['c2345678-90ab-cdef-1234-567890abcdef'],
+    description: 'Array of Seat IDs to book (for multiple seats)',
+    type: [String],
+  })
+  @IsArray()
+  @IsUUID('4', { each: true })
+  @IsOptional()
+  seatIds?: string[];
 
   @ApiProperty({
     type: CustomerInfoDto,

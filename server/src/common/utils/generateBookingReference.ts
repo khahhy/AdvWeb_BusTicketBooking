@@ -12,4 +12,3 @@ export function generateBookingReference(): string {
 
   return reference;
 }
-

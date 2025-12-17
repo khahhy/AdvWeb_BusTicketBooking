@@ -109,7 +109,38 @@ export class BookingsController {
     return this.bookingsService.getStats();
   }
 
-  @ApiOperation({ summary: 'Guest: Look up bookings by email and phone number' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Admin: Get revenue chart data (Last 30 days)' })
+  @Get('revenue-chart')
+  async getRevenueChart() {
+    return this.bookingsService.getRevenueChart();
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Admin: Get booking trends (Peak hours)' })
+  @Get('booking-trends')
+  async getBookingTrends() {
+    return this.bookingsService.getBookingTrends();
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Admin: Get occupancy rate (Avg fill rate last 30 days)',
+  })
+  @Get('occupancy-rate')
+  async getOccupancyRate() {
+    return this.bookingsService.getOccupancyRate();
+  }
+
+  @ApiOperation({
+    summary: 'Guest: Look up bookings by email and phone number',
+  })
   @ApiBody({ type: LookupBookingDto })
   @ApiResponse({ status: 200, description: 'Fetched guest bookings.' })
   @Post('guest/lookup')
@@ -140,7 +171,9 @@ export class BookingsController {
     return this.eTicketService.getFullBookingData(ticketCode);
   }
 
-  @ApiOperation({ summary: 'Download e-ticket PDF by ticket code (server-generated)' })
+  @ApiOperation({
+    summary: 'Download e-ticket PDF by ticket code (server-generated)',
+  })
   @ApiParam({ name: 'ticketCode', description: 'Booking reference code' })
   @ApiProduces('application/pdf')
   @ApiResponse({ status: 200, description: 'PDF e-ticket file.' })
@@ -161,7 +194,10 @@ export class BookingsController {
 
   @ApiOperation({ summary: 'Resend e-ticket email' })
   @ApiParam({ name: 'ticketCode', description: 'Booking reference code' })
-  @ApiResponse({ status: 200, description: 'E-ticket email sent successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'E-ticket email sent successfully.',
+  })
   @ApiResponse({ status: 404, description: 'Booking not found.' })
   @Post('eticket/:ticketCode/resend')
   @HttpCode(HttpStatus.OK)
@@ -176,7 +212,11 @@ export class BookingsController {
       type: 'object',
       required: ['email'],
       properties: {
-        email: { type: 'string', format: 'email', example: 'guest@example.com' },
+        email: {
+          type: 'string',
+          format: 'email',
+          example: 'guest@example.com',
+        },
       },
     },
   })
@@ -237,7 +277,9 @@ export class BookingsController {
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Cancel a booking and release seat locks (Authenticated users)' })
+  @ApiOperation({
+    summary: 'Cancel a booking and release seat locks (Authenticated users)',
+  })
   @ApiParam({ name: 'id', description: 'Booking ID', type: String })
   @ApiResponse({ status: 200, description: 'Booking cancelled successfully.' })
   @ApiResponse({

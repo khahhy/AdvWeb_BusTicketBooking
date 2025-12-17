@@ -121,11 +121,6 @@ const BusLayoutVisualization: React.FC<BusLayoutVisualizationProps> = ({
             <div className="h-2 w-32 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
           </div>
         </div>
-
-        {/* Layout Info */}
-        <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
-          <p>Click arrows to switch between bus types</p>
-        </div>
       </CardContent>
     </Card>
   );

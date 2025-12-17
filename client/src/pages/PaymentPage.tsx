@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { CreditCard, Building, Smartphone, Loader2 } from "lucide-react";
+import { Building, Loader2 } from "lucide-react";
 import Navbar from "@/components/common/Navbar";
 import backgroundImage from "@/assets/images/background.png";
 import dayjs from "dayjs";
@@ -10,6 +10,7 @@ import PaymentButton from "@/components/payment/PaymentButton";
 import PaymentPriceSidebar from "@/components/payment/PaymentPriceSidebar";
 import Footer from "@/components/dashboard/Footer";
 import { useCreateBookingMutation } from "@/store/api/bookingApi";
+import { useCreatePaymentMutation } from "@/store/api/paymentApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/store/slice/authSlice";
 import { useGetTripRouteMapDetailQuery } from "@/store/api/routesApi";
@@ -20,6 +21,8 @@ export default function PaymentPage() {
   const currentUser = useSelector(selectCurrentUser);
   const [createBooking, { isLoading: isCreatingBooking }] =
     useCreateBookingMutation();
+  const [createPayment, { isLoading: isCreatingPayment }] =
+    useCreatePaymentMutation();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -28,8 +31,13 @@ export default function PaymentPage() {
   // Get data from URL params
   const tripId = searchParams.get("tripId") || "";
   const routeId = searchParams.get("routeId") || "";
-  const seatId = searchParams.get("seatId") || "";
-  const selectedSeat = searchParams.get("seat") || "";
+  // Support both single seat (seatId) and multiple seats (seatIds)
+  const seatIdsParam =
+    searchParams.get("seatIds") || searchParams.get("seatId") || "";
+  const seatsParam =
+    searchParams.get("seats") || searchParams.get("seat") || "";
+  const seatIds = seatIdsParam.split(",").filter(Boolean);
+  const selectedSeats = seatsParam.split(",").filter(Boolean);
   const travelDate = searchParams.get("date") || dayjs().format("YYYY-MM-DD");
   const passengerName = searchParams.get("passengerName") || "Guest User";
   const passengerIdRaw = searchParams.get("passengerId") || "123456789012";
@@ -98,11 +106,10 @@ export default function PaymentPage() {
     };
   }, [tripData, tripId]);
 
-  // Calculate prices
+  // Calculate prices - multiply by number of seats
   const ticketPrice = trip.price;
-  const insuranceFee = 1000;
-  const serviceFee = 14000;
-  const totalPrice = ticketPrice + insuranceFee + serviceFee;
+  const seatCount = seatIds.length || 1;
+  const totalPrice = ticketPrice * seatCount;
 
   // Payment method state
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
@@ -113,31 +120,44 @@ export default function PaymentPage() {
     return dayjs(travelDate).format("ddd, MMM DD, YYYY");
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number): string => {
     return amount.toLocaleString("vi-VN") + "VND";
   };
-
   const handlePayment = async () => {
     setPaymentError("");
 
     // Log the data being sent
-    console.log("Booking data:", { tripId, routeId, seatId, passengerName, emailParam, phoneNumber });
+    console.log("Booking data:", {
+      tripId,
+      routeId,
+      seatIds,
+      passengerName,
+      emailParam,
+      phoneNumber,
+    });
 
     // Validate required fields
-    if (!tripId || !routeId || !seatId) {
-      console.warn("Missing required data:", { tripId, routeId, seatId });
+    if (!tripId || !routeId || seatIds.length === 0) {
+      console.warn("Missing required data:", { tripId, routeId, seatIds });
       setPaymentError(
-        `Missing booking data: ${!tripId ? "tripId " : ""}${!routeId ? "routeId " : ""}${!seatId ? "seatId" : ""}. Please go back and select a seat.`,
+        `Missing booking data: ${!tripId ? "tripId " : ""}${!routeId ? "routeId " : ""}${seatIds.length === 0 ? "seatIds" : ""}. Please go back and select a seat.`,
       );
       return;
     }
 
+    // Validate payment method selected
+    if (!selectedPaymentMethod) {
+      setPaymentError("Please select a payment method");
+      return;
+    }
+
     try {
-      const response = await createBooking({
+      // Step 1: Create booking with multiple seats
+      const bookingResponse = await createBooking({
         userId: currentUser?.id,
         tripId,
         routeId,
-        seatId,
+        seatIds, // Pass array of seat IDs
         customerInfo: {
           fullName: passengerName,
           email: emailParam,
@@ -146,31 +166,43 @@ export default function PaymentPage() {
         },
       }).unwrap();
 
-      console.log("Booking response:", response);
+      console.log("Booking created:", bookingResponse);
 
-      const ticketCode = response.data?.ticketCode || "";
-      const bookingId = response.data?.bookingId || "";
+      const bookingId = bookingResponse.data?.bookingId;
+      const bookingIds = bookingResponse.data?.bookingIds || [bookingId];
+      const bookingTotalPrice = bookingResponse.data?.totalPrice || totalPrice;
 
-      if (!ticketCode) {
-        console.warn("No ticketCode in response:", response);
+      if (!bookingId) {
+        throw new Error("Booking created but no bookingId returned");
       }
 
-      const params = new URLSearchParams({
-        tripId,
-        routeId,
-        seat: selectedSeat,
-        date: travelDate,
-        passengerName,
-        passengerId: passengerIdRaw,
-        email: emailParam,
-        ticketCode,
-        bookingId,
-      });
+      // Step 2: Create payment link with PayOS for all bookings
+      const paymentResponse = await createPayment({
+        bookingId, // Primary booking ID
+        bookingIds, // All booking IDs
+        totalAmount: bookingTotalPrice, // Total for all seats
+        buyerName: passengerName,
+        buyerEmail: emailParam,
+        buyerPhone: phoneNumber,
+      }).unwrap();
 
-      navigate(`/confirmation?${params.toString()}`);
+      console.log("Payment link created:", paymentResponse);
+
+      // Backend trả về trực tiếp object, không có wrapper 'data'
+      const checkoutUrl =
+        (paymentResponse as { checkoutUrl?: string }).checkoutUrl ||
+        paymentResponse.data?.checkoutUrl;
+
+      if (!checkoutUrl) {
+        console.error("Payment response:", paymentResponse);
+        throw new Error("Payment link created but no checkoutUrl returned");
+      }
+
+      // Step 3: Redirect to PayOS payment page
+      window.location.href = checkoutUrl;
     } catch (error: unknown) {
-      console.error("Booking API error (full):", JSON.stringify(error, null, 2));
-      
+      console.error("Payment flow error:", JSON.stringify(error, null, 2));
+
       let errorMessage = "Unknown error";
       if (error && typeof error === "object") {
         const err = error as Record<string, unknown>;
@@ -185,29 +217,17 @@ export default function PaymentPage() {
           errorMessage = JSON.stringify(error);
         }
       }
-      
-      setPaymentError(`Booking failed: ${errorMessage}`);
+
+      setPaymentError(`Payment failed: ${errorMessage}`);
     }
   };
 
   const paymentMethods = [
     {
-      id: "credit-card",
-      name: "Credit/Debit card",
-      description: "Visa, MasterCard, JCB",
-      icon: <CreditCard className="w-5 h-5" />,
-    },
-    {
       id: "internet-banking",
       name: "Internet Banking",
       description: "ATM Card with online payment",
       icon: <Building className="w-5 h-5" />,
-    },
-    {
-      id: "zalopay",
-      name: "ZaloPay E-wallet",
-      description: "You must have Zalopay application on your phone",
-      icon: <Smartphone className="w-5 h-5" />,
     },
   ];
 
@@ -230,7 +250,7 @@ export default function PaymentPage() {
   }
 
   // Error state
-  if (tripError || (!tripId || !routeId)) {
+  if (tripError || !tripId || !routeId) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
         <Navbar />
@@ -312,7 +332,7 @@ export default function PaymentPage() {
             <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.7s_forwards]">
               <PaymentButton
                 onPayment={handlePayment}
-                isLoading={isCreatingBooking}
+                isLoading={isCreatingBooking || isCreatingPayment}
               />
             </div>
           </div>
@@ -321,10 +341,10 @@ export default function PaymentPage() {
           <div className="lg:col-span-1">
             <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.4s_forwards]">
               <PaymentPriceSidebar
-                selectedSeat={selectedSeat}
+                selectedSeat={selectedSeats.join(", ")}
                 ticketPrice={ticketPrice}
-                insuranceFee={insuranceFee}
-                serviceFee={serviceFee}
+                insuranceFee={0}
+                serviceFee={0}
                 totalPrice={totalPrice}
                 formatCurrency={formatCurrency}
               />

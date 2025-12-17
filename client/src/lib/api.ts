@@ -16,6 +16,7 @@ export const API_ENDPOINTS = {
   users: {
     list: "/users",
     details: "/users/{id}",
+    notificationPreferences: "/users/me/notification-preferences",
   },
   bookings: {
     list: "/bookings",
@@ -37,6 +38,13 @@ export const API_ENDPOINTS = {
     list: "/routes",
     tripMaps: "/routes/trip-maps",
     details: "/routes/{id}",
+  },
+  notifications: {
+    list: "/notifications",
+    details: "/notifications/{id}",
+    markAsRead: "/notifications/{id}/read",
+    markAllAsRead: "/notifications/mark-all-read",
+    delete: "/notifications/{id}",
   },
 } as const;
 

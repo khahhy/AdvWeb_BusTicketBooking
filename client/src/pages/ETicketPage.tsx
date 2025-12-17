@@ -43,7 +43,7 @@ export default function ETicketPage() {
   useEffect(() => {
     const fetchTicketData = async () => {
       console.log("ETicketPage: ticketCode from URL params:", ticketCode);
-      
+
       if (!ticketCode) {
         setError("Invalid ticket code - no ticket code provided");
         setIsLoading(false);
@@ -53,7 +53,7 @@ export default function ETicketPage() {
       try {
         const url = `${API_BASE_URL}/bookings/eticket/${ticketCode}`;
         console.log("ETicketPage: Fetching from URL:", url);
-        
+
         const response = await fetch(url);
         console.log("ETicketPage: Response status:", response.status);
 
@@ -68,7 +68,9 @@ export default function ETicketPage() {
         setTicketData(result.data);
       } catch (err) {
         console.error("ETicketPage: Error fetching ticket:", err);
-        setError(`Failed to load e-ticket: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        setError(
+          `Failed to load e-ticket: ${err instanceof Error ? err.message : "Unknown error"}`,
+        );
       } finally {
         setIsLoading(false);
       }
@@ -157,4 +159,3 @@ export default function ETicketPage() {
     </div>
   );
 }
-

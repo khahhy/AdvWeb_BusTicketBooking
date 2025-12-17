@@ -209,7 +209,6 @@ model Payments {
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
   orderCode            BigInt?       @unique
-  metadata             Json?
   booking              Bookings      @relation(fields: [bookingId], references: [id])
 
   @@index([bookingId])

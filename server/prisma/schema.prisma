@@ -210,6 +210,9 @@ model Payments {
   updatedAt            DateTime      @updatedAt
   orderCode            BigInt?       @unique
   booking              Bookings      @relation(fields: [bookingId], references: [id])
+  refundedAmount       Decimal?      
+  refundedAt           DateTime?    
+  refundReason         String?
 
   @@index([bookingId])
   @@index([orderCode])
@@ -311,6 +314,7 @@ enum PaymentStatus {
   pending
   successful
   failed
+  refunded
 }
 
 enum NotificationType {

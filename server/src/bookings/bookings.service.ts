@@ -4,21 +4,27 @@ import {
   ConflictException,
   BadRequestException,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { BookingsGateway } from './bookings.gateway';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RedisCacheService } from 'src/cache/redis-cache.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { LookupBookingDto } from './dto/lookup-booking.dto';
-import { Prisma, BookingStatus } from '@prisma/client';
+import { BookingRulesSettingsDto } from 'src/setting/dto/booking-rule-setting.dto';
+import { Prisma, BookingStatus, SettingKey } from '@prisma/client';
 import { QueryBookingDto } from './dto/query-booking.dto';
 import { generateBookingReference } from 'src/common/utils/generateBookingReference';
 import { ETicketService } from 'src/eticket/eticket.service';
 import { EmailService } from 'src/email/email.service';
 import { SmsService } from 'src/notifications/sms.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { SettingService } from 'src/setting/setting.service';
 
 @Injectable()
 export class BookingsService {
+  private readonly logger = new Logger(BookingsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly cacheManager: RedisCacheService,
@@ -26,6 +32,7 @@ export class BookingsService {
     private readonly eTicketService: ETicketService,
     private readonly emailService: EmailService,
     private readonly smsService: SmsService,
+    private readonly settingService: SettingService,
   ) {}
 
   private async generateUniqueTicketCode(): Promise<string> {
@@ -112,8 +119,6 @@ export class BookingsService {
       dropoffStopId: endStop.id,
     };
   }
-
-  // bookings.service.ts
 
   async lockSeat(
     userId: string,
@@ -1183,6 +1188,81 @@ export class BookingsService {
     } catch (err) {
       console.error('Failed to send booking confirmation SMS:', err);
       // Don't throw error, just log it so it doesn't block the booking
+    }
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleBookingExpiration() {
+    try {
+      const bookingRule = await this.settingService.findOne(
+        SettingKey.BOOKING_RULES,
+      );
+
+      const rules =
+        (bookingRule.data as unknown as BookingRulesSettingsDto) || {
+          refundPercentage: 85,
+          minCancellationHours: 24,
+          paymentHoldTimeMinutes: 15,
+        };
+
+      const holdTime = rules.paymentHoldTimeMinutes ?? 15;
+
+      // Threshold
+      const expirationThreshold = new Date(Date.now() - holdTime * 60 * 1000);
+
+      const expiredBookings = await this.prisma.bookings.findMany({
+        where: {
+          status: BookingStatus.pendingPayment,
+          createdAt: {
+            lt: expirationThreshold,
+          },
+        },
+        select: {
+          id: true,
+          tripId: true,
+          seatId: true,
+          ticketCode: true,
+        },
+      });
+
+      if (expiredBookings.length === 0) return;
+
+      this.logger.log(
+        `Found ${expiredBookings.length} expired bookings. Cancelling...`,
+      );
+
+      for (const booking of expiredBookings) {
+        await this.prisma.$transaction(async (tx) => {
+          // Update CANCELLED
+          await tx.bookings.update({
+            where: { id: booking.id },
+            data: { status: BookingStatus.cancelled },
+          });
+
+          // SeatSegmentLocks
+          const locks = await tx.seatSegmentLocks.findMany({
+            where: { bookingId: booking.id },
+            select: { segmentId: true },
+          });
+
+          await tx.seatSegmentLocks.deleteMany({
+            where: { bookingId: booking.id },
+          });
+
+          const segmentIds = locks.map((lock) => lock.segmentId);
+          this.bookingsGateway.emitSeatUnlocked(
+            booking.tripId,
+            booking.seatId,
+            segmentIds,
+          );
+        });
+
+        this.logger.log(
+          `Auto-cancelled expired booking: ${booking.ticketCode}`,
+        );
+      }
+    } catch (error) {
+      this.logger.error('Error in automated booking expiration job:', error);
     }
   }
 }

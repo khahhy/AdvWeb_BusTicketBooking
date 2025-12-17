@@ -60,10 +60,28 @@ export default function PaymentResultPage() {
       if (bookingData) {
         if (bookingData.tripId) params.append("tripId", bookingData.tripId);
         if (bookingData.routeId) params.append("routeId", bookingData.routeId);
-        if (bookingData.ticketCode)
-          params.append("ticketCode", bookingData.ticketCode);
-        if (bookingData.seatNumber)
-          params.append("seat", bookingData.seatNumber);
+        // Support multiple tickets
+        if (bookingData.bookings && bookingData.bookings.length > 0) {
+          // Pass all ticket codes and seat numbers as comma-separated
+          const ticketCodes = bookingData.bookings
+            .map((b: { ticketCode?: string }) => b.ticketCode)
+            .filter(Boolean)
+            .join(",");
+          const seatNumbers = bookingData.bookings
+            .map((b: { seatNumber?: string }) => b.seatNumber)
+            .filter(Boolean)
+            .join(",");
+          params.append("ticketCodes", ticketCodes);
+          params.append("seats", seatNumbers);
+          params.append("bookingCount", String(bookingData.bookings.length));
+        } else {
+          // Fallback for single booking
+          if (bookingData.ticketCode)
+            params.append("ticketCodes", bookingData.ticketCode);
+          if (bookingData.seatNumber)
+            params.append("seats", bookingData.seatNumber);
+          params.append("bookingCount", "1");
+        }
         if (bookingData.passengerName)
           params.append("passengerName", bookingData.passengerName);
         if (bookingData.email) params.append("email", bookingData.email);
@@ -73,6 +91,8 @@ export default function PaymentResultPage() {
             new Date(bookingData.travelDate).toISOString().split("T")[0],
           );
         }
+        if (bookingData.amount)
+          params.append("totalAmount", String(bookingData.amount));
 
         setTimeout(() => {
           navigate(`/confirmation?${params.toString()}`);

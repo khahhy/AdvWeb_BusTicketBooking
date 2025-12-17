@@ -1,14 +1,39 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsOptional, IsEmail } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsEmail,
+  IsArray,
+  IsNumber,
+} from 'class-validator';
 
 export class CreatePaymentDto {
   @ApiProperty({
-    description: 'ID của booking',
+    description: 'ID của booking (primary booking for single seat)',
     example: 'booking-uuid-123',
   })
   @IsNotEmpty()
   @IsString()
   bookingId: string;
+
+  @ApiPropertyOptional({
+    description: 'Array of all booking IDs (for multiple seats)',
+    example: ['booking-uuid-123', 'booking-uuid-456'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  bookingIds?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Total amount to charge (for multiple seats)',
+    example: 500000,
+  })
+  @IsOptional()
+  @IsNumber()
+  totalAmount?: number;
 
   @ApiProperty({
     description: 'Tên người mua (tùy chọn)',

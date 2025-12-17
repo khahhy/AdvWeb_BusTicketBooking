@@ -209,8 +209,13 @@ export default function TripDetailPage() {
   };
 
   const formatDate = () => {
-    const date = dayjs(travelDate);
-    return date.isValid() ? date.format("dddd, MMMM DD, YYYY") : "Invalid Date";
+    // Use trip's actual start time if available, fallback to URL param
+    const dateToFormat = actualData?.startTime || travelDate;
+    const parsed = dayjs(dateToFormat);
+    if (!parsed.isValid()) {
+      return dayjs().format("dddd, MMMM DD, YYYY");
+    }
+    return parsed.format("dddd, MMMM DD, YYYY");
   };
 
   const formatCurrency = (amount: number | undefined | null) => {
@@ -220,12 +225,16 @@ export default function TripDetailPage() {
 
   const handleBookTrip = () => {
     if (selectedSeats.length === 0) return;
-    const selectedSeatId = selectedSeats[0];
-    const seatObj = seats.find((s) => s.seatId === selectedSeatId);
-    const seatNumber = seatObj?.seatNumber || "";
+
+    // Get all selected seat info
+    const selectedSeatObjects = seats.filter((s) =>
+      selectedSeats.includes(s.seatId),
+    );
+    const seatIds = selectedSeatObjects.map((s) => s.seatId).join(",");
+    const seatNumbers = selectedSeatObjects.map((s) => s.seatNumber).join(",");
 
     navigate(
-      `/checkout?tripId=${tripId}&routeId=${routeId}&seatId=${selectedSeatId}&seat=${seatNumber}&date=${travelDate}`,
+      `/checkout?tripId=${tripId}&routeId=${routeId}&seatIds=${seatIds}&seats=${seatNumbers}&date=${travelDate}`,
     );
   };
 

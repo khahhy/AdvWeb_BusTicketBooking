@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { CreditCard, Building, Smartphone, Loader2 } from "lucide-react";
+import { Building, Loader2 } from "lucide-react";
 import Navbar from "@/components/common/Navbar";
 import backgroundImage from "@/assets/images/background.png";
 import dayjs from "dayjs";
@@ -31,8 +31,13 @@ export default function PaymentPage() {
   // Get data from URL params
   const tripId = searchParams.get("tripId") || "";
   const routeId = searchParams.get("routeId") || "";
-  const seatId = searchParams.get("seatId") || "";
-  const selectedSeat = searchParams.get("seat") || "";
+  // Support both single seat (seatId) and multiple seats (seatIds)
+  const seatIdsParam =
+    searchParams.get("seatIds") || searchParams.get("seatId") || "";
+  const seatsParam =
+    searchParams.get("seats") || searchParams.get("seat") || "";
+  const seatIds = seatIdsParam.split(",").filter(Boolean);
+  const selectedSeats = seatsParam.split(",").filter(Boolean);
   const travelDate = searchParams.get("date") || dayjs().format("YYYY-MM-DD");
   const passengerName = searchParams.get("passengerName") || "Guest User";
   const passengerIdRaw = searchParams.get("passengerId") || "123456789012";
@@ -101,9 +106,10 @@ export default function PaymentPage() {
     };
   }, [tripData, tripId]);
 
-  // Calculate prices
+  // Calculate prices - multiply by number of seats
   const ticketPrice = trip.price;
-  const totalPrice = ticketPrice;
+  const seatCount = seatIds.length || 1;
+  const totalPrice = ticketPrice * seatCount;
 
   // Payment method state
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
@@ -124,17 +130,17 @@ export default function PaymentPage() {
     console.log("Booking data:", {
       tripId,
       routeId,
-      seatId,
+      seatIds,
       passengerName,
       emailParam,
       phoneNumber,
     });
 
     // Validate required fields
-    if (!tripId || !routeId || !seatId) {
-      console.warn("Missing required data:", { tripId, routeId, seatId });
+    if (!tripId || !routeId || seatIds.length === 0) {
+      console.warn("Missing required data:", { tripId, routeId, seatIds });
       setPaymentError(
-        `Missing booking data: ${!tripId ? "tripId " : ""}${!routeId ? "routeId " : ""}${!seatId ? "seatId" : ""}. Please go back and select a seat.`,
+        `Missing booking data: ${!tripId ? "tripId " : ""}${!routeId ? "routeId " : ""}${seatIds.length === 0 ? "seatIds" : ""}. Please go back and select a seat.`,
       );
       return;
     }
@@ -146,12 +152,12 @@ export default function PaymentPage() {
     }
 
     try {
-      // Step 1: Create booking
+      // Step 1: Create booking with multiple seats
       const bookingResponse = await createBooking({
         userId: currentUser?.id,
         tripId,
         routeId,
-        seatId,
+        seatIds, // Pass array of seat IDs
         customerInfo: {
           fullName: passengerName,
           email: emailParam,
@@ -163,14 +169,18 @@ export default function PaymentPage() {
       console.log("Booking created:", bookingResponse);
 
       const bookingId = bookingResponse.data?.bookingId;
+      const bookingIds = bookingResponse.data?.bookingIds || [bookingId];
+      const bookingTotalPrice = bookingResponse.data?.totalPrice || totalPrice;
 
       if (!bookingId) {
         throw new Error("Booking created but no bookingId returned");
       }
 
-      // Step 2: Create payment link with PayOS
+      // Step 2: Create payment link with PayOS for all bookings
       const paymentResponse = await createPayment({
-        bookingId,
+        bookingId, // Primary booking ID
+        bookingIds, // All booking IDs
+        totalAmount: bookingTotalPrice, // Total for all seats
         buyerName: passengerName,
         buyerEmail: emailParam,
         buyerPhone: phoneNumber,
@@ -214,22 +224,10 @@ export default function PaymentPage() {
 
   const paymentMethods = [
     {
-      id: "credit-card",
-      name: "Credit/Debit card",
-      description: "Visa, MasterCard, JCB",
-      icon: <CreditCard className="w-5 h-5" />,
-    },
-    {
       id: "internet-banking",
       name: "Internet Banking",
       description: "ATM Card with online payment",
       icon: <Building className="w-5 h-5" />,
-    },
-    {
-      id: "zalopay",
-      name: "ZaloPay E-wallet",
-      description: "You must have Zalopay application on your phone",
-      icon: <Smartphone className="w-5 h-5" />,
     },
   ];
 
@@ -343,7 +341,7 @@ export default function PaymentPage() {
           <div className="lg:col-span-1">
             <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.4s_forwards]">
               <PaymentPriceSidebar
-                selectedSeat={selectedSeat}
+                selectedSeat={selectedSeats.join(", ")}
                 ticketPrice={ticketPrice}
                 insuranceFee={0}
                 serviceFee={0}

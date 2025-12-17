@@ -35,7 +35,14 @@ export class PaymentService {
    * Tạo link thanh toán cho booking
    */
   async createPaymentLink(createPaymentDto: CreatePaymentDto) {
-    const { bookingId, buyerName, buyerEmail, buyerPhone } = createPaymentDto;
+    const {
+      bookingId,
+      bookingIds,
+      totalAmount,
+      buyerName,
+      buyerEmail,
+      buyerPhone,
+    } = createPaymentDto;
 
     // Kiểm tra booking có tồn tại và chưa thanh toán
     const booking = await this.prisma.bookings.findUnique({
@@ -81,7 +88,27 @@ export class PaymentService {
 
     // Tạo orderCode duy nhất từ bookingId
     const orderCode = this.generateOrderCode(bookingId);
-    const amount = Number(booking.price);
+
+    // Handle multiple bookings
+    const allBookingIds = bookingIds?.length ? bookingIds : [bookingId];
+
+    // Calculate total amount from all bookings if not provided
+    let amount: number;
+    let seatNumbers: string[] = [booking.seat.seatNumber];
+
+    if (totalAmount) {
+      amount = totalAmount;
+    } else if (allBookingIds.length > 1) {
+      // Fetch all bookings to calculate total
+      const allBookings = await this.prisma.bookings.findMany({
+        where: { id: { in: allBookingIds } },
+        include: { seat: true },
+      });
+      amount = allBookings.reduce((sum, b) => sum + Number(b.price), 0);
+      seatNumbers = allBookings.map((b) => b.seat.seatNumber);
+    } else {
+      amount = Number(booking.price);
+    }
 
     // Lấy thông tin khách hàng
     const customerInfo = booking.customerInfo as Record<
@@ -102,16 +129,24 @@ export class PaymentService {
       '';
 
     // Tạo mô tả thanh toán (PayOS giới hạn 25 ký tự)
-    const description = `Ve xe ghe ${booking.seat.seatNumber}`.substring(0, 25);
+    const seatDesc =
+      seatNumbers.length > 1
+        ? `${seatNumbers.length} ghe`
+        : `ghe ${seatNumbers[0]}`;
+    const description = `Ve xe ${seatDesc}`.substring(0, 25);
 
-    // Tạo payment record
+    // Tạo payment record với metadata chứa tất cả booking IDs
     const payment = await this.prisma.payments.create({
       data: {
         bookingId: booking.id,
-        amount: booking.price,
+        amount: new Prisma.Decimal(amount),
         gateway: GatewayType.payos,
         orderCode: BigInt(orderCode),
         status: PaymentStatus.pending,
+        metadata:
+          allBookingIds.length > 1
+            ? { relatedBookingIds: allBookingIds }
+            : undefined,
       },
     });
 
@@ -181,20 +216,30 @@ export class PaymentService {
 
   /**
    * Xử lý webhook từ PayOS
+   * PayOS sends: { code: "00", desc: "success", data: { orderCode, amount, ... }, signature: "..." }
    */
   async handlePayOSWebhook(webhookData: PayOSWebhookDto) {
     try {
-      // Xác thực webhook data
-      const verifiedData =
-        this.payosService.verifyPaymentWebhookData(webhookData);
+      this.logger.log(
+        `Received PayOS webhook: ${JSON.stringify(webhookData, null, 2)}`,
+      );
+
+      // Extract data from nested structure
+      const webhookCode = webhookData.code;
+      const paymentData = webhookData.data;
+
+      if (!paymentData || !paymentData.orderCode) {
+        this.logger.error('Invalid webhook data: missing orderCode');
+        throw new BadRequestException('Invalid webhook data');
+      }
 
       this.logger.log(
-        `Received PayOS webhook for order: ${verifiedData.orderCode}`,
+        `Processing webhook for orderCode: ${paymentData.orderCode}, webhookCode: ${webhookCode}`,
       );
 
       // Tìm booking từ orderCode
       const bookingId = await this.getBookingIdFromOrderCode(
-        verifiedData.orderCode,
+        paymentData.orderCode,
       );
 
       const booking = await this.prisma.bookings.findUnique({
@@ -233,7 +278,7 @@ export class PaymentService {
 
       if (!booking) {
         this.logger.error(
-          `Booking not found for orderCode: ${verifiedData.orderCode}`,
+          `Booking not found for orderCode: ${paymentData.orderCode}`,
         );
         throw new NotFoundException('Booking không tồn tại');
       }
@@ -244,124 +289,117 @@ export class PaymentService {
         throw new NotFoundException('Payment không tồn tại');
       }
 
-      // Kiểm tra trạng thái thanh toán
-      const isSuccess = verifiedData.code === '00';
+      // Skip if already processed
+      if (payment.status === PaymentStatus.successful) {
+        this.logger.log(`Payment already processed for booking: ${bookingId}`);
+        return {
+          success: true,
+          message: 'Payment already processed',
+          bookingId,
+          status: 'successful',
+        };
+      }
+
+      // Kiểm tra trạng thái thanh toán - code "00" means success
+      const isSuccess = webhookCode === '00';
 
       if (isSuccess) {
-        // Thanh toán thành công
+        // Get all related booking IDs from payment metadata
+        const metadata = payment.metadata as { relatedBookingIds?: string[] };
+        const allBookingIds = metadata?.relatedBookingIds || [bookingId];
+
+        this.logger.log(
+          `Processing payment for ${allBookingIds.length} booking(s): ${allBookingIds.join(', ')}`,
+        );
+
+        // Thanh toán thành công - confirm all related bookings
         await this.prisma.$transaction(async (tx) => {
           // Cập nhật payment status
           await tx.payments.update({
             where: { id: payment.id },
             data: {
               status: PaymentStatus.successful,
-              gatewayTransactionId: verifiedData.paymentLinkId,
+              gatewayTransactionId: paymentData.paymentLinkId,
             },
           });
 
-          // Cập nhật booking status
-          await tx.bookings.update({
-            where: { id: bookingId },
+          // Cập nhật all related booking statuses
+          await tx.bookings.updateMany({
+            where: { id: { in: allBookingIds } },
             data: {
               status: BookingStatus.confirmed,
             },
           });
         });
 
-        this.logger.log(`Payment successful for booking: ${bookingId}`);
+        this.logger.log(
+          `Payment successful for ${allBookingIds.length} booking(s)`,
+        );
 
-        // Gửi email xác nhận và e-ticket
-        try {
-          const customerInfo = booking.customerInfo as Record<string, unknown>;
-          const customerEmail =
-            booking.user?.email || (customerInfo?.email as string);
-          const customerPhone =
-            booking.user?.phoneNumber || (customerInfo?.phoneNumber as string);
-          const customerName =
-            booking.user?.fullName ||
-            (customerInfo?.fullName as string) ||
-            'Khách hàng';
+        // Gửi email xác nhận và e-ticket for each booking
+        for (const currentBookingId of allBookingIds) {
+          try {
+            const currentBooking =
+              currentBookingId === bookingId
+                ? booking
+                : await this.prisma.bookings.findUnique({
+                    where: { id: currentBookingId },
+                    include: {
+                      user: true,
+                      trip: { include: { bus: true } },
+                      route: { include: { origin: true, destination: true } },
+                      seat: true,
+                    },
+                  });
 
-          // Check email preferences
-          let sendEmail = true;
-          if (booking.user?.id) {
-            const emailPref = await this.checkEmailPreference(
-              booking.user.id,
-              'payment',
+            if (!currentBooking) continue;
+
+            // Get email from user account OR customerInfo (for guest checkout)
+            const customerInfo = currentBooking.customerInfo as Record<
+              string,
+              string | undefined
+            >;
+            const recipientEmail =
+              currentBooking.user?.email || customerInfo?.email || '';
+            const recipientName =
+              currentBooking.user?.fullName ||
+              customerInfo?.fullName ||
+              'Khách hàng';
+
+            if (recipientEmail && currentBooking.ticketCode) {
+              // Tạo PDF e-ticket
+              const pdfBuffer = await this.eticketService.generatePDF(
+                currentBooking.ticketCode,
+              );
+
+              // Gửi email với attachment
+              await this.emailService.sendETicketEmail(
+                recipientEmail,
+                currentBooking.ticketCode,
+                recipientName,
+                {
+                  from: currentBooking.route.origin.name,
+                  to: currentBooking.route.destination.name,
+                  departureTime: currentBooking.trip.startTime.toISOString(),
+                  seatNumber: currentBooking.seat.seatNumber,
+                },
+                pdfBuffer,
+              );
+
+              this.logger.log(
+                `Confirmation email sent for booking ${currentBookingId} to: ${recipientEmail}`,
+              );
+            } else {
+              this.logger.warn(
+                `No email found for booking ${currentBookingId}, skipping email`,
+              );
+            }
+          } catch (emailError) {
+            this.logger.error(
+              `Failed to send email for booking ${currentBookingId}`,
+              emailError,
             );
-            sendEmail = emailPref;
           }
-
-          if (sendEmail && customerEmail && booking.ticketCode) {
-            // Tạo PDF e-ticket
-            const pdfBuffer = await this.eticketService.generatePDF(
-              booking.ticketCode,
-            );
-
-            // Gửi email với attachment
-            await this.emailService.sendETicketEmail(
-              customerEmail,
-              booking.ticketCode,
-              customerName,
-              {
-                from: booking.route.origin.name,
-                to: booking.route.destination.name,
-                departureTime: booking.trip.startTime.toISOString(),
-                seatNumber: booking.seat.seatNumber,
-              },
-              pdfBuffer,
-            );
-
-            this.logger.log(`Confirmation email sent to: ${customerEmail}`);
-          }
-
-          // Check SMS preferences
-          let sendSms = true;
-          if (booking.user?.id) {
-            const smsPref = await this.smsService.checkSmsPreference(
-              booking.user.id,
-              'payment',
-            );
-            sendSms = smsPref;
-          }
-
-          // Gửi SMS confirmation
-          if (sendSms && customerPhone && booking.ticketCode) {
-            const tripDate = booking.trip.startTime.toLocaleDateString(
-              'vi-VN',
-              {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              },
-            );
-            const tripTime = booking.trip.startTime.toLocaleTimeString(
-              'vi-VN',
-              {
-                hour: '2-digit',
-                minute: '2-digit',
-              },
-            );
-
-            await this.smsService.sendBookingConfirmationSms(customerPhone, {
-              customerName,
-              ticketCode: booking.ticketCode,
-              tripDate,
-              tripTime,
-              origin: booking.route.origin.name,
-              destination: booking.route.destination.name,
-              seatNumber: booking.seat.seatNumber,
-              price: `${Number(booking.price).toLocaleString('vi-VN')}đ`,
-            });
-            this.logger.log(`Confirmation SMS sent to: ${customerPhone}`);
-          }
-        } catch (notificationError) {
-          this.logger.error(
-            'Failed to send confirmation notifications',
-            notificationError,
-          );
-          // Không throw error vì payment đã thành công
         }
       } else {
         // Thanh toán thất bại
@@ -372,7 +410,9 @@ export class PaymentService {
           },
         });
 
-        this.logger.log(`Payment failed for booking: ${bookingId}`);
+        this.logger.log(
+          `Payment failed for booking: ${bookingId}, code: ${webhookCode}`,
+        );
       }
 
       return {
@@ -413,11 +453,53 @@ export class PaymentService {
       throw new NotFoundException('Payment không tồn tại');
     }
 
-    // Lấy thông tin từ PayOS
-    const orderCode = this.generateOrderCode(bookingId);
+    // Use stored orderCode from database instead of generating new one
+    const storedOrderCode = payment.orderCode;
+    if (!storedOrderCode) {
+      return {
+        bookingId,
+        paymentId: payment.id,
+        status: payment.status,
+        amount: Number(payment.amount),
+        gateway: payment.gateway,
+        error: 'No orderCode found in payment record',
+      };
+    }
+
     try {
-      const paymentInfo =
-        await this.payosService.getPaymentLinkInformation(orderCode);
+      const paymentInfo = await this.payosService.getPaymentLinkInformation(
+        Number(storedOrderCode),
+      );
+
+      // If PayOS returns PAID status but our DB is still pending, update it
+      const payosStatus = (paymentInfo as { status?: string })?.status;
+      if (payosStatus === 'PAID' && payment.status === PaymentStatus.pending) {
+        this.logger.log(
+          `Syncing payment status for booking ${bookingId}: PayOS=PAID, DB=pending`,
+        );
+
+        await this.prisma.$transaction(async (tx) => {
+          await tx.payments.update({
+            where: { id: payment.id },
+            data: { status: PaymentStatus.successful },
+          });
+
+          await tx.bookings.update({
+            where: { id: bookingId },
+            data: { status: BookingStatus.confirmed },
+          });
+        });
+
+        return {
+          bookingId,
+          paymentId: payment.id,
+          status: PaymentStatus.successful,
+          amount: Number(payment.amount),
+          gateway: payment.gateway,
+          paymentInfo,
+          synced: true,
+        };
+      }
 
       return {
         bookingId,
@@ -444,19 +526,47 @@ export class PaymentService {
 
   /**
    * Kiểm tra trạng thái thanh toán theo orderCode (public API cho callback)
+   * This endpoint is called by frontend after PayOS redirect - includes auto-sync
+   * Now supports multiple bookings (multi-seat payments)
    */
   async checkPaymentStatusByOrderCode(orderCode: number) {
-    const bookingId = await this.getBookingIdFromOrderCode(orderCode);
-
-    // Get full booking details for redirect
-    const booking = await this.prisma.bookings.findUnique({
-      where: { id: bookingId },
+    // First find the payment by orderCode to get all related booking IDs
+    const payment = await this.prisma.payments.findUnique({
+      where: { orderCode: BigInt(orderCode) },
       include: {
-        payments: {
-          where: { gateway: GatewayType.payos },
-          orderBy: { createdAt: 'desc' },
-          take: 1,
+        booking: {
+          include: {
+            user: true,
+            trip: true,
+            route: {
+              include: {
+                origin: true,
+                destination: true,
+              },
+            },
+            seat: true,
+          },
         },
+      },
+    });
+
+    if (!payment) {
+      throw new NotFoundException('Payment không tồn tại');
+    }
+
+    // Get all related booking IDs from metadata
+    const metadata = payment.metadata as {
+      relatedBookingIds?: string[];
+    } | null;
+    const relatedBookingIds = metadata?.relatedBookingIds || [
+      payment.bookingId,
+    ];
+
+    // Fetch all related bookings
+    const allBookings = await this.prisma.bookings.findMany({
+      where: { id: { in: relatedBookingIds } },
+      include: {
+        user: true,
         trip: true,
         route: {
           include: {
@@ -468,28 +578,143 @@ export class PaymentService {
       },
     });
 
-    if (!booking) {
+    if (allBookings.length === 0) {
       throw new NotFoundException('Booking không tồn tại');
     }
 
-    const payment = booking.payments[0];
-    const customerInfo = booking.customerInfo as Record<
+    const primaryBooking = allBookings[0];
+    const customerInfo = primaryBooking.customerInfo as Record<
       string,
       string | undefined
     >;
 
+    // Auto-sync: If DB status is still pending, check PayOS and sync if needed
+    let currentStatus = payment?.status || 'pending';
+
+    if (payment && currentStatus === PaymentStatus.pending) {
+      try {
+        this.logger.log(
+          `Checking PayOS status for orderCode: ${orderCode}, current DB status: pending`,
+        );
+
+        const paymentInfo =
+          await this.payosService.getPaymentLinkInformation(orderCode);
+        const payosStatus = (paymentInfo as { status?: string })?.status;
+
+        this.logger.log(`PayOS returned status: ${payosStatus}`);
+
+        if (payosStatus === 'PAID') {
+          this.logger.log(
+            `Auto-syncing: PayOS=PAID, updating ${relatedBookingIds.length} booking(s) to confirmed`,
+          );
+
+          // Update DB to match PayOS status - update all related bookings
+          await this.prisma.$transaction(async (tx) => {
+            await tx.payments.update({
+              where: { id: payment.id },
+              data: {
+                status: PaymentStatus.successful,
+                gatewayTransactionId:
+                  (paymentInfo as { id?: string })?.id ||
+                  payment.gatewayTransactionId,
+              },
+            });
+
+            // Update ALL related bookings to confirmed
+            await tx.bookings.updateMany({
+              where: { id: { in: relatedBookingIds } },
+              data: { status: BookingStatus.confirmed },
+            });
+          });
+
+          currentStatus = PaymentStatus.successful;
+
+          // Send confirmation emails for each booking after sync
+          try {
+            const recipientEmail =
+              primaryBooking.user?.email || customerInfo?.email || '';
+            const recipientName =
+              primaryBooking.user?.fullName ||
+              customerInfo?.fullName ||
+              'Khách hàng';
+
+            if (recipientEmail) {
+              // Send email for each booking/ticket
+              for (const booking of allBookings) {
+                if (booking.ticketCode) {
+                  const pdfBuffer = await this.eticketService.generatePDF(
+                    booking.ticketCode,
+                  );
+
+                  await this.emailService.sendETicketEmail(
+                    recipientEmail,
+                    booking.ticketCode,
+                    recipientName,
+                    {
+                      from: booking.route.origin.name,
+                      to: booking.route.destination.name,
+                      departureTime: booking.trip.startTime.toISOString(),
+                      seatNumber: booking.seat?.seatNumber || 'N/A',
+                    },
+                    pdfBuffer,
+                  );
+
+                  this.logger.log(
+                    `Confirmation email sent for ticket ${booking.ticketCode} to: ${recipientEmail} (via auto-sync)`,
+                  );
+                }
+              }
+            }
+          } catch (emailError) {
+            this.logger.error(
+              'Failed to send confirmation email during auto-sync',
+              emailError,
+            );
+          }
+        } else if (payosStatus === 'CANCELLED' || payosStatus === 'EXPIRED') {
+          // Update to failed if PayOS says cancelled/expired
+          await this.prisma.payments.update({
+            where: { id: payment.id },
+            data: { status: PaymentStatus.failed },
+          });
+          currentStatus = PaymentStatus.failed;
+        }
+      } catch (syncError) {
+        this.logger.error(
+          `Failed to sync payment status from PayOS: ${(syncError as Error).message}`,
+        );
+        // Continue with DB status if sync fails
+      }
+    }
+
+    // Calculate total amount
+    const totalAmount = allBookings.reduce(
+      (sum, b) => sum + Number(b.price),
+      0,
+    );
+
+    // Return response with all bookings info
     return {
-      bookingId,
-      tripId: booking.tripId,
-      routeId: booking.routeId,
-      ticketCode: booking.ticketCode,
-      status: payment?.status || 'pending',
-      seatNumber: booking.seat?.seatNumber,
+      // Primary booking info (for backwards compatibility)
+      bookingId: primaryBooking.id,
+      tripId: primaryBooking.tripId,
+      routeId: primaryBooking.routeId,
+      ticketCode: primaryBooking.ticketCode,
+      status: currentStatus,
+      seatNumber: allBookings.map((b) => b.seat?.seatNumber).join(', '),
       passengerName: customerInfo?.fullName,
       email: customerInfo?.email,
-      travelDate: booking.trip?.startTime,
-      amount: Number(payment?.amount || booking.price),
+      travelDate: primaryBooking.trip?.startTime,
+      amount: totalAmount,
       gateway: payment?.gateway,
+      // New fields for multi-seat support
+      bookingCount: allBookings.length,
+      bookings: allBookings.map((booking) => ({
+        bookingId: booking.id,
+        ticketCode: booking.ticketCode,
+        seatNumber: booking.seat?.seatNumber,
+        price: Number(booking.price),
+      })),
     };
   }
 
@@ -523,10 +748,17 @@ export class PaymentService {
       );
     }
 
-    // Hủy payment link trên PayOS
-    const orderCode = this.generateOrderCode(bookingId);
+    // Use stored orderCode from database
+    const storedOrderCode = payment.orderCode;
+    if (!storedOrderCode) {
+      throw new BadRequestException('No orderCode found in payment record');
+    }
+
     try {
-      await this.payosService.cancelPaymentLink(orderCode, reason);
+      await this.payosService.cancelPaymentLink(
+        Number(storedOrderCode),
+        reason,
+      );
 
       // Cập nhật payment status
       await this.prisma.payments.update({

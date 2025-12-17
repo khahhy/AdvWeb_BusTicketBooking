@@ -25,8 +25,13 @@ export default function CheckoutPage() {
   // Get trip data from URL params
   const tripId = searchParams.get("tripId") || "";
   const routeId = searchParams.get("routeId") || "";
-  const seatId = searchParams.get("seatId") || "";
-  const selectedSeat = searchParams.get("seat") || "";
+  // Support both single seat (seatId) and multiple seats (seatIds)
+  const seatIdsParam =
+    searchParams.get("seatIds") || searchParams.get("seatId") || "";
+  const seatsParam =
+    searchParams.get("seats") || searchParams.get("seat") || "";
+  const seatIds = seatIdsParam.split(",").filter(Boolean);
+  const selectedSeats = seatsParam.split(",").filter(Boolean);
   const travelDate = searchParams.get("date") || dayjs().format("YYYY-MM-DD");
 
   // Fetch trip details from API
@@ -117,11 +122,12 @@ export default function CheckoutPage() {
     }));
   };
 
-  // Calculate prices
+  // Calculate prices - multiply by number of seats
   const ticketPrice = trip.price;
+  const seatCount = seatIds.length || 1;
   const insuranceFee = 0;
   const serviceFee = 0;
-  const totalPrice = ticketPrice + insuranceFee + serviceFee;
+  const totalPrice = ticketPrice * seatCount + insuranceFee + serviceFee;
 
   const [fullName, setFullName] = useState("");
   const [contactName, setContactName] = useState("");
@@ -186,8 +192,8 @@ export default function CheckoutPage() {
       const params = new URLSearchParams({
         tripId,
         routeId,
-        seatId,
-        seat: selectedSeat,
+        seatIds: seatIds.join(","),
+        seats: selectedSeats.join(","),
         date: travelDate,
         passengerName: fullName,
         passengerId: personalId,
@@ -288,7 +294,7 @@ export default function CheckoutPage() {
                 setFullName={setFullName}
                 personalId={personalId}
                 setPersonalId={setPersonalId}
-                selectedSeat={selectedSeat}
+                selectedSeat={selectedSeats.join(", ")}
                 showPassengerDetails={showPassengerDetails}
                 setShowPassengerDetails={setShowPassengerDetails}
                 errors={errors}
@@ -318,7 +324,7 @@ export default function CheckoutPage() {
           <div className="lg:col-span-1">
             <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.4s_forwards]">
               <PriceDetailsSidebar
-                selectedSeat={selectedSeat}
+                selectedSeat={selectedSeats.join(", ")}
                 ticketPrice={ticketPrice}
                 insuranceFee={insuranceFee}
                 serviceFee={serviceFee}
@@ -337,7 +343,7 @@ export default function CheckoutPage() {
         trip={trip}
         formatDate={formatDate}
         formatCurrency={formatCurrency}
-        selectedSeat={selectedSeat}
+        selectedSeat={selectedSeats.join(", ")}
         ticketPrice={ticketPrice}
         seats={seats}
       />

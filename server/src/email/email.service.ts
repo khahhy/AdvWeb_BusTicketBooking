@@ -228,140 +228,409 @@ export class EmailService {
       to: string;
       departureTime: string;
       seatNumber: string;
+      busType?: string;
+      licensePlate?: string;
+      travelDate?: string;
+      totalPrice?: string;
     },
     pdfBuffer: Buffer,
   ) {
     const mailOptions = {
       from: `"Bus Ticket Booking" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: `Your E-Ticket - ${ticketCode}`,
+      subject: `E-Ticket Confirmation - ${ticketCode}`,
       html: `
         <!DOCTYPE html>
         <html>
         <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <style>
             body {
-              font-family: Arial, sans-serif;
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
               line-height: 1.6;
               color: #333;
+              margin: 0;
+              padding: 20px;
+              background-color: #f8f9fa;
+            }
+            .ticket-container {
               max-width: 600px;
               margin: 0 auto;
-              padding: 20px;
-            }
-            .container {
-              background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0f9ff 100%);
+              background: #ffffff;
               border-radius: 16px;
-              padding: 40px;
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+              overflow: hidden;
+              box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+              border: 2px solid #e5e7eb;
             }
-            .logo {
-              text-align: center;
-              margin-bottom: 30px;
+            .header {
+              background: linear-gradient(135deg, #fecdd3 0%, #fda4af 50%, #fecdd3 100%);
+              padding: 24px 32px;
             }
-            .logo h1 {
-              color: #134074;
+            .header-content {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+            }
+            .brand {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+            }
+            .brand-icon {
+              background: white;
+              padding: 12px;
+              border-radius: 12px;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+            .brand-text h1 {
+              color: #1f2937;
+              font-size: 22px;
+              margin: 0;
+              font-weight: 700;
+            }
+            .brand-text p {
+              color: #4b5563;
+              font-size: 13px;
+              margin: 4px 0 0 0;
+            }
+            .status-badge {
+              background: #dcfce7;
+              color: #166534;
+              padding: 8px 16px;
+              border-radius: 20px;
+              font-weight: 600;
+              font-size: 13px;
+              border: 2px solid #86efac;
+            }
+            .booking-code-section {
+              background: linear-gradient(to bottom, #fff1f2, #ffffff);
+              padding: 24px 32px;
+              border-bottom: 4px dashed #d1d5db;
+            }
+            .booking-label {
+              font-size: 13px;
+              color: #6b7280;
+              margin-bottom: 4px;
+            }
+            .booking-code {
               font-size: 28px;
+              font-weight: 700;
+              color: #fb7185;
+              font-family: 'Courier New', monospace;
+              letter-spacing: 2px;
+            }
+            .section {
+              padding: 24px 32px;
+              border-bottom: 1px solid #e5e7eb;
+            }
+            .section-title {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-bottom: 16px;
+            }
+            .section-title-icon {
+              width: 20px;
+              height: 20px;
+              color: #fb7185;
+            }
+            .section-title h2 {
+              font-size: 18px;
+              font-weight: 700;
+              color: #111827;
               margin: 0;
             }
-            .content {
-              background: white;
-              border-radius: 12px;
-              padding: 30px;
+            .route-display {
+              display: table;
+              width: 100%;
               margin-bottom: 20px;
             }
-            .ticket-code {
-              background: #134074;
-              color: white;
-              padding: 15px 30px;
-              border-radius: 8px;
-              font-size: 24px;
-              font-weight: bold;
+            .route-point {
+              display: table-cell;
+              width: 40%;
+            }
+            .route-point.end {
+              text-align: right;
+            }
+            .route-middle {
+              display: table-cell;
+              width: 20%;
               text-align: center;
-              margin: 20px 0;
+              vertical-align: middle;
             }
-            .trip-details {
-              background: #f8fafc;
-              border-radius: 8px;
-              padding: 20px;
-              margin: 20px 0;
+            .city-name {
+              font-size: 24px;
+              font-weight: 700;
+              color: #111827;
+              margin-bottom: 4px;
             }
-            .trip-details table {
+            .time {
+              font-size: 18px;
+              font-weight: 600;
+              color: #fb7185;
+            }
+            .route-line {
+              position: relative;
+              height: 2px;
+              background: #d1d5db;
+              margin: 0 10px;
+            }
+            .trip-info-grid {
+              background: #f9fafb;
+              border-radius: 12px;
+              padding: 16px;
+            }
+            .trip-info-row {
+              display: table;
               width: 100%;
-              border-collapse: collapse;
+              margin-bottom: 8px;
             }
-            .trip-details td {
+            .trip-info-row:last-child {
+              margin-bottom: 0;
+            }
+            .trip-info-item {
+              display: table-cell;
+              width: 33.33%;
+              padding: 8px;
+            }
+            .trip-info-label {
+              font-size: 12px;
+              color: #6b7280;
+              margin-bottom: 4px;
+            }
+            .trip-info-value {
+              font-size: 14px;
+              font-weight: 600;
+              color: #111827;
+            }
+            .license-plate {
+              background: #fef9c3;
+              color: #854d0e;
+              padding: 8px 16px;
+              border-radius: 8px;
+              font-weight: 600;
+              font-size: 14px;
+              text-align: center;
+              margin-top: 16px;
+            }
+            .passenger-grid {
+              display: table;
+              width: 100%;
+            }
+            .passenger-col {
+              display: table-cell;
+              width: 50%;
+              vertical-align: top;
+            }
+            .info-item {
+              margin-bottom: 16px;
+            }
+            .info-item:last-child {
+              margin-bottom: 0;
+            }
+            .info-label {
+              font-size: 13px;
+              color: #6b7280;
+              margin-bottom: 4px;
+            }
+            .info-value {
+              font-size: 15px;
+              font-weight: 600;
+              color: #111827;
+            }
+            .payment-box {
+              background: #f9fafb;
+              border-radius: 12px;
+              padding: 16px;
+            }
+            .payment-row {
+              display: table;
+              width: 100%;
               padding: 8px 0;
             }
-            .trip-details td:first-child {
-              color: #666;
-              width: 120px;
+            .payment-label {
+              display: table-cell;
+              color: #4b5563;
+              font-size: 14px;
             }
-            .trip-details td:last-child {
-              font-weight: bold;
-              color: #333;
+            .payment-value {
+              display: table-cell;
+              text-align: right;
+              font-weight: 600;
+              font-size: 14px;
+            }
+            .payment-total {
+              border-top: 2px solid #d1d5db;
+              padding-top: 12px;
+              margin-top: 8px;
+            }
+            .payment-total .payment-label {
+              font-size: 16px;
+              font-weight: 700;
+              color: #111827;
+            }
+            .payment-total .payment-value {
+              font-size: 16px;
+              font-weight: 700;
+              color: #16a34a;
+            }
+            .important-info {
+              background: #eff6ff;
+              padding: 24px 32px;
+            }
+            .important-info h3 {
+              color: #1e40af;
+              font-size: 15px;
+              font-weight: 600;
+              margin: 0 0 12px 0;
+            }
+            .important-info ul {
+              margin: 0;
+              padding-left: 20px;
+              color: #1e40af;
+              font-size: 13px;
+            }
+            .important-info li {
+              margin-bottom: 6px;
             }
             .footer {
+              background: #f3f4f6;
+              padding: 20px 32px;
               text-align: center;
-              color: #666;
-              font-size: 12px;
-              margin-top: 20px;
+              border-top: 1px solid #e5e7eb;
             }
-            .info-box {
-              background: #fef3c7;
-              border-left: 4px solid #f59e0b;
-              padding: 12px;
-              margin: 20px 0;
-              border-radius: 4px;
-              font-size: 14px;
+            .footer p {
+              margin: 0;
+              color: #6b7280;
+              font-size: 13px;
+            }
+            .footer .support {
+              margin-top: 8px;
+              font-size: 12px;
+              color: #9ca3af;
             }
           </style>
         </head>
         <body>
-          <div class="container">
-            <div class="logo">
-              <h1>Bus Ticket Booking</h1>
+          <div class="ticket-container">
+            <!-- Header -->
+            <div class="header">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <div class="brand-text">
+                      <h1>Bus Ticket Booking</h1>
+                      <p>E-Ticket Confirmation</p>
+                    </div>
+                  </td>
+                  <td align="right">
+                    <span class="status-badge">CONFIRMED</span>
+                  </td>
+                </tr>
+              </table>
             </div>
-            
-            <div class="content">
-              <h2 style="color: #134074; margin-top: 0;">Your E-Ticket is Ready!</h2>
-              
-              <p>Dear ${passengerName},</p>
-              
-              <p>Thank you for booking with us. Your e-ticket has been confirmed and is attached to this email.</p>
-              
-              <div class="ticket-code">${ticketCode}</div>
-              
-              <div class="trip-details">
-                <table>
-                  <tr>
-                    <td>From:</td>
-                    <td>${tripDetails.from}</td>
-                  </tr>
-                  <tr>
-                    <td>To:</td>
-                    <td>${tripDetails.to}</td>
-                  </tr>
-                  <tr>
-                    <td>Departure:</td>
-                    <td>${tripDetails.departureTime}</td>
-                  </tr>
-                  <tr>
-                    <td>Seat:</td>
-                    <td>${tripDetails.seatNumber}</td>
-                  </tr>
-                </table>
-              </div>
-              
-              <div class="info-box">
-                <strong>Important:</strong> Please arrive at the boarding point at least 15 minutes before departure. Present this e-ticket (printed or on your phone) along with a valid ID.
-              </div>
-              
-              <p>You can also download your e-ticket from our website using your booking code.</p>
+
+            <!-- Booking Code -->
+            <div class="booking-code-section">
+              <p class="booking-label">Booking Code</p>
+              <p class="booking-code">${ticketCode}</p>
             </div>
-            
+
+            <!-- Trip Information -->
+            <div class="section">
+              <div class="section-title">
+                <h2>Trip Information</h2>
+              </div>
+
+              <!-- Route Display -->
+              <div class="route-display">
+                <div class="route-point">
+                  <p class="city-name">${tripDetails.from}</p>
+                  <p class="time">${tripDetails.departureTime}</p>
+                </div>
+                <div class="route-middle">
+                  <span style="color: #9ca3af; font-size: 20px;">&#8594;</span>
+                </div>
+                <div class="route-point end">
+                  <p class="city-name">${tripDetails.to}</p>
+                </div>
+              </div>
+
+              <!-- Trip Info Grid -->
+              <div class="trip-info-grid">
+                <div class="trip-info-row">
+                  <div class="trip-info-item">
+                    <p class="trip-info-label">Travel Date</p>
+                    <p class="trip-info-value">${tripDetails.travelDate || 'See ticket'}</p>
+                  </div>
+                  <div class="trip-info-item">
+                    <p class="trip-info-label">Seat Number</p>
+                    <p class="trip-info-value">${tripDetails.seatNumber}</p>
+                  </div>
+                  <div class="trip-info-item">
+                    <p class="trip-info-label">Bus Type</p>
+                    <p class="trip-info-value">${tripDetails.busType || 'Standard'}</p>
+                  </div>
+                </div>
+              </div>
+
+              ${tripDetails.licensePlate ? `<div class="license-plate">License Plate: ${tripDetails.licensePlate}</div>` : ''}
+            </div>
+
+            <!-- Passenger Information -->
+            <div class="section">
+              <div class="section-title">
+                <h2>Passenger Information</h2>
+              </div>
+              <div class="info-item">
+                <p class="info-label">Full Name</p>
+                <p class="info-value">${passengerName}</p>
+              </div>
+              <div class="info-item">
+                <p class="info-label">Email</p>
+                <p class="info-value">${email}</p>
+              </div>
+            </div>
+
+            <!-- Payment Details -->
+            ${
+              tripDetails.totalPrice
+                ? `
+            <div class="section">
+              <div class="section-title">
+                <h2>Payment Details</h2>
+              </div>
+              <div class="payment-box">
+                <div class="payment-row">
+                  <span class="payment-label">Ticket Price (Seat ${tripDetails.seatNumber})</span>
+                  <span class="payment-value">${tripDetails.totalPrice}</span>
+                </div>
+                <div class="payment-row payment-total">
+                  <span class="payment-label">Total Paid</span>
+                  <span class="payment-value">${tripDetails.totalPrice}</span>
+                </div>
+              </div>
+            </div>
+            `
+                : ''
+            }
+
+            <!-- Important Information -->
+            <div class="important-info">
+              <h3>Important Information</h3>
+              <ul>
+                <li>Please arrive at the terminal at least 15 minutes before departure</li>
+                <li>Bring a valid ID matching the passenger name on this ticket</li>
+                <li>Present this e-ticket (printed or digital) for boarding</li>
+                <li>Keep your booking code safe for any inquiries</li>
+              </ul>
+            </div>
+
+            <!-- Footer -->
             <div class="footer">
-              <p>© 2025 Bus Ticket Booking. All rights reserved.</p>
-              <p>This is an automated email, please do not reply.</p>
+              <p>Thank you for choosing Bus Ticket Booking Service</p>
+              <p class="support">For support: support@busticket.com | Hotline: 1900-xxxx</p>
             </div>
           </div>
         </body>

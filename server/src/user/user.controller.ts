@@ -174,4 +174,58 @@ export class UserController {
     const userAgent = req.headers['user-agent'] as string;
     return this.userService.remove(id, userId, ip, userAgent);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Get notification preferences for current user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Notification preferences retrieved successfully.',
+  })
+  @Get('me/notification-preferences')
+  async getNotificationPreferences(@Req() req: RequestWithUser) {
+    const userId = req.user.userId;
+    return this.userService.getNotificationPreferences(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Update notification preferences for current user' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: {
+          type: 'object',
+          properties: {
+            booking: { type: 'boolean' },
+            payment: { type: 'boolean' },
+            reminder: { type: 'boolean' },
+            promotion: { type: 'boolean' },
+          },
+        },
+        sms: {
+          type: 'object',
+          properties: {
+            booking: { type: 'boolean' },
+            payment: { type: 'boolean' },
+            reminder: { type: 'boolean' },
+            promotion: { type: 'boolean' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Notification preferences updated successfully.',
+  })
+  @Patch('me/notification-preferences')
+  async updateNotificationPreferences(
+    @Req() req: RequestWithUser,
+    @Body() preferences: any,
+  ) {
+    const userId = req.user.userId;
+    return this.userService.updateNotificationPreferences(userId, preferences);
+  }
 }

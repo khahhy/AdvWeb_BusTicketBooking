@@ -8,26 +8,27 @@ datasource db {
 }
 
 model Users {
-  id                  String          @id @default(uuid())
-  fullName            String?
-  email               String          @unique
-  phoneNumber         String?         @unique
-  password            String?
-  authProvider        AuthProvider    @default(local)
-  providerId          String?
-  role                UserRole        @default(passenger)
-  status              UserStatus      @default(unverified)
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
-  emailVerified       Boolean         @default(false)
-  verificationToken   String?         @unique
-  tokenExpiresAt      DateTime?
-  resetToken          String?         @unique
-  resetTokenExpiresAt DateTime?
-  bookings            Bookings[]
-  notifications       Notifications[]
-  reviews             Reviews[]
-  activityLogs        ActivityLog[]
+  id                      String          @id @default(uuid())
+  fullName                String?
+  email                   String          @unique
+  phoneNumber             String?         @unique
+  password                String?
+  authProvider            AuthProvider    @default(local)
+  providerId              String?
+  role                    UserRole        @default(passenger)
+  status                  UserStatus      @default(unverified)
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  emailVerified           Boolean         @default(false)
+  verificationToken       String?         @unique
+  tokenExpiresAt          DateTime?
+  resetToken              String?         @unique
+  resetTokenExpiresAt     DateTime?
+  notificationPreferences Json?           @default("{\"email\":{\"booking\":true,\"payment\":true,\"reminder\":true,\"promotion\":true},\"sms\":{\"booking\":true,\"payment\":false,\"reminder\":true,\"promotion\":false}}")
+  activityLogs            ActivityLog[]
+  bookings                Bookings[]
+  notifications           Notifications[]
+  reviews                 Reviews[]
 }
 
 model Locations {
@@ -45,24 +46,24 @@ model Locations {
 }
 
 model Buses {
-  id            String          @id @default(uuid())
-  plate         String          @unique
-  busType       BusType         @default(standard)
-  priceFactor   Float           @default(1.0)
-  amenities     Json?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  seats         Seats[]
-  trips         Trips[]
+  id          String   @id @default(uuid())
+  plate       String   @unique
+  amenities   Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  busType     BusType  @default(standard)
+  priceFactor Float    @default(1.0)
+  seats       Seats[]
+  trips       Trips[]
 }
 
 model Seats {
-  id          String             @id @default(uuid())
-  busId       String
-  seatNumber  String
-  bookings    Bookings[]
-  seatLocks   SeatSegmentLocks[]
-  bus         Buses              @relation(fields: [busId], references: [id])
+  id         String             @id @default(uuid())
+  busId      String
+  seatNumber String
+  bookings   Bookings[]
+  seatLocks  SeatSegmentLocks[]
+  bus        Buses              @relation(fields: [busId], references: [id])
 
   @@unique([busId, seatNumber])
   @@index([busId])
@@ -142,8 +143,8 @@ model TripRouteMap {
   tripId  String
   routeId String
   price   Decimal
-  route   Routes @relation(fields: [routeId], references: [id])
-  trip    Trips  @relation(fields: [tripId], references: [id])
+  route   Routes  @relation(fields: [routeId], references: [id])
+  trip    Trips   @relation(fields: [tripId], references: [id])
 
   @@id([tripId, routeId])
   @@index([routeId])
@@ -203,10 +204,11 @@ model Payments {
   amount               Decimal
   gateway              GatewayType?
   gatewayTransactionId String?
-  orderCode            BigInt?       @unique
   status               PaymentStatus
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
+  orderCode            BigInt?       @unique
+  metadata             Json?
   booking              Bookings      @relation(fields: [bookingId], references: [id])
 
   @@index([bookingId])
@@ -243,37 +245,34 @@ model Notifications {
 
 model SystemSettings {
   key         SettingKey @id
-  value       Json            
-  description String?     
-  createdAt   DateTime   @default(now())    
+  value       Json
+  description String?
   updatedAt   DateTime   @updatedAt
+  createdAt   DateTime   @default(now())
 }
 
 model ActivityLog {
-  id        String   @id @default(uuid())
-  userId    String?
-  user      Users?   @relation(fields: [userId], references: [id], onDelete: SetNull)
-  action    String   // 'CREATE_BOOKING', 'LOGIN', 'UPDATE_BUS_PRICE', ...
-
-  entityId    String?  // bookingId, busId
-  entityType  String?  // 'Bookings', 'Buses'
-  metadata  Json?    // { oldData: ..., newData: ... } 
-  
-  // Security
-  ipAddress String?  // ip
-  userAgent String?  // 
-  createdAt DateTime @default(now())
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String
+  entityId   String?
+  entityType String?
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  user       Users?   @relation(fields: [userId], references: [id])
 
   @@index([userId])
-  @@index([entityId, entityType]) 
+  @@index([entityId, entityType])
   @@index([createdAt])
 }
 
 enum SettingKey {
-  GENERAL           
-  BOOKING_RULES     
-  BUS_AMENITIES     
-  PAYMENT_GATEWAYS  
+  GENERAL
+  BOOKING_RULES
+  BUS_AMENITIES
+  PAYMENT_GATEWAYS
   BUS_TYPE_PRICING
   PRICING_POLICIES
 }

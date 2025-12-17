@@ -16,6 +16,7 @@ export const API_ENDPOINTS = {
   users: {
     list: "/users",
     details: "/users/{id}",
+    notificationPreferences: "/users/me/notification-preferences",
   },
   bookings: {
     list: "/bookings",

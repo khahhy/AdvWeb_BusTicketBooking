@@ -7,6 +7,9 @@ import {
   Info,
   Trash2,
   Filter,
+  Settings,
+  Mail,
+  MessageSquare,
 } from "lucide-react";
 import Navbar from "@/components/common/Navbar";
 import { Button } from "@/components/ui/button";
@@ -18,6 +21,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import Footer from "@/components/dashboard/Footer";
 import backgroundImage from "@/assets/images/background.png";
 import dayjs from "dayjs";
@@ -169,6 +181,22 @@ export default function NotificationsPage() {
     | "reminder"
   >("all");
   const [loading, setLoading] = useState(true);
+  const [preferencesOpen, setPreferencesOpen] = useState(false);
+
+  // Notification preferences
+  const [emailNotifications, setEmailNotifications] = useState({
+    booking: true,
+    payment: true,
+    reminder: true,
+    promotion: true,
+  });
+
+  const [smsNotifications, setSmsNotifications] = useState({
+    booking: true,
+    payment: false,
+    reminder: true,
+    promotion: false,
+  });
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -211,7 +239,38 @@ export default function NotificationsPage() {
       }
     };
 
+    const loadPreferences = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return;
+
+        const response = await fetch(
+          buildApiUrl(API_ENDPOINTS.users.notificationPreferences),
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (response.ok) {
+          const result = await response.json();
+          const prefs = result.data;
+
+          if (prefs.email) {
+            setEmailNotifications(prefs.email);
+          }
+          if (prefs.sms) {
+            setSmsNotifications(prefs.sms);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading preferences:", error);
+      }
+    };
+
     loadNotifications();
+    loadPreferences();
   }, [navigate]);
 
   const getNotificationIcon = (type: string, priority: string) => {
@@ -390,6 +449,38 @@ export default function NotificationsPage() {
     return dayjs(timestamp).fromNow();
   };
 
+  const handleSavePreferences = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
+
+      const response = await fetch(
+        buildApiUrl(API_ENDPOINTS.users.notificationPreferences),
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: emailNotifications,
+            sms: smsNotifications,
+          }),
+        },
+      );
+
+      if (response.ok) {
+        setPreferencesOpen(false);
+        // You can add a toast notification here
+        console.log("Preferences saved successfully");
+      } else {
+        console.error("Failed to save preferences");
+      }
+    } catch (error) {
+      console.error("Error saving preferences:", error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50">
@@ -483,17 +574,234 @@ export default function NotificationsPage() {
                 </Select>
               </div>
 
-              {unreadCount > 0 && (
-                <Button
-                  onClick={handleMarkAllAsRead}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
+              <div className="flex items-center gap-2">
+                {/* Notification Preferences Dialog */}
+                <Dialog
+                  open={preferencesOpen}
+                  onOpenChange={setPreferencesOpen}
                 >
-                  <CheckCircle className="w-4 h-4" />
-                  Mark all as read
-                </Button>
-              )}
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2"
+                    >
+                      <Settings className="w-4 h-4" />
+                      Preferences
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <Settings className="w-5 h-5" />
+                        Notification Preferences
+                      </DialogTitle>
+                      <DialogDescription>
+                        Manage how you receive notifications for different
+                        events
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-6 py-4">
+                      {/* Email Notifications */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-4">
+                          <Mail className="w-5 h-5 text-blue-600" />
+                          <h3 className="font-semibold text-lg">
+                            Email Notifications
+                          </h3>
+                        </div>
+
+                        <div className="space-y-3 ml-7">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">
+                                Booking Confirmations
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                Get emails when bookings are confirmed
+                              </p>
+                            </div>
+                            <Switch
+                              checked={emailNotifications.booking}
+                              onCheckedChange={(checked) =>
+                                setEmailNotifications((prev) => ({
+                                  ...prev,
+                                  booking: checked,
+                                }))
+                              }
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">Payment Updates</p>
+                              <p className="text-sm text-gray-500">
+                                Receive payment success notifications
+                              </p>
+                            </div>
+                            <Switch
+                              checked={emailNotifications.payment}
+                              onCheckedChange={(checked) =>
+                                setEmailNotifications((prev) => ({
+                                  ...prev,
+                                  payment: checked,
+                                }))
+                              }
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">Trip Reminders</p>
+                              <p className="text-sm text-gray-500">
+                                Get reminded before your trips
+                              </p>
+                            </div>
+                            <Switch
+                              checked={emailNotifications.reminder}
+                              onCheckedChange={(checked) =>
+                                setEmailNotifications((prev) => ({
+                                  ...prev,
+                                  reminder: checked,
+                                }))
+                              }
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">Promotions & Offers</p>
+                              <p className="text-sm text-gray-500">
+                                Receive special deals and discounts
+                              </p>
+                            </div>
+                            <Switch
+                              checked={emailNotifications.promotion}
+                              onCheckedChange={(checked) =>
+                                setEmailNotifications((prev) => ({
+                                  ...prev,
+                                  promotion: checked,
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* SMS Notifications */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-4">
+                          <MessageSquare className="w-5 h-5 text-green-600" />
+                          <h3 className="font-semibold text-lg">
+                            SMS Notifications
+                          </h3>
+                        </div>
+
+                        <div className="space-y-3 ml-7">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">
+                                Booking Confirmations
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                Get SMS when bookings are confirmed
+                              </p>
+                            </div>
+                            <Switch
+                              checked={smsNotifications.booking}
+                              onCheckedChange={(checked) =>
+                                setSmsNotifications((prev) => ({
+                                  ...prev,
+                                  booking: checked,
+                                }))
+                              }
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">Payment Updates</p>
+                              <p className="text-sm text-gray-500">
+                                Receive payment success SMS
+                              </p>
+                            </div>
+                            <Switch
+                              checked={smsNotifications.payment}
+                              onCheckedChange={(checked) =>
+                                setSmsNotifications((prev) => ({
+                                  ...prev,
+                                  payment: checked,
+                                }))
+                              }
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">Trip Reminders</p>
+                              <p className="text-sm text-gray-500">
+                                Get SMS reminders before trips
+                              </p>
+                            </div>
+                            <Switch
+                              checked={smsNotifications.reminder}
+                              onCheckedChange={(checked) =>
+                                setSmsNotifications((prev) => ({
+                                  ...prev,
+                                  reminder: checked,
+                                }))
+                              }
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">Promotions & Offers</p>
+                              <p className="text-sm text-gray-500">
+                                Receive promotional SMS
+                              </p>
+                            </div>
+                            <Switch
+                              checked={smsNotifications.promotion}
+                              onCheckedChange={(checked) =>
+                                setSmsNotifications((prev) => ({
+                                  ...prev,
+                                  promotion: checked,
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={() => setPreferencesOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button onClick={handleSavePreferences}>
+                        Save Preferences
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                {unreadCount > 0 && (
+                  <Button
+                    onClick={handleMarkAllAsRead}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    Mark all as read
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>

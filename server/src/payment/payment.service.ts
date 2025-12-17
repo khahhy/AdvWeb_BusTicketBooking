@@ -14,6 +14,11 @@ import { EmailService } from 'src/email/email.service';
 import { ETicketService } from 'src/eticket/eticket.service';
 import { SmsService } from 'src/notifications/sms.service';
 
+interface NotificationPreferences {
+  email?: Record<string, boolean>;
+  sms?: Record<string, boolean>;
+}
+
 @Injectable()
 export class PaymentService {
   private readonly logger = new Logger(PaymentService.name);
@@ -105,7 +110,6 @@ export class PaymentService {
         bookingId: booking.id,
         amount: booking.price,
         gateway: GatewayType.payos,
-        // @ts-expect-error - orderCode field exists but TS types not updated yet
         orderCode: BigInt(orderCode),
         status: PaymentStatus.pending,
       },
@@ -278,7 +282,17 @@ export class PaymentService {
             (customerInfo?.fullName as string) ||
             'Khách hàng';
 
-          if (customerEmail && booking.ticketCode) {
+          // Check email preferences
+          let sendEmail = true;
+          if (booking.user?.id) {
+            const emailPref = await this.checkEmailPreference(
+              booking.user.id,
+              'payment',
+            );
+            sendEmail = emailPref;
+          }
+
+          if (sendEmail && customerEmail && booking.ticketCode) {
             // Tạo PDF e-ticket
             const pdfBuffer = await this.eticketService.generatePDF(
               booking.ticketCode,
@@ -301,8 +315,18 @@ export class PaymentService {
             this.logger.log(`Confirmation email sent to: ${customerEmail}`);
           }
 
+          // Check SMS preferences
+          let sendSms = true;
+          if (booking.user?.id) {
+            const smsPref = await this.smsService.checkSmsPreference(
+              booking.user.id,
+              'payment',
+            );
+            sendSms = smsPref;
+          }
+
           // Gửi SMS confirmation
-          if (customerPhone && booking.ticketCode) {
+          if (sendSms && customerPhone && booking.ticketCode) {
             const tripDate = booking.trip.startTime.toLocaleDateString(
               'vi-VN',
               {
@@ -521,6 +545,31 @@ export class PaymentService {
         `Error cancelling payment: ${(error as Error).message}`,
       );
       throw error;
+    }
+  }
+
+  /**
+   * Check if user has email notifications enabled for a specific type
+   */
+  private async checkEmailPreference(
+    userId: string,
+    notificationType: 'booking' | 'payment' | 'reminder' | 'promotion',
+  ): Promise<boolean> {
+    try {
+      const user = await this.prisma.users.findUnique({
+        where: { id: userId },
+        select: { notificationPreferences: true },
+      });
+
+      if (!user || !user.notificationPreferences) {
+        return true; // Default to enabled
+      }
+
+      const prefs = user.notificationPreferences as NotificationPreferences;
+      return prefs.email?.[notificationType] !== false;
+    } catch (error) {
+      this.logger.error('Error checking email preferences:', error);
+      return true; // Default to enabled on error
     }
   }
 

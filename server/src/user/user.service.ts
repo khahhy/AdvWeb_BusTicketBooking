@@ -420,4 +420,82 @@ export class UserService {
       });
     }
   }
+
+  async getNotificationPreferences(userId: string) {
+    try {
+      const user = await this.prisma.users.findUnique({
+        where: { id: userId },
+        select: { notificationPreferences: true },
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      const preferences = user.notificationPreferences || {
+        email: {
+          booking: true,
+          payment: true,
+          reminder: true,
+          promotion: true,
+        },
+        sms: {
+          booking: true,
+          payment: false,
+          reminder: true,
+          promotion: false,
+        },
+      };
+
+      return {
+        message: 'Notification preferences retrieved successfully',
+        data: preferences,
+      };
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      throw new InternalServerErrorException(
+        'Failed to get notification preferences',
+        { cause: err },
+      );
+    }
+  }
+
+  async updateNotificationPreferences(userId: string, preferences: any) {
+    try {
+      const user = await this.prisma.users.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      const updated = await this.prisma.users.update({
+        where: { id: userId },
+        data: {
+          notificationPreferences: preferences as Prisma.InputJsonValue,
+        },
+        select: {
+          id: true,
+          email: true,
+          notificationPreferences: true,
+        },
+      });
+
+      return {
+        message: 'Notification preferences updated successfully',
+        data: updated.notificationPreferences,
+      };
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      throw new InternalServerErrorException(
+        'Failed to update notification preferences',
+        { cause: err },
+      );
+    }
+  }
 }

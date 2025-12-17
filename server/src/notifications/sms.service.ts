@@ -1,12 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Twilio } from 'twilio';
+import { PrismaService } from 'src/prisma/prisma.service';
+
+interface NotificationPreferences {
+  email?: Record<string, boolean>;
+  sms?: Record<string, boolean>;
+}
 
 @Injectable()
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
   private twilioClient: Twilio;
 
-  constructor() {
+  constructor(private prisma: PrismaService) {
     // Initialize Twilio client if credentials are available
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
     const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -26,6 +32,33 @@ export class SmsService {
    */
   isServiceAvailable(): boolean {
     return !!this.twilioClient;
+  }
+
+  /**
+   * Check if user has SMS notifications enabled for a specific type
+   */
+  async checkSmsPreference(
+    userId: string,
+    notificationType: 'booking' | 'payment' | 'reminder' | 'promotion',
+  ): Promise<boolean> {
+    try {
+      const user = await this.prisma.users.findUnique({
+        where: { id: userId },
+        select: { notificationPreferences: true },
+      });
+
+      if (!user || !user.notificationPreferences) {
+        // Default to enabled if no preferences set
+        return true;
+      }
+
+      const prefs = user.notificationPreferences as NotificationPreferences;
+      return prefs.sms?.[notificationType] !== false;
+    } catch (error) {
+      this.logger.error('Error checking SMS preferences:', error);
+      // Default to enabled on error
+      return true;
+    }
   }
 
   /**

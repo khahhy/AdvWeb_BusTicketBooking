@@ -25,7 +25,7 @@ interface AuthRequest {
 @ApiTags('notifications')
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 

@@ -3,16 +3,24 @@ import {
   Logger,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PayOSService } from 'src/payos/payos.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PayOSWebhookDto } from './dto/payos-webhook.dto';
-import { Prisma } from '@prisma/client';
-import { BookingStatus, GatewayType, PaymentStatus } from '@prisma/client';
+import {
+  Prisma,
+  BookingStatus,
+  GatewayType,
+  PaymentStatus,
+  SettingKey,
+} from '@prisma/client';
 import { EmailService } from 'src/email/email.service';
 import { ETicketService } from 'src/eticket/eticket.service';
 import { SmsService } from 'src/notifications/sms.service';
+import { SettingService } from 'src/setting/setting.service';
+import { BookingRulesSettingsDto } from 'src/setting/dto/booking-rule-setting.dto';
 
 interface NotificationPreferences {
   email?: Record<string, boolean>;
@@ -29,6 +37,7 @@ export class PaymentService {
     private readonly emailService: EmailService,
     private readonly eticketService: ETicketService,
     private readonly smsService: SmsService,
+    private readonly settingService: SettingService,
   ) {}
 
   /**
@@ -842,5 +851,144 @@ export class PaymentService {
     }
 
     return payment.bookingId;
+  }
+
+  async cancelWithRefund(bookingId: string, userId: string, reason?: string) {
+    this.logger.log(
+      `Request cancel & refund for booking ${bookingId} by user ${userId}`,
+    );
+
+    const booking = await this.prisma.bookings.findUnique({
+      where: { id: bookingId },
+      include: {
+        trip: { include: { bus: true } },
+        route: { include: { origin: true, destination: true } },
+        seat: true,
+        user: true,
+        payments: {
+          where: { status: PaymentStatus.successful },
+          take: 1,
+        },
+        seatLocks: true,
+      },
+    });
+
+    if (!booking) throw new NotFoundException('Booking does not exist.');
+
+    if (booking.userId !== userId) {
+      throw new ForbiddenException(
+        'You are not allowed to cancel this ticket.',
+      );
+    }
+
+    if (booking.status === BookingStatus.cancelled) {
+      throw new BadRequestException('This ticket was previously cancelled.');
+    }
+
+    if (
+      booking.status !== BookingStatus.confirmed ||
+      booking.payments.length === 0
+    ) {
+      throw new BadRequestException(
+        'Tickets are not yet paid for, please use the regular cancellation function.',
+      );
+    }
+
+    const paymentRecord = booking.payments[0];
+
+    const bookingRule = await this.settingService.findOne(
+      SettingKey.BOOKING_RULES,
+    );
+
+    const rules = (bookingRule.data as BookingRulesSettingsDto) || {
+      refundPercentage: 100,
+      minCancellationHours: 24,
+      paymentHoldTimeMinutes: 15,
+    };
+
+    const minHours = rules.minCancellationHours || 24;
+    const refundPercent = rules.refundPercentage || 100;
+
+    const now = new Date();
+    const tripStartTime = new Date(booking.trip.startTime);
+    const hoursUntilTrip =
+      (tripStartTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    if (hoursUntilTrip < minHours) {
+      throw new BadRequestException(
+        `It's too late to cancel the ticket. You must cancel at least ${minHours} hours before departure.`,
+      );
+    }
+
+    // calculate refund amount
+    const originalAmount = Number(paymentRecord.amount);
+    const refundAmount = (originalAmount * refundPercent) / 100;
+    const feeAmount = originalAmount - refundAmount;
+
+    this.logger.log(
+      `Refund calc: ${originalAmount} * ${refundPercent}% = ${refundAmount}`,
+    );
+
+    // Update DB & Release Seat
+    await this.prisma.$transaction(async (tx) => {
+      const updatedPayment = await tx.payments.update({
+        where: { id: paymentRecord.id },
+        data: {
+          status: PaymentStatus.refunded,
+          refundedAmount: refundAmount,
+          refundedAt: new Date(),
+          refundReason: reason || 'User requested cancellation',
+        },
+      });
+
+      // Update Booking Status: Cancel
+      const updatedBooking = await tx.bookings.update({
+        where: { id: bookingId },
+        data: { status: BookingStatus.cancelled },
+      });
+
+      // unlock seat
+      await tx.seatSegmentLocks.deleteMany({
+        where: { bookingId: bookingId },
+      });
+
+      return { updatedPayment, updatedBooking };
+    });
+
+    // send email notification about refund
+    try {
+      const customerInfo = booking.customerInfo as {
+        fullName: string;
+        email: string;
+        phoneNumber: string;
+        identificationCard?: string;
+      };
+      const email = booking.user?.email || customerInfo?.email;
+      const name = booking.user?.fullName || customerInfo?.fullName;
+
+      if (email) {
+        await this.emailService.sendRefundNotification(email, name, {
+          ticketCode: booking.ticketCode!,
+          tripName: `${booking.route.origin.name} - ${booking.route.destination.name}`,
+          refundAmount: refundAmount,
+          refundPercent: refundPercent,
+          feeAmount: feeAmount,
+        });
+      }
+    } catch (err) {
+      this.logger.error('Failed to send refund email', err);
+    }
+
+    return {
+      success: true,
+      message:
+        'Ticket cancellation successful. Refund request has been acknowledged and will be processed within 24 business hours.',
+      data: {
+        bookingId,
+        refundAmount,
+        refundPercentage: refundPercent,
+        status: 'refunded',
+      },
+    };
   }
 }

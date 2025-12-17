@@ -8,6 +8,7 @@ import {
   HttpCode,
   HttpStatus,
   Delete,
+  Req,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,6 +22,7 @@ import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PayOSWebhookDto } from './dto/payos-webhook.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import type { RequestWithUser } from 'src/common/type/request-with-user.interface';
 
 @ApiTags('payments')
 @Controller('payments')
@@ -72,7 +74,7 @@ export class PaymentController {
 
   @Get('status/:bookingId')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Kiểm tra trạng thái thanh toán của booking' })
   @ApiParam({ name: 'bookingId', description: 'ID của booking' })
   @ApiResponse({
@@ -102,7 +104,7 @@ export class PaymentController {
 
   @Delete('cancel/:bookingId')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Hủy payment link' })
   @ApiParam({ name: 'bookingId', description: 'ID của booking' })
   @ApiBody({
@@ -131,5 +133,46 @@ export class PaymentController {
     @Body() body?: { reason?: string },
   ) {
     return this.paymentService.cancelPayment(bookingId, body?.reason);
+  }
+
+  @Post('refund/:bookingId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Cancels PAID ticket and refunds',
+
+    description:
+      'This API will check the ticket, calculate the refund, update the database and send an email. It does not call the real bank.',
+  })
+  @ApiParam({
+    name: 'bookingId',
+    description: 'ID of the booking to be canceled',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        reason: {
+          type: 'string',
+          example: 'I am unexpectedly busy',
+        },
+      },
+    },
+    required: false,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Cancels ticket and refunds successfully work',
+  })
+  @ApiResponse({ status: 400, description: 'Unpaid or overdue ticket' })
+  @ApiResponse({ status: 403, description: 'Not the rightful owner' })
+  async cancelWithRefund(
+    @Param('bookingId') bookingId: string,
+    @Req() req: RequestWithUser,
+    @Body() body: { reason?: string },
+  ) {
+    const userId = req.user.userId;
+
+    return this.paymentService.cancelWithRefund(bookingId, userId, body.reason);
   }
 }

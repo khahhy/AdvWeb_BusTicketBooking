@@ -910,4 +910,179 @@ export class EmailService {
       throw error;
     }
   }
+
+  async sendRefundNotification(
+    email: string,
+    customerName: string,
+    refundDetails: {
+      ticketCode: string;
+      tripName: string;
+      refundAmount: number;
+      refundPercent: number;
+      feeAmount: number;
+    },
+  ) {
+    const { ticketCode, tripName, refundAmount, refundPercent, feeAmount } =
+      refundDetails;
+
+    const formatCurrency = (amount: number) => {
+      return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+      }).format(amount);
+    };
+
+    const mailOptions = {
+      from: `"Bus Ticket Booking" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: `Booking Cancelled & Refund Processed - ${ticketCode}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            .container {
+              background: #ffffff;
+              border-radius: 16px;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+              overflow: hidden;
+              border: 1px solid #e5e7eb;
+            }
+            .header {
+              background: linear-gradient(135deg, #134074 0%, #1e56a0 100%);
+              padding: 30px;
+              text-align: center;
+            }
+            .header h1 {
+              color: white;
+              margin: 0;
+              font-size: 24px;
+            }
+            .status-icon {
+              font-size: 40px;
+              margin-bottom: 10px;
+              display: block;
+            }
+            .content {
+              padding: 30px;
+            }
+            .greeting {
+              font-size: 16px;
+              margin-bottom: 20px;
+            }
+            .refund-box {
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 12px;
+              padding: 20px;
+              margin: 20px 0;
+            }
+            .refund-row {
+              display: flex;
+              justify-content: space-between;
+              padding: 10px 0;
+              border-bottom: 1px solid #e2e8f0;
+            }
+            .refund-row:last-child {
+              border-bottom: none;
+              padding-bottom: 0;
+            }
+            .refund-total {
+              border-top: 2px solid #cbd5e1;
+              margin-top: 10px;
+              padding-top: 15px;
+              font-weight: bold;
+              font-size: 18px;
+              color: #166534;
+            }
+            .label {
+              color: #64748b;
+            }
+            .value {
+              font-weight: 600;
+              color: #0f172a;
+            }
+            .info-text {
+              background: #eff6ff;
+              border-left: 4px solid #3b82f6;
+              padding: 15px;
+              margin-top: 25px;
+              border-radius: 4px;
+              font-size: 14px;
+              color: #1e40af;
+            }
+            .footer {
+              background: #f1f5f9;
+              padding: 20px;
+              text-align: center;
+              font-size: 12px;
+              color: #64748b;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <span class="status-icon">✅</span>
+              <h1>Refund Processed</h1>
+            </div>
+            
+            <div class="content">
+              <p class="greeting">Hi <strong>${customerName}</strong>,</p>
+              
+              <p>Your booking <strong>${ticketCode}</strong> for trip <strong>${tripName}</strong> has been successfully cancelled as per your request.</p>
+              
+              <div class="refund-box">
+                <div class="refund-row">
+                  <span class="label">Ticket Status </span>
+                  <span class="value" style="color: #ef4444;">Cancelled</span>
+                </div>
+                <div class="refund-row">
+                  <span class="label">Refund Policy </span>
+                  <span class="value">${refundPercent}% of ticket price</span>
+                </div>
+                <div class="refund-row">
+                  <span class="label">Cancellation Fee </span>
+                  <span class="value" style="color: #ef4444;">-${formatCurrency(feeAmount)}</span>
+                </div>
+                <div class="refund-row refund-total">
+                  <span class="label">Total Refund Amount</span>
+                  <span class="value">${formatCurrency(refundAmount)}</span>
+                </div>
+              </div>
+
+              <div class="info-text">
+                <strong>ℹ️ Note:</strong> The refund amount has been initiated to your original payment method. Please allow <strong>3-5 business days</strong> for the amount to reflect in your account, depending on your bank's processing time.
+              </div>
+
+              <p style="margin-top: 30px;">If you have any questions, please contact our support team.</p>
+            </div>
+
+            <div class="footer">
+              <p>© 2025 Bus Ticket Booking. All rights reserved.</p>
+              <p>This is an automated message.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      console.log(`Refund email sent to ${email} for booking ${ticketCode}`);
+      return { success: true };
+    } catch (error) {
+      console.error('Error sending refund email:', error);
+      throw error;
+    }
+  }
 }

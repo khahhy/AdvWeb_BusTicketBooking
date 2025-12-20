@@ -335,224 +335,215 @@ export default function SearchPage() {
       {/* Results Section */}
       <div className="max-w-7xl mx-auto px-6 py-12 pb-20 dark:bg-black dark:bg-none">
         {/* Header Section */}
-        <div className="mb-8 flex gap-6">
-          <div className="w-80 flex-shrink-0"></div>
-          <div className="flex-1">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  Available Trips
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300">
-                  {fromLocation} → {toLocation} • {formatDate()}
-                </p>
-              </div>
-              <div className="text-sm text-gray-500 dark:text-gray-300">
-                {(() => {
-                  if (isLoading) return "Loading...";
-                  const totalTrips = allTrips.length;
-                  const originalTrips =
-                    tripRouteData?.length || (error ? mockTrips.length : 0);
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                Available Trips
+              </h2>
+              <p className="text-gray-600 dark:text-gray-300">
+                {fromLocation} → {toLocation} • {formatDate()}
+              </p>
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-300 px-4 py-2">
+              {(() => {
+                if (isLoading) return "Loading...";
+                const totalTrips = allTrips.length;
+                const originalTrips =
+                  tripRouteData?.length || (error ? mockTrips.length : 0);
 
-                  if (totalTrips === 0) {
-                    return originalTrips > 0
-                      ? "No trips match your filters"
-                      : "No trips found";
-                  }
+                if (totalTrips === 0) {
+                  return originalTrips > 0
+                    ? "No trips match your filters"
+                    : "No trips found";
+                }
 
-                  const displayStart = startIndex + 1;
-                  const displayEnd = Math.min(endIndex, totalTrips);
-                  const hasFilters =
-                    filters.departureTime.length > 0 ||
-                    filters.arrivalTime.length > 0 ||
-                    filters.busType.length > 0 ||
-                    filters.amenities.length > 0 ||
-                    filters.priceRange[0] > 0 ||
-                    filters.priceRange[1] < 1328000;
+                const displayStart = startIndex + 1;
+                const displayEnd = Math.min(endIndex, totalTrips);
+                const hasFilters =
+                  filters.departureTime.length > 0 ||
+                  filters.arrivalTime.length > 0 ||
+                  filters.busType.length > 0 ||
+                  filters.amenities.length > 0 ||
+                  filters.priceRange[0] > 0 ||
+                  filters.priceRange[1] < 1328000;
 
-                  if (hasFilters && totalTrips < originalTrips) {
-                    return `Showing ${displayStart}-${displayEnd} of ${totalTrips} trips (${originalTrips - totalTrips} filtered out)`;
-                  }
+                if (hasFilters && totalTrips < originalTrips) {
+                  return `Showing ${displayStart}-${displayEnd} of ${totalTrips} trips (${originalTrips - totalTrips} filtered out)`;
+                }
 
-                  return `Showing ${displayStart}-${displayEnd} of ${totalTrips} trips`;
-                })()}
-              </div>
+                return `Showing ${displayStart}-${displayEnd} of ${totalTrips} trips`;
+              })()}
             </div>
           </div>
         </div>
 
-        {/* Filter and Trip Cards Layout */}
-        <div className="flex gap-6">
-          {/* Filter Panel - Left Side */}
-          <div className="w-80 flex-shrink-0">
-            <FilterPanel onFilterChange={handleFilterChange} />
-          </div>
+        {/* Filter Panel - Horizontal Above Trips */}
+        <FilterPanel onFilterChange={handleFilterChange} />
 
-          {/* Trip Cards - Right Side */}
-          <div className="flex-1 trips-results">
-            <div className="space-y-6">
-              {isLoading && (
-                <div className="flex justify-center items-center py-8">
-                  <div className="text-gray-600 dark:text-gray-400">
-                    Loading trips...
-                  </div>
+        {/* Trip Cards */}
+        <div className="trips-results">
+          <div className="space-y-6">
+            {isLoading && (
+              <div className="flex justify-center items-center py-8">
+                <div className="text-gray-600 dark:text-gray-400">
+                  Loading trips...
                 </div>
-              )}
+              </div>
+            )}
 
-              {error && (
-                <div className="flex justify-center items-center py-8">
-                  <div className="text-red-600 dark:text-red-400">
-                    Error loading trips. Using mock data.
-                  </div>
+            {error && (
+              <div className="flex justify-center items-center py-8">
+                <div className="text-red-600 dark:text-red-400">
+                  Error loading trips. Using mock data.
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Use paginated trips data */}
-              {!isLoading &&
-                currentTrips.length > 0 &&
-                currentTrips.map((tripRoute, index) => {
-                  // Check if this is API data or mock data
-                  const isApiData = "trip" in tripRoute;
+            {/* Use paginated trips data */}
+            {!isLoading &&
+              currentTrips.length > 0 &&
+              currentTrips.map((tripRoute, index) => {
+                // Check if this is API data or mock data
+                const isApiData = "trip" in tripRoute;
 
-                  if (isApiData) {
-                    // Convert TripRoute data to Trip format for TripCard component
-                    const startTime = dayjs(tripRoute.trip.startTime);
-                    const endTime = dayjs(tripRoute.trip.endTime);
-                    const durationHours = endTime.diff(startTime, "hour", true);
-                    const durationText =
-                      durationHours >= 1
-                        ? `${Math.floor(durationHours)}h ${Math.round((durationHours % 1) * 60)}m`
-                        : `${Math.round(durationHours * 60)}m`;
+                if (isApiData) {
+                  // Convert TripRoute data to Trip format for TripCard component
+                  const startTime = dayjs(tripRoute.trip.startTime);
+                  const endTime = dayjs(tripRoute.trip.endTime);
+                  const durationHours = endTime.diff(startTime, "hour", true);
+                  const durationText =
+                    durationHours >= 1
+                      ? `${Math.floor(durationHours)}h ${Math.round((durationHours % 1) * 60)}m`
+                      : `${Math.round(durationHours * 60)}m`;
 
-                    const tripData = {
-                      ...tripRoute.trip,
+                  const tripData = {
+                    ...tripRoute.trip,
 
-                      id: tripRoute.tripId || tripRoute.id,
-                      tripId: tripRoute.tripId,
-                      routeId: tripRoute.routeId,
-                      route: tripRoute.route,
-                      departureTime: startTime.format("HH:mm"),
-                      arrivalTime: endTime.format("HH:mm"),
-                      duration: durationText,
-                      from: tripRoute.route.origin.city,
-                      to: tripRoute.route.destination.city,
-                      fromTerminal: tripRoute.route.origin.name,
-                      toTerminal: tripRoute.route.destination.name,
-                      price: Number(tripRoute.price),
+                    id: tripRoute.tripId || tripRoute.id,
+                    tripId: tripRoute.tripId,
+                    routeId: tripRoute.routeId,
+                    route: tripRoute.route,
+                    departureTime: startTime.format("HH:mm"),
+                    arrivalTime: endTime.format("HH:mm"),
+                    duration: durationText,
+                    from: tripRoute.route.origin.city,
+                    to: tripRoute.route.destination.city,
+                    fromTerminal: tripRoute.route.origin.name,
+                    toTerminal: tripRoute.route.destination.name,
+                    price: Number(tripRoute.price),
 
-                      // Bus Info
-                      busType:
-                        tripRoute.trip.bus?.busType?.toLowerCase() ||
-                        "standard",
-                      amenities:
-                        (tripRoute.trip.bus?.amenities as unknown as {
-                          [key: string]: boolean;
-                        }) || {},
-                    };
+                    // Bus Info
+                    busType:
+                      tripRoute.trip.bus?.busType?.toLowerCase() || "standard",
+                    amenities:
+                      (tripRoute.trip.bus?.amenities as unknown as {
+                        [key: string]: boolean;
+                      }) || {},
+                  };
 
-                    return (
-                      <TripCard
-                        key={`trip-${tripData.id}-${index}`}
-                        trip={tripData}
-                        isOpen={openTripId === tripData.id}
-                        onToggle={(tripId) =>
-                          setOpenTripId(openTripId === tripId ? null : tripId)
-                        }
-                      />
-                    );
-                  }
-                })}
+                  return (
+                    <TripCard
+                      key={`trip-${tripData.id}-${index}`}
+                      trip={tripData}
+                      isOpen={openTripId === tripData.id}
+                      onToggle={(tripId) =>
+                        setOpenTripId(openTripId === tripId ? null : tripId)
+                      }
+                    />
+                  );
+                }
+              })}
 
-              {/* No results message */}
-              {!isLoading && currentTrips.length === 0 && (
-                <div className="flex justify-center items-center py-8">
-                  <div className="text-gray-600 dark:text-gray-400">
-                    No trips found for your search criteria.
-                  </div>
+            {/* No results message */}
+            {!isLoading && currentTrips.length === 0 && (
+              <div className="flex justify-center items-center py-8">
+                <div className="text-gray-600 dark:text-gray-400">
+                  No trips found for your search criteria.
                 </div>
-              )}
-            </div>
-
-            {/* Pagination Controls */}
-            {!isLoading && totalPages > 1 && (
-              <div className="mt-8 flex justify-center items-center space-x-2">
-                {/* Previous Button */}
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    currentPage === 1
-                      ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600"
-                      : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:border-gray-600"
-                  }`}
-                >
-                  Previous
-                </button>
-
-                {/* Page Numbers */}
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => {
-                    // Show first page, last page, current page, and pages around current page
-                    const showPage =
-                      page === 1 ||
-                      page === totalPages ||
-                      (page >= currentPage - 1 && page <= currentPage + 1);
-
-                    if (!showPage && page === currentPage - 2) {
-                      return (
-                        <span
-                          key="dots-before"
-                          className="px-2 py-2 text-gray-400"
-                        >
-                          ...
-                        </span>
-                      );
-                    }
-
-                    if (!showPage && page === currentPage + 2) {
-                      return (
-                        <span
-                          key="dots-after"
-                          className="px-2 py-2 text-gray-400"
-                        >
-                          ...
-                        </span>
-                      );
-                    }
-
-                    if (!showPage) return null;
-
-                    return (
-                      <button
-                        key={page}
-                        onClick={() => handlePageChange(page)}
-                        className={`px-3 py-2 rounded-md text-sm font-medium ${
-                          currentPage === page
-                            ? "bg-blue-600 text-white dark:bg-blue-700"
-                            : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:border-gray-600"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    );
-                  },
-                )}
-
-                {/* Next Button */}
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    currentPage === totalPages
-                      ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600"
-                      : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:border-gray-600"
-                  }`}
-                >
-                  Next
-                </button>
               </div>
             )}
           </div>
+
+          {/* Pagination Controls */}
+          {!isLoading && totalPages > 1 && (
+            <div className="mt-8 flex justify-center items-center space-x-2">
+              {/* Previous Button */}
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  currentPage === 1
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600"
+                    : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:border-gray-600"
+                }`}
+              >
+                Previous
+              </button>
+
+              {/* Page Numbers */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => {
+                  // Show first page, last page, current page, and pages around current page
+                  const showPage =
+                    page === 1 ||
+                    page === totalPages ||
+                    (page >= currentPage - 1 && page <= currentPage + 1);
+
+                  if (!showPage && page === currentPage - 2) {
+                    return (
+                      <span
+                        key="dots-before"
+                        className="px-2 py-2 text-gray-400"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+
+                  if (!showPage && page === currentPage + 2) {
+                    return (
+                      <span
+                        key="dots-after"
+                        className="px-2 py-2 text-gray-400"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+
+                  if (!showPage) return null;
+
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`px-3 py-2 rounded-md text-sm font-medium ${
+                        currentPage === page
+                          ? "bg-blue-600 text-white dark:bg-blue-700"
+                          : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:border-gray-600"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                },
+              )}
+
+              {/* Next Button */}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  currentPage === totalPages
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600"
+                    : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:border-gray-600"
+                }`}
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

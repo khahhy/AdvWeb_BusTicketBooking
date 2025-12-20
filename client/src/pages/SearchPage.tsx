@@ -29,9 +29,11 @@ export default function SearchPage() {
   const [filters, setFilters] = useState<FilterState>({
     departureTime: [],
     arrivalTime: [],
-    priceRange: [0, 1328000],
+    priceRange: [0, 500000],
     busType: [],
     amenities: [],
+    sortByTime: "departure-asc",
+    sortByPrice: "price-asc",
   });
 
   // Update locations and date when search params change
@@ -366,7 +368,7 @@ export default function SearchPage() {
                   filters.busType.length > 0 ||
                   filters.amenities.length > 0 ||
                   filters.priceRange[0] > 0 ||
-                  filters.priceRange[1] < 1328000;
+                  filters.priceRange[1] < 500000;
 
                 if (hasFilters && totalTrips < originalTrips) {
                   return `Showing ${displayStart}-${displayEnd} of ${totalTrips} trips (${originalTrips - totalTrips} filtered out)`;

@@ -19,6 +19,7 @@ import { RedisCacheModule } from './cache/redis-cache.module';
 import { HealthModule } from './health/health.module';
 import { PaymentModule } from './payment/payment.module';
 import { PayOSModule } from './payos/payos.module';
+import { ChatbotModule } from './chatbot/chatbot.module';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 
@@ -44,6 +45,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     HealthModule,
     PaymentModule,
     PayOSModule,
+    ChatbotModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

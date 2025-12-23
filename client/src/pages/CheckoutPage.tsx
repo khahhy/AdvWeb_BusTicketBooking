@@ -140,6 +140,28 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [showSeatMap, setShowSeatMap] = useState(false);
 
+  // Auto-fill user info if logged in
+  useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.fullName) {
+          setFullName(user.fullName);
+          setContactName(user.fullName);
+        }
+        if (user.email) {
+          setEmail(user.email);
+        }
+        if (user.phoneNumber) {
+          setPhoneNumber(user.phoneNumber);
+        }
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }, []);
+
   const seats = useMemo(
     () => transformSeatStatus(seatStatusData?.seats, trip.price),
     [seatStatusData, trip.price],
@@ -160,9 +182,7 @@ export default function CheckoutPage() {
     if (!fullName.trim()) {
       newErrors.fullName = "Please enter passenger full name";
     }
-    if (!personalId.trim()) {
-      newErrors.personalId = "Please enter Personal ID/Citizen ID/Passport ID";
-    }
+    // Personal ID is optional
 
     // Validate contact information
     if (!contactName.trim()) {
@@ -178,10 +198,7 @@ export default function CheckoutPage() {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = "Please enter a valid email address";
     }
-    if (!contactPersonalId.trim()) {
-      newErrors.contactPersonalId =
-        "Please enter Personal ID/Citizen ID/Passport ID";
-    }
+    // Contact Personal ID is optional
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;

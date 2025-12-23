@@ -172,139 +172,132 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
       className="bg-white dark:bg-black rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-100 dark:border-gray-700"
     >
       {/* Trip Header */}
-      <div className="p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-8 flex-1">
+      <div className="py-6 px-6">
+        <div className="grid grid-cols-2 gap-8">
+          {/* Left Section: Time and Location Info */}
+          <div className="flex items-center gap-6">
             {/* Departure */}
             <div className="text-center w-32 flex-shrink-0">
-              <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+              <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 leading-tight mb-2">
                 {trip.departureTime}
               </div>
-              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">
                 {trip.from}
               </div>
               {trip.fromTerminal && (
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
                   {trip.fromTerminal}
                 </div>
               )}
             </div>
 
             {/* Duration */}
-            <div className="flex flex-col items-center px-6 flex-shrink-0">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="flex flex-col items-center justify-center px-3 flex-shrink-0">
+              <div className="flex items-center gap-2 mb-1.5">
                 <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-                <div className="h-0.5 w-20 border-t-2 border-dashed border-gray-300 dark:border-gray-600"></div>
+                <div className="h-0.5 w-32 border-t-2 border-dashed border-gray-300 dark:border-gray-600"></div>
                 <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500" />
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+              <div className="text-xs text-gray-600 dark:text-gray-300 font-semibold">
                 {trip.duration}
               </div>
-              <div className="text-xs text-gray-400 dark:text-gray-500">
+              <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
                 (Asian/Ho Chi Minh)
               </div>
             </div>
 
             {/* Arrival */}
             <div className="text-center w-32 flex-shrink-0">
-              <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+              <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 leading-tight mb-2">
                 {trip.arrivalTime}
               </div>
-              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">
                 {trip.to}
               </div>
               {trip.toTerminal && (
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
                   {trip.toTerminal}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Seats Info */}
-          <div className="flex flex-col items-center gap-2 px-8 border-l border-gray-200 dark:border-gray-600">
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <Clock className="w-4 h-4" />
-              <span className="font-medium">
-                {availableSeatsCount} blank seats
-              </span>
-            </div>
-          </div>
-
-          {/* Price */}
-          <div className="text-right pl-8 border-l border-gray-200 dark:border-gray-600">
-            <div className="text-3xl font-bold text-foreground mb-1">
-              {formatCurrency(trip.price)}
-            </div>
-            {selectedSeats.length > 0 && (
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                {selectedSeats.length} seats: {formatCurrency(totalPrice)}
+          {/* Right Section: Seats, Price and Amenities */}
+          <div className="flex flex-col gap-3">
+            {/* Top: Seats and Price Info */}
+            <div className="flex items-center justify-end gap-6">
+              {/* Seats Info */}
+              <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                <span className="font-semibold">
+                  {availableSeatsCount} blank seats
+                </span>
               </div>
-            )}
-          </div>
-        </div>
 
-        {/* Note */}
-        {trip.note && (
-          <div className="mt-4 p-3 bg-foreground/5 rounded-2xl border border-foreground/10">
-            <p className="text-xs text-foreground/80">
-              <span className="font-semibold">Noted:</span> {trip.note}
-            </p>
-          </div>
-        )}
-
-        {/* Bus Type and Amenities */}
-        <div className="mt-4 flex items-center gap-4">
-          {trip.busType && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">
-                {trip.busType}
-              </span>
-              <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs font-medium">
-                {trip.busType}
-              </span>
+              {/* Price */}
+              <div className="text-right">
+                <div className="text-3xl font-bold text-foreground leading-tight mb-1">
+                  {formatCurrency(trip.price)}
+                </div>
+                {selectedSeats.length > 0 && (
+                  <div className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+                    {selectedSeats.length} seat
+                    {selectedSeats.length > 1 ? "s" : ""}:{" "}
+                    {formatCurrency(totalPrice)}
+                  </div>
+                )}
+              </div>
             </div>
-          )}
 
-          {trip.amenities && Object.keys(trip.amenities).length > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
-              {Object.entries(trip.amenities)
-                .filter(([, available]) => available)
-                .map(([amenity]) => {
-                  const getAmenityIcon = (amenity: string) => {
-                    switch (amenity.toLowerCase()) {
-                      case "wifi":
-                        return <Wifi className="w-3 h-3" />;
-                      case "tv":
-                        return <Tv className="w-3 h-3" />;
-                      case "snack":
-                        return <Coffee className="w-3 h-3" />;
-                      case "water":
-                        return <Droplets className="w-3 h-3" />;
-                      case "toilet":
-                        return <Bath className="w-3 h-3" />;
-                      case "blanket":
-                        return <ShirtIcon className="w-3 h-3" />;
-                      case "charger":
-                        return <Zap className="w-3 h-3" />;
-                      case "aircondition":
-                        return <Snowflake className="w-3 h-3" />;
-                      default:
-                        return null;
-                    }
-                  };
-                  return (
-                    <div
-                      key={amenity}
-                      className="flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-xs font-medium"
-                    >
-                      {getAmenityIcon(amenity)}
-                      <span className="capitalize">{amenity}</span>
-                    </div>
-                  );
-                })}
+            {/* Bottom: Bus Type and Amenities */}
+            <div className="flex items-center justify-end gap-2 flex-wrap">
+              {trip.busType && (
+                <span className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-xs font-semibold uppercase">
+                  {trip.busType}
+                </span>
+              )}
+
+              {trip.amenities && Object.keys(trip.amenities).length > 0 && (
+                <>
+                  {Object.entries(trip.amenities)
+                    .filter(([, available]) => available)
+                    .map(([amenity]) => {
+                      const getAmenityIcon = (amenity: string) => {
+                        switch (amenity.toLowerCase()) {
+                          case "wifi":
+                            return <Wifi className="w-3.5 h-3.5" />;
+                          case "tv":
+                            return <Tv className="w-3.5 h-3.5" />;
+                          case "snack":
+                            return <Coffee className="w-3.5 h-3.5" />;
+                          case "water":
+                            return <Droplets className="w-3.5 h-3.5" />;
+                          case "toilet":
+                            return <Bath className="w-3.5 h-3.5" />;
+                          case "blanket":
+                            return <ShirtIcon className="w-3.5 h-3.5" />;
+                          case "charger":
+                            return <Zap className="w-3.5 h-3.5" />;
+                          case "aircondition":
+                            return <Snowflake className="w-3.5 h-3.5" />;
+                          default:
+                            return null;
+                        }
+                      };
+                      return (
+                        <div
+                          key={amenity}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-xs font-semibold border border-green-200 dark:border-green-800"
+                        >
+                          {getAmenityIcon(amenity)}
+                          <span className="capitalize">{amenity}</span>
+                        </div>
+                      );
+                    })}
+                </>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -326,7 +319,7 @@ export default function TripCard({ trip, isOpen, onToggle }: TripCardProps) {
                     setActiveTab(tab.id as TabId);
                   }
                 }}
-                className={`px-6 py-2 text-sm font-medium rounded-2xl transition-all duration-200 ${
+                className={`px-10 py-2 text-sm font-medium rounded-2xl transition-all duration-200 ${
                   activeTab === tab.id && isOpen
                     ? "bg-foreground text-white"
                     : "text-gray-600 hover:bg-gray-100"

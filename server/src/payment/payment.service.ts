@@ -21,6 +21,7 @@ import { ETicketService } from 'src/eticket/eticket.service';
 import { SmsService } from 'src/notifications/sms.service';
 import { SettingService } from 'src/setting/setting.service';
 import { BookingRulesSettingsDto } from 'src/setting/dto/booking-rule-setting.dto';
+import { PaymentGateway } from './payment.gateway';
 
 interface NotificationPreferences {
   email?: Record<string, boolean>;
@@ -38,6 +39,7 @@ export class PaymentService {
     private readonly eticketService: ETicketService,
     private readonly smsService: SmsService,
     private readonly settingService: SettingService,
+    private readonly paymentGateway: PaymentGateway,
   ) {}
 
   /**
@@ -410,6 +412,13 @@ export class PaymentService {
             );
           }
         }
+
+        // Emit WebSocket event for payment success
+        this.paymentGateway.emitPaymentSuccess(bookingId, {
+          ticketCode: booking.ticketCode || bookingId,
+          amount: paymentData.amount,
+          bookingIds: allBookingIds,
+        });
       } else {
         // Thanh toán thất bại
         await this.prisma.payments.update({
@@ -422,6 +431,11 @@ export class PaymentService {
         this.logger.log(
           `Payment failed for booking: ${bookingId}, code: ${webhookCode}`,
         );
+
+        // Emit WebSocket event for payment failure
+        this.paymentGateway.emitPaymentFailure(bookingId, {
+          reason: webhookData.desc || 'Payment failed',
+        });
       }
 
       return {

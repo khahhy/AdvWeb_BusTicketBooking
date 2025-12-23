@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PaymentController } from './payment.controller';
 import { PaymentService } from './payment.service';
+import { PaymentGateway } from './payment.gateway';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { PayOSModule } from 'src/payos/payos.module';
 import { EmailModule } from 'src/email/email.module';
@@ -20,7 +21,7 @@ import { SettingModule } from 'src/setting/setting.module';
     NotificationsModule,
   ],
   controllers: [PaymentController],
-  providers: [PaymentService],
+  providers: [PaymentService, PaymentGateway],
   exports: [PaymentService],
 })
 export class PaymentModule {}

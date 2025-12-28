@@ -52,6 +52,7 @@ export interface ParsedIntent {
     destinationName?: string;
     needMoreInfo?: boolean;
     clarificationMessage?: string;
+    topic?: string;
   };
 }
 

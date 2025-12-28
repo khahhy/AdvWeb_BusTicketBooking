@@ -9,6 +9,7 @@ import {
   Eye,
   Edit,
   XCircle,
+  Star,
 } from "lucide-react";
 import Navbar from "@/components/common/Navbar";
 import { Button } from "@/components/ui/button";
@@ -54,18 +55,59 @@ interface Booking {
   };
 }
 
+interface ReviewSummary {
+  id: string;
+  bookingId: string;
+  rating: number;
+  comment?: string | null;
+  createdAt: string;
+}
+
 export default function BookingHistoryPage() {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reviewsByBookingId, setReviewsByBookingId] = useState<
+    Record<string, ReviewSummary>
+  >({});
   const [filter, setFilter] = useState<
-    "all" | "confirmed" | "pendingPayment" | "cancelled"
+    "all" | "confirmed" | "pendingPayment" | "cancelled" | "completed"
   >("all");
 
   useEffect(() => {
     window.scrollTo(0, 0);
     fetchBookings();
   }, []);
+
+  const fetchReviews = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
+
+      const response = await fetch("http://localhost:3000/reviews/my", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch reviews");
+      }
+
+      const result = await response.json();
+      const reviews = (result.data || []) as ReviewSummary[];
+      const mapped = reviews.reduce<Record<string, ReviewSummary>>(
+        (acc, review) => {
+          acc[review.bookingId] = review;
+          return acc;
+        },
+        {},
+      );
+      setReviewsByBookingId(mapped);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+    }
+  };
 
   const fetchBookings = async () => {
     try {
@@ -91,6 +133,7 @@ export default function BookingHistoryPage() {
 
       const result = await response.json();
       setBookings(result.data || []);
+      fetchReviews();
     } catch (error) {
       console.error("Error fetching bookings:", error);
       toast.error("Unable to load booking history");
@@ -107,8 +150,24 @@ export default function BookingHistoryPage() {
     return dayjs(dateStr).format("DD/MM/YYYY");
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
+  const isBookingCompleted = (booking: Booking) => {
+    const now = new Date();
+    return (
+      booking.status === "confirmed" &&
+      new Date(booking.trip.startTime).getTime() < now.getTime()
+    );
+  };
+
+  const getStatusBadge = (booking: Booking) => {
+    if (isBookingCompleted(booking)) {
+      return (
+        <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900 dark:text-emerald-200">
+          Completed
+        </Badge>
+      );
+    }
+
+    switch (booking.status) {
       case "confirmed":
         return (
           <Badge className="bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900 dark:text-green-300">
@@ -132,9 +191,11 @@ export default function BookingHistoryPage() {
     }
   };
 
-  const filteredBookings = bookings.filter((booking) =>
-    filter === "all" ? true : booking.status === filter,
-  );
+  const filteredBookings = bookings.filter((booking) => {
+    if (filter === "all") return true;
+    if (filter === "completed") return isBookingCompleted(booking);
+    return booking.status === filter;
+  });
 
   const handleDownloadTicket = (bookingCode: string) => {
     console.log("Downloading ticket for:", bookingCode);
@@ -187,6 +248,10 @@ export default function BookingHistoryPage() {
       booking.status !== "pendingPayment" &&
       tripStartTime > now
     );
+  };
+
+  const handleGiveFeedback = (bookingId: string) => {
+    navigate(`/feedback/${bookingId}`);
   };
 
   return (
@@ -250,6 +315,13 @@ export default function BookingHistoryPage() {
               >
                 Cancelled
               </Button>
+              <Button
+                variant={filter === "completed" ? "default" : "outline"}
+                onClick={() => setFilter("completed")}
+                className="rounded-full"
+              >
+                Completed
+              </Button>
             </div>
           </div>
         </div>
@@ -297,7 +369,7 @@ export default function BookingHistoryPage() {
                         Passenger: {booking.customerInfo.fullName}
                       </p>
                     </div>
-                    {getStatusBadge(booking.status)}
+                    {getStatusBadge(booking)}
                   </div>
 
                   {/* Trip Info */}
@@ -416,6 +488,19 @@ export default function BookingHistoryPage() {
                         >
                           <Download className="w-4 h-4" />
                           Download
+                        </Button>
+                      )}
+                      {isBookingCompleted(booking) && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleGiveFeedback(booking.id)}
+                          className="flex items-center gap-1 border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-200 dark:hover:bg-amber-900"
+                        >
+                          <Star className="w-4 h-4" />
+                          {reviewsByBookingId[booking.id]
+                            ? "View Feedback"
+                            : "Feedback"}
                         </Button>
                       )}
                     </div>

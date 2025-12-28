@@ -15,10 +15,11 @@ import { Textarea } from "@/components/ui/textarea";
 import Footer from "@/components/dashboard/Footer";
 import backgroundImage from "@/assets/images/background.png";
 import dayjs from "dayjs";
+import { toast } from "sonner";
 
 interface BookingData {
   id: string;
-  bookingCode: string;
+  ticketCode: string;
   from: string;
   to: string;
   date: string;
@@ -29,38 +30,19 @@ interface BookingData {
   busType: string;
 }
 
-interface RatingCategory {
-  id: string;
-  label: string;
-  rating: number;
-}
+const formatDuration = (start: Date, end: Date) => {
+  const diffMs = end.getTime() - start.getTime();
+  if (!Number.isFinite(diffMs) || diffMs <= 0) return "—";
 
-// Mock booking data
-const mockBookings: { [key: string]: BookingData } = {
-  "1": {
-    id: "1",
-    bookingCode: "BUS123456",
-    from: "Ho Chi Minh City",
-    to: "Da Lat",
-    date: "2024-11-15",
-    departureTime: "08:00",
-    arrivalTime: "14:30",
-    duration: "6h 30m",
-    busNumber: "SGN-DAL-001",
-    busType: "Limousine 22 seats",
-  },
-  "2": {
-    id: "2",
-    bookingCode: "BUS789012",
-    from: "Ho Chi Minh City",
-    to: "Nha Trang",
-    date: "2024-12-01",
-    departureTime: "22:00",
-    arrivalTime: "06:30",
-    duration: "8h 30m",
-    busNumber: "SGN-NTR-003",
-    busType: "Sleeper Bus 34 beds",
-  },
+  const totalMinutes = Math.round(diffMs / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours <= 0) {
+    return `${minutes}m`;
+  }
+
+  return `${hours}h ${minutes}m`;
 };
 
 export default function FeedbackRatingPage() {
@@ -69,43 +51,133 @@ export default function FeedbackRatingPage() {
 
   const [booking, setBooking] = useState<BookingData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [overallRating, setOverallRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [feedback, setFeedback] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-
-  const [categories, setCategories] = useState<RatingCategory[]>([
-    { id: "comfort", label: "Comfort & Cleanliness", rating: 0 },
-    { id: "punctuality", label: "On-time Performance", rating: 0 },
-    { id: "staff", label: "Staff Service", rating: 0 },
-    { id: "safety", label: "Safety & Driving", rating: 0 },
-  ]);
+  const [isViewOnly, setIsViewOnly] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    setBooking(null);
+    setLoading(true);
+    setError(null);
+    setOverallRating(0);
+    setFeedback("");
+    setSubmitted(false);
+    setIsViewOnly(false);
 
-    // Simulate API call
-    setTimeout(() => {
-      if (id && mockBookings[id]) {
-        setBooking(mockBookings[id]);
+    const fetchBooking = async () => {
+      if (!id) return;
+      try {
+        const token = localStorage.getItem("accessToken");
+        const response = await fetch(`http://localhost:3000/bookings/${id}`, {
+          headers: token
+            ? {
+                Authorization: `Bearer ${token}`,
+              }
+            : undefined,
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to load booking");
+        }
+
+        const result = await response.json();
+        const data = result.data;
+
+        if (!data) {
+          throw new Error("Booking not found");
+        }
+
+        const startTime = data.trip?.startTime;
+        const arrivalTimeValue =
+          data.dropoffStop?.arrivalTime || data.trip?.endTime;
+        const tripStart = startTime ? dayjs(startTime) : null;
+        const tripEnd = arrivalTimeValue ? dayjs(arrivalTimeValue) : null;
+        const startDate = startTime ? new Date(startTime) : null;
+        const endDate = arrivalTimeValue ? new Date(arrivalTimeValue) : null;
+
+        setBooking({
+          id: data.id,
+          ticketCode: data.ticketCode || data.id,
+          from:
+            data.pickupStop?.location?.city ??
+            data.pickupStop?.location?.name ??
+            "Unknown",
+          to:
+            data.dropoffStop?.location?.city ??
+            data.dropoffStop?.location?.name ??
+            "Unknown",
+          date: startTime ?? "",
+          departureTime: tripStart ? tripStart.format("HH:mm") : "--:--",
+          arrivalTime: tripEnd ? tripEnd.format("HH:mm") : "—",
+          duration:
+            startDate && endDate ? formatDuration(startDate, endDate) : "—",
+          busNumber: data.trip?.bus?.plate ?? "—",
+          busType: data.trip?.bus?.busType ?? "—",
+        });
+      } catch (err) {
+        console.error("Error fetching booking for feedback", err);
+        setError(err instanceof Error ? err.message : "Unable to load booking");
+        toast.error("Unable to load booking for feedback");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }, 500);
+    };
+
+    fetchBooking();
+  }, [id]);
+
+  useEffect(() => {
+    const fetchExistingReview = async () => {
+      if (!id) return;
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
+
+      try {
+        const response = await fetch(
+          `http://localhost:3000/reviews/booking/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (response.status === 404) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error("Failed to load existing review");
+        }
+
+        const result = await response.json();
+        const review = result.data;
+
+        if (review) {
+          setOverallRating(review.rating ?? 0);
+          setFeedback(review.comment ?? "");
+          setIsViewOnly(true);
+        }
+      } catch (err) {
+        console.error("Error fetching existing review", err);
+      }
+    };
+
+    fetchExistingReview();
   }, [id]);
 
   const formatDate = (dateStr: string) => {
-    return dayjs(dateStr).format("DD/MM/YYYY");
+    return dateStr ? dayjs(dateStr).format("DD/MM/YYYY") : "N/A";
   };
 
-  const handleStarClick = (rating: number, categoryId?: string) => {
-    if (categoryId) {
-      setCategories((prev) =>
-        prev.map((cat) => (cat.id === categoryId ? { ...cat, rating } : cat)),
-      );
-    } else {
-      setOverallRating(rating);
-    }
+  const handleStarClick = (rating: number) => {
+    if (isViewOnly) return;
+    setOverallRating(rating);
   };
 
   const handleStarHover = (rating: number, isOverall: boolean = false) => {
@@ -116,23 +188,75 @@ export default function FeedbackRatingPage() {
   };
 
   const handleSubmit = async () => {
+    if (isViewOnly) {
+      toast.info("Feedback has already been submitted for this trip");
+      return;
+    }
+
     if (overallRating === 0) {
-      alert("Please provide an overall rating");
+      toast.error("Please provide an overall rating");
+      return;
+    }
+
+    if (!booking) {
+      toast.error("Booking details are not available");
+      return;
+    }
+
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      toast.error("Please login to submit feedback");
+      navigate("/login");
       return;
     }
 
     setSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setSubmitting(false);
+    try {
+      const response = await fetch("http://localhost:3000/reviews", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          bookingId: booking.id,
+          rating: overallRating,
+          comment: feedback.trim() || undefined,
+        }),
+      });
+
+      if (response.status === 409) {
+        toast.error("You already submitted feedback for this booking");
+        setSubmitted(true);
+        return;
+      }
+
+      if (response.status === 401) {
+        toast.error("Session expired. Please login again.");
+        navigate("/login");
+        return;
+      }
+
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => null);
+        const message = errorPayload?.message || "Failed to submit feedback";
+        throw new Error(message);
+      }
+
+      toast.success("Feedback submitted successfully");
       setSubmitted(true);
 
-      // Auto redirect after 3 seconds
       setTimeout(() => {
         navigate("/booking-history");
       }, 3000);
-    }, 1500);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Unable to submit feedback",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const StarRating = ({
@@ -140,13 +264,11 @@ export default function FeedbackRatingPage() {
     onStarClick,
     onStarHover,
     size = "w-6 h-6",
-    categoryId,
   }: {
     rating: number;
-    onStarClick: (rating: number, categoryId?: string) => void;
+    onStarClick: (rating: number) => void;
     onStarHover?: (rating: number) => void;
     size?: string;
-    categoryId?: string;
   }) => {
     const [localHover, setLocalHover] = useState(0);
 
@@ -156,7 +278,7 @@ export default function FeedbackRatingPage() {
           <button
             key={star}
             type="button"
-            onClick={() => onStarClick(star, categoryId)}
+            onClick={() => onStarClick(star)}
             onMouseEnter={() => {
               setLocalHover(star);
               onStarHover?.(star);
@@ -166,7 +288,7 @@ export default function FeedbackRatingPage() {
               onStarHover?.(0);
             }}
             className="transition-colors duration-200 hover:scale-110 transform"
-            disabled={submitted}
+            disabled={submitted || isViewOnly}
           >
             <Star
               className={`${size} transition-all duration-200 ${
@@ -204,10 +326,12 @@ export default function FeedbackRatingPage() {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              Trip Not Found
+              {error ? "Unable to load booking" : "Trip Not Found"}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              The trip you're trying to rate doesn't exist.
+              {error
+                ? "We couldn't retrieve your booking details. Please try again from your booking history."
+                : "The trip you're trying to rate doesn't exist."}
             </p>
             <Button onClick={() => navigate("/booking-history")}>
               Go Back to History
@@ -337,7 +461,7 @@ export default function FeedbackRatingPage() {
                   Booking Code:
                 </span>
                 <div className="font-semibold text-gray-900 dark:text-white">
-                  {booking.bookingCode}
+                  {booking.ticketCode}
                 </div>
               </div>
               <div>
@@ -360,6 +484,15 @@ export default function FeedbackRatingPage() {
             </div>
           </div>
         </div>
+
+        {isViewOnly && (
+          <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.35s_forwards]">
+            <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-2xl px-4 py-3 mb-6 text-sm text-amber-800 dark:text-amber-200">
+              You already submitted feedback for this trip. You can view it
+              below.
+            </div>
+          </div>
+        )}
 
         {/* Overall Rating */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.4s_forwards]">
@@ -390,33 +523,6 @@ export default function FeedbackRatingPage() {
           </div>
         </div>
 
-        {/* Category Ratings */}
-        <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]">
-          <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
-              Rate Specific Aspects
-            </h3>
-
-            <div className="space-y-6">
-              {categories.map((category) => (
-                <div
-                  key={category.id}
-                  className="flex items-center justify-between"
-                >
-                  <span className="text-gray-700 dark:text-gray-300 font-medium min-w-0 flex-1 mr-6">
-                    {category.label}
-                  </span>
-                  <StarRating
-                    rating={category.rating}
-                    onStarClick={handleStarClick}
-                    categoryId={category.id}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/* Written Feedback */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]">
           <div className="bg-white dark:bg-black rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
@@ -433,7 +539,8 @@ export default function FeedbackRatingPage() {
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
               className="min-h-32 resize-none"
-              disabled={submitting}
+              maxLength={500}
+              disabled={submitting || isViewOnly}
             />
 
             <div className="flex items-center justify-between mt-4 text-sm text-gray-500 dark:text-gray-400">
@@ -445,34 +552,46 @@ export default function FeedbackRatingPage() {
 
         {/* Submit Button */}
         <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.7s_forwards]">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Button
-              onClick={handleSubmit}
-              disabled={overallRating === 0 || submitting}
-              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-2xl font-semibold flex items-center justify-center gap-2"
-            >
-              {submitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Submitting...
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4" />
-                  Submit Feedback
-                </>
-              )}
-            </Button>
+          {isViewOnly ? (
+            <div className="flex justify-end">
+              <Button
+                onClick={() => navigate("/booking-history")}
+                variant="outline"
+                className="py-3 rounded-2xl font-semibold"
+              >
+                Back to Booking History
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button
+                onClick={handleSubmit}
+                disabled={overallRating === 0 || submitting}
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-2xl font-semibold flex items-center justify-center gap-2"
+              >
+                {submitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    Submit Feedback
+                  </>
+                )}
+              </Button>
 
-            <Button
-              onClick={() => navigate("/booking-history")}
-              variant="outline"
-              className="flex-1 py-3 rounded-2xl font-semibold"
-              disabled={submitting}
-            >
-              Skip for Now
-            </Button>
-          </div>
+              <Button
+                onClick={() => navigate("/booking-history")}
+                variant="outline"
+                className="flex-1 py-3 rounded-2xl font-semibold"
+                disabled={submitting}
+              >
+                Skip for Now
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 

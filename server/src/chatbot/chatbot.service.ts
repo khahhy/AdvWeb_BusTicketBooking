@@ -47,6 +47,7 @@ export class ChatbotService {
   private generateTextSeatMap(
     availableSeats: string[],
     bookedSeats: string[],
+    // busType?: string,
   ): string {
     // Group seats by row
     const seatsByRow: Record<string, string[]> = {};

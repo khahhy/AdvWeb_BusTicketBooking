@@ -418,6 +418,7 @@ export class BookingsService {
             select: {
               tripName: true,
               startTime: true,
+              endTime: true,
               bus: {
                 select: {
                   plate: true,

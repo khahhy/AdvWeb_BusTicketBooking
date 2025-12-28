@@ -1,8 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -14,9 +16,13 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { UserRole } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { Roles } from 'src/common/decorators/role.decorator';
+import { RolesGuard } from 'src/common/guards/role.guard';
 import type { RequestWithUser } from 'src/common/type/request-with-user.interface';
 import { CreateReviewDto } from './dto/create-review.dto';
+import { ModerateReviewDto } from './dto/moderate-review.dto';
 import { ReviewsService } from './reviews.service';
 
 @ApiTags('reviews')
@@ -61,5 +67,39 @@ export class ReviewsController {
   @Get('my')
   async findMyReviews(@Req() req: RequestWithUser) {
     return this.reviewsService.findByUser(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Admin: Get all reviews for moderation' })
+  @ApiResponse({ status: 200, description: 'Fetched reviews successfully.' })
+  @Get('admin')
+  async findAllForAdmin() {
+    return this.reviewsService.findAllForAdmin();
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Admin: Moderate a review' })
+  @ApiResponse({ status: 200, description: 'Review moderated successfully.' })
+  @Patch(':id/moderate')
+  async moderateReview(
+    @Param('id') id: string,
+    @Body() dto: ModerateReviewDto,
+    @Req() req: RequestWithUser,
+  ) {
+    return this.reviewsService.moderateReview(id, req.user.userId, dto.status);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Admin: Delete a review' })
+  @ApiResponse({ status: 200, description: 'Review deleted successfully.' })
+  @Delete(':id')
+  async removeReview(@Param('id') id: string) {
+    return this.reviewsService.removeReview(id);
   }
 }

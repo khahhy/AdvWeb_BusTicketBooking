@@ -61,6 +61,8 @@ interface ReviewSummary {
   rating: number;
   comment?: string | null;
   createdAt: string;
+  status?: "visible" | "hidden" | "flagged";
+  flaggedReason?: string | null;
 }
 
 export default function BookingHistoryPage() {
@@ -252,6 +254,19 @@ export default function BookingHistoryPage() {
 
   const handleGiveFeedback = (bookingId: string) => {
     navigate(`/feedback/${bookingId}`);
+  };
+
+  const getFeedbackLabel = (review?: ReviewSummary) => {
+    if (!review) return "Feedback";
+    switch (review.status) {
+      case "flagged":
+        return "Feedback Pending";
+      case "hidden":
+        return "Feedback Hidden";
+      case "visible":
+      default:
+        return "View Feedback";
+    }
   };
 
   return (
@@ -498,9 +513,7 @@ export default function BookingHistoryPage() {
                           className="flex items-center gap-1 border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-200 dark:hover:bg-amber-900"
                         >
                           <Star className="w-4 h-4" />
-                          {reviewsByBookingId[booking.id]
-                            ? "View Feedback"
-                            : "Feedback"}
+                          {getFeedbackLabel(reviewsByBookingId[booking.id])}
                         </Button>
                       )}
                     </div>

@@ -224,6 +224,10 @@ model Reviews {
   userId    String
   rating    Int
   comment   String?
+  status    ReviewStatus @default(visible)
+  flaggedReason String?
+  moderatedAt DateTime?
+  moderatedBy String?
   createdAt DateTime @default(now())
   booking   Bookings @relation(fields: [bookingId], references: [id])
   user      Users    @relation(fields: [userId], references: [id])
@@ -315,6 +319,12 @@ enum PaymentStatus {
   successful
   failed
   refunded
+}
+
+enum ReviewStatus {
+  visible
+  hidden
+  flagged
 }
 
 enum NotificationType {

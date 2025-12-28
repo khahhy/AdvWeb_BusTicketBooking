@@ -71,6 +71,35 @@ const ReviewDetailModal = ({
                 </div>
               </div>
             </div>
+
+            <div>
+              <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
+                Moderation
+              </h3>
+              <div className="space-y-2 text-xs">
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                    review.status === "visible"
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
+                      : review.status === "hidden"
+                        ? "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                        : "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200"
+                  }`}
+                >
+                  {review.status}
+                </span>
+                {review.flaggedReason && (
+                  <div className="text-amber-700 dark:text-amber-200">
+                    Flagged: {review.flaggedReason}
+                  </div>
+                )}
+                {review.moderatedAt && (
+                  <div className="text-gray-500 dark:text-gray-400">
+                    Last moderated: {formatDate(review.moderatedAt)}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="md:col-span-2 space-y-4">
@@ -95,7 +124,9 @@ const ReviewDetailModal = ({
             <div className="relative bg-gray-50 dark:bg-gray-700 p-6 rounded-lg">
               <Quote className="absolute top-4 left-4 w-8 h-8 text-gray-200 dark:text-gray-600 -z-0" />
               <p className="text-gray-700 dark:text-gray-300 italic relative z-10 leading-relaxed">
-                "{review.comment}"
+                {review.comment?.trim()
+                  ? `"${review.comment}"`
+                  : "No comment provided."}
               </p>
             </div>
 

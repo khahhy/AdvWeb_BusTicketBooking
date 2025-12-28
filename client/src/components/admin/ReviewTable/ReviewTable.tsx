@@ -1,13 +1,22 @@
-import { Eye, Star, Trash2, EyeOff } from "lucide-react";
+import { Eye, Star, Trash2, EyeOff, FileText, CheckCircle } from "lucide-react";
 import { Review } from "@/admin/customerCare/ReviewManagement";
 import { formatDate } from "@/utils/formatDate";
 
 interface ReviewTableProps {
   reviews: Review[];
   onViewDetail: (review: Review) => void;
+  onToggleVisibility: (review: Review) => void;
+  onApprove: (review: Review) => void;
+  onDelete: (review: Review) => void;
 }
 
-const ReviewTable = ({ reviews, onViewDetail }: ReviewTableProps) => {
+const ReviewTable = ({
+  reviews,
+  onViewDetail,
+  onToggleVisibility,
+  onApprove,
+  onDelete,
+}: ReviewTableProps) => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
@@ -19,6 +28,7 @@ const ReviewTable = ({ reviews, onViewDetail }: ReviewTableProps) => {
               <th className="px-6 py-3 w-1/3">Comment</th>
               <th className="px-6 py-3">Trip Info</th>
               <th className="px-6 py-3">Date</th>
+              <th className="px-6 py-3">Status</th>
               <th className="px-6 py-3 text-right">Actions</th>
             </tr>
           </thead>
@@ -53,7 +63,7 @@ const ReviewTable = ({ reviews, onViewDetail }: ReviewTableProps) => {
                     className="truncate max-w-xs text-gray-600 dark:text-gray-400"
                     title={review.comment}
                   >
-                    "{review.comment}"
+                    {review.comment?.trim() ? `"${review.comment}"` : "—"}
                   </p>
                 </td>
                 <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
@@ -64,6 +74,19 @@ const ReviewTable = ({ reviews, onViewDetail }: ReviewTableProps) => {
                 <td className="px-6 py-4 text-gray-400 dark:text-gray-400 text-xs whitespace-nowrap">
                   {formatDate(review.createdAt)}
                 </td>
+                <td className="px-6 py-4">
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                      review.status === "visible"
+                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
+                        : review.status === "hidden"
+                          ? "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                          : "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200"
+                    }`}
+                  >
+                    {review.status}
+                  </span>
+                </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
@@ -71,15 +94,34 @@ const ReviewTable = ({ reviews, onViewDetail }: ReviewTableProps) => {
                       className="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/50 rounded-full"
                       title="View Detail"
                     >
-                      <Eye className="w-4 h-4" />
+                      <FileText className="w-4 h-4" />
                     </button>
+                    {review.status === "flagged" && (
+                      <button
+                        onClick={() => onApprove(review)}
+                        className="p-2 text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/50 rounded-full"
+                        title="Approve Review"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
+                      onClick={() => onToggleVisibility(review)}
                       className="p-2 text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/50 rounded-full"
-                      title="Hide Review (Moderation)"
+                      title={
+                        review.status === "hidden"
+                          ? "Show Review"
+                          : "Hide Review (Moderation)"
+                      }
                     >
-                      <EyeOff className="w-4 h-4" />
+                      {review.status === "hidden" ? (
+                        <Eye className="w-4 h-4" />
+                      ) : (
+                        <EyeOff className="w-4 h-4" />
+                      )}
                     </button>
                     <button
+                      onClick={() => onDelete(review)}
                       className="p-2 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-full"
                       title="Delete"
                     >
@@ -92,7 +134,7 @@ const ReviewTable = ({ reviews, onViewDetail }: ReviewTableProps) => {
             {reviews.length === 0 && (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="text-center py-12 text-gray-500 dark:text-gray-400"
                 >
                   No reviews found.

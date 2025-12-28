@@ -5,9 +5,34 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { BookingStatus } from '@prisma/client';
+import { BookingStatus, ReviewStatus } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
+
+const PROHIBITED_TERMS = [
+  'spam',
+  'scam',
+  'fraud',
+  'fuck',
+  'shit',
+  'bitch',
+  'asshole',
+  'bastard',
+  'dick',
+  'piss',
+  'cunt',
+  'whore',
+  'slut',
+];
+
+const escapeRegExp = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const findProhibitedTerms = (comment: string) =>
+  PROHIBITED_TERMS.filter((term) => {
+    const regex = new RegExp(`\\b${escapeRegExp(term)}\\b`, 'i');
+    return regex.test(comment);
+  });
 
 @Injectable()
 export class ReviewsService {
@@ -49,6 +74,10 @@ export class ReviewsService {
     }
 
     const trimmedComment = dto.comment?.trim();
+    const matchedTerms = trimmedComment
+      ? findProhibitedTerms(trimmedComment)
+      : [];
+    const shouldFlag = matchedTerms.length > 0;
 
     const review = await this.prisma.reviews.create({
       data: {
@@ -56,6 +85,10 @@ export class ReviewsService {
         user: { connect: { id: userId } },
         rating: dto.rating,
         comment: trimmedComment?.length ? trimmedComment : null,
+        status: shouldFlag ? ReviewStatus.flagged : ReviewStatus.visible,
+        flaggedReason: shouldFlag
+          ? `Contains prohibited terms: ${matchedTerms.join(', ')}`
+          : null,
       },
     });
 
@@ -81,5 +114,80 @@ export class ReviewsService {
     });
 
     return { message: 'Fetched reviews successfully', data: reviews };
+  }
+
+  async findAllForAdmin() {
+    const reviews = await this.prisma.reviews.findMany({
+      include: {
+        user: { select: { fullName: true, email: true } },
+        booking: {
+          select: {
+            route: { select: { name: true } },
+            trip: { select: { startTime: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const data = reviews.map((review) => ({
+      id: review.id,
+      bookingId: review.bookingId,
+      userId: review.userId,
+      userName:
+        review.user?.fullName || review.user?.email || 'Unknown Passenger',
+      routeName: review.booking?.route?.name || 'Unknown Route',
+      tripDate: review.booking?.trip?.startTime?.toISOString() || '',
+      rating: review.rating,
+      comment: review.comment ?? '',
+      createdAt: review.createdAt.toISOString(),
+      status: review.status,
+      flaggedReason: review.flaggedReason,
+      moderatedAt: review.moderatedAt?.toISOString() || null,
+      moderatedBy: review.moderatedBy ?? null,
+    }));
+
+    return { message: 'Fetched reviews successfully', data };
+  }
+
+  async moderateReview(
+    reviewId: string,
+    adminId: string,
+    status: ReviewStatus,
+  ) {
+    const review = await this.prisma.reviews.findUnique({
+      where: { id: reviewId },
+      select: { id: true },
+    });
+
+    if (!review) {
+      throw new NotFoundException('Review not found');
+    }
+
+    const updated = await this.prisma.reviews.update({
+      where: { id: reviewId },
+      data: {
+        status,
+        moderatedAt: new Date(),
+        moderatedBy: adminId,
+      },
+    });
+
+    return { message: 'Review moderated successfully', data: updated };
+  }
+
+  async removeReview(reviewId: string) {
+    const review = await this.prisma.reviews.findUnique({
+      where: { id: reviewId },
+      select: { id: true },
+    });
+
+    if (!review) {
+      throw new NotFoundException('Review not found');
+    }
+
+    await this.prisma.reviews.delete({ where: { id: reviewId } });
+
+    return { message: 'Review deleted successfully' };
   }
 }

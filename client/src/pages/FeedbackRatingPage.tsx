@@ -30,6 +30,8 @@ interface BookingData {
   busType: string;
 }
 
+type ReviewStatus = "visible" | "hidden" | "flagged";
+
 const formatDuration = (start: Date, end: Date) => {
   const diffMs = end.getTime() - start.getTime();
   if (!Number.isFinite(diffMs) || diffMs <= 0) return "—";
@@ -58,6 +60,8 @@ export default function FeedbackRatingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [isViewOnly, setIsViewOnly] = useState(false);
+  const [reviewStatus, setReviewStatus] = useState<ReviewStatus | null>(null);
+  const [reviewReason, setReviewReason] = useState<string | null>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -68,6 +72,8 @@ export default function FeedbackRatingPage() {
     setFeedback("");
     setSubmitted(false);
     setIsViewOnly(false);
+    setReviewStatus(null);
+    setReviewReason(null);
 
     const fetchBooking = async () => {
       if (!id) return;
@@ -161,6 +167,8 @@ export default function FeedbackRatingPage() {
         if (review) {
           setOverallRating(review.rating ?? 0);
           setFeedback(review.comment ?? "");
+          setReviewStatus(review.status ?? "visible");
+          setReviewReason(review.flaggedReason ?? null);
           setIsViewOnly(true);
         }
       } catch (err) {
@@ -189,7 +197,13 @@ export default function FeedbackRatingPage() {
 
   const handleSubmit = async () => {
     if (isViewOnly) {
-      toast.info("Feedback has already been submitted for this trip");
+      if (reviewStatus === "hidden") {
+        toast.info("Your feedback is hidden by admin moderation");
+      } else if (reviewStatus === "flagged") {
+        toast.info("Your feedback is pending admin approval");
+      } else {
+        toast.info("Feedback has already been submitted for this trip");
+      }
       return;
     }
 
@@ -258,6 +272,13 @@ export default function FeedbackRatingPage() {
       setSubmitting(false);
     }
   };
+
+  const moderationBannerClass =
+    reviewStatus === "hidden"
+      ? "bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-2xl px-4 py-3 mb-6 text-sm text-rose-800 dark:text-rose-200"
+      : "bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-2xl px-4 py-3 mb-6 text-sm text-amber-800 dark:text-amber-200";
+  const infoBannerClass =
+    "bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-900 rounded-2xl px-4 py-3 mb-6 text-sm text-sky-800 dark:text-sky-200";
 
   const StarRating = ({
     rating,
@@ -485,9 +506,20 @@ export default function FeedbackRatingPage() {
           </div>
         </div>
 
-        {isViewOnly && (
+        {isViewOnly && reviewStatus !== "visible" && (
           <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.35s_forwards]">
-            <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-2xl px-4 py-3 mb-6 text-sm text-amber-800 dark:text-amber-200">
+            <div className={moderationBannerClass}>
+              {reviewStatus === "hidden"
+                ? "Your feedback has been hidden by an administrator."
+                : "Your feedback is pending moderation approval."}
+              {reviewReason ? ` Reason: ${reviewReason}` : ""}
+            </div>
+          </div>
+        )}
+
+        {isViewOnly && reviewStatus === "visible" && (
+          <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.35s_forwards]">
+            <div className={infoBannerClass}>
               You already submitted feedback for this trip. You can view it
               below.
             </div>

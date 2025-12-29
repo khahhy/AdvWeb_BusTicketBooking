@@ -1,10 +1,11 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, Filter } from "lucide-react";
 import {
   ReviewDetailModal,
   ReviewStats,
   ReviewTable,
 } from "@/components/admin";
+import { toast } from "sonner";
 
 export interface Review {
   id: string;
@@ -16,92 +17,150 @@ export interface Review {
   rating: number;
   comment: string;
   createdAt: string;
-  status: "visible" | "hidden";
+  status: "visible" | "hidden" | "flagged";
+  flaggedReason?: string | null;
+  moderatedAt?: string | null;
+  moderatedBy?: string | null;
 }
-
-const MOCK_REVIEWS: Review[] = [
-  {
-    id: "r1",
-    bookingId: "b1",
-    userId: "u1",
-    userName: "Nguyen Van An",
-    routeName: "Saigon - Da Lat",
-    tripDate: "2025-11-15T08:00:00Z",
-    rating: 5,
-    comment: "Xe mới, sạch sẽ, bác tài chạy êm. Rất hài lòng!",
-    createdAt: "2025-11-16T10:00:00Z",
-    status: "visible",
-  },
-  {
-    id: "r2",
-    bookingId: "b2",
-    userId: "u2",
-    userName: "Tran Thi Bich",
-    routeName: "Da Nang - Saigon",
-    tripDate: "2025-11-14T20:00:00Z",
-    rating: 2,
-    comment: "Xe đến trễ 30 phút mà không báo trước. Wifi hỏng.",
-    createdAt: "2025-11-15T09:30:00Z",
-    status: "visible",
-  },
-  {
-    id: "r3",
-    bookingId: "b3",
-    userId: "u3",
-    userName: "Le Hoang Nam",
-    routeName: "Nha Trang - Saigon",
-    tripDate: "2025-11-10T14:00:00Z",
-    rating: 4,
-    comment: "Dịch vụ tốt nhưng máy lạnh hơi lạnh quá.",
-    createdAt: "2025-11-11T16:20:00Z",
-    status: "visible",
-  },
-  {
-    id: "r4",
-    bookingId: "b4",
-    userId: "u4",
-    userName: "Pham Van D",
-    routeName: "Saigon - Vung Tau",
-    tripDate: "2025-11-18T07:00:00Z",
-    rating: 1,
-    comment: "Thái độ nhân viên lơ xe rất tệ.",
-    createdAt: "2025-11-18T12:00:00Z",
-    status: "visible",
-  },
-  {
-    id: "r5",
-    bookingId: "b5",
-    userId: "u5",
-    userName: "Hoang Thi E",
-    routeName: "Saigon - Da Lat",
-    tripDate: "2025-11-19T22:00:00Z",
-    rating: 5,
-    comment: "Tuyệt vời! Sẽ ủng hộ lần sau.",
-    createdAt: "2025-11-20T08:00:00Z",
-    status: "visible",
-  },
-];
+type ReviewStatusFilter = Review["status"] | "all";
 
 const ReviewManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [ratingFilter, setRatingFilter] = useState<number | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<ReviewStatusFilter>("all");
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
+  const fetchReviews = async (showLoading: boolean = true) => {
+    if (showLoading) {
+      setIsLoading(true);
+    }
+
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        toast.error("Please login to view reviews");
+        return;
+      }
+
+      const response = await fetch("http://localhost:3000/reviews/admin", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch reviews");
+      }
+
+      const result = await response.json();
+      setReviews(Array.isArray(result.data) ? result.data : []);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+      toast.error("Unable to load reviews");
+    } finally {
+      if (showLoading) {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
   const filteredReviews = useMemo(() => {
-    return MOCK_REVIEWS.filter((review) => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return reviews.filter((review) => {
+      const comment = review.comment ?? "";
+      const flaggedReason = review.flaggedReason ?? "";
       const matchesSearch =
-        review.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        review.comment.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        review.routeName.toLowerCase().includes(searchTerm.toLowerCase());
+        review.userName.toLowerCase().includes(normalizedSearch) ||
+        comment.toLowerCase().includes(normalizedSearch) ||
+        review.routeName.toLowerCase().includes(normalizedSearch) ||
+        flaggedReason.toLowerCase().includes(normalizedSearch);
 
       const matchesRating =
         ratingFilter === "all" || review.rating === ratingFilter;
+      const matchesStatus =
+        statusFilter === "all" || review.status === statusFilter;
 
-      return matchesSearch && matchesRating;
+      return matchesSearch && matchesRating && matchesStatus;
     });
-  }, [searchTerm, ratingFilter]);
+  }, [reviews, searchTerm, ratingFilter, statusFilter]);
+
+  const handleModerateReview = async (
+    reviewId: string,
+    status: Review["status"],
+  ) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        toast.error("Please login to continue");
+        return;
+      }
+
+      const response = await fetch(
+        `http://localhost:3000/reviews/${reviewId}/moderate`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update review status");
+      }
+
+      toast.success("Review status updated");
+      await fetchReviews(false);
+    } catch (error) {
+      console.error("Error moderating review:", error);
+      toast.error("Unable to update review status");
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!confirm("Are you sure you want to delete this review?")) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        toast.error("Please login to continue");
+        return;
+      }
+
+      const response = await fetch(
+        `http://localhost:3000/reviews/${reviewId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete review");
+      }
+
+      toast.success("Review deleted");
+      setReviews((prev) => prev.filter((review) => review.id !== reviewId));
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      toast.error("Unable to delete review");
+    }
+  };
 
   return (
     <div className="p-6 space-y-6 min-h-screen font-sans text-gray-900 dark:text-white">
@@ -130,6 +189,21 @@ const ReviewManagement = () => {
             <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <select
               className="w-full md:w-40 pl-10 pr-8 py-2 border dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-gray-700 dark:text-white"
+              value={statusFilter}
+              onChange={(e) =>
+                setStatusFilter(e.target.value as ReviewStatusFilter)
+              }
+            >
+              <option value="all">All Statuses</option>
+              <option value="visible">Visible</option>
+              <option value="flagged">Flagged</option>
+              <option value="hidden">Hidden</option>
+            </select>
+          </div>
+          <div className="relative w-full md:w-auto">
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <select
+              className="w-full md:w-40 pl-10 pr-8 py-2 border dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-gray-700 dark:text-white"
               value={ratingFilter}
               onChange={(e) =>
                 setRatingFilter(
@@ -148,13 +222,26 @@ const ReviewManagement = () => {
         </div>
       </div>
 
-      <ReviewTable
-        reviews={filteredReviews}
-        onViewDetail={(r) => {
-          setSelectedReview(r);
-          setIsDetailOpen(true);
-        }}
-      />
+      {isLoading ? (
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+          Loading reviews...
+        </div>
+      ) : (
+        <ReviewTable
+          reviews={filteredReviews}
+          onViewDetail={(r) => {
+            setSelectedReview(r);
+            setIsDetailOpen(true);
+          }}
+          onToggleVisibility={(review) => {
+            const nextStatus =
+              review.status === "hidden" ? "visible" : "hidden";
+            handleModerateReview(review.id, nextStatus);
+          }}
+          onApprove={(review) => handleModerateReview(review.id, "visible")}
+          onDelete={(review) => handleDeleteReview(review.id)}
+        />
+      )}
 
       <ReviewDetailModal
         isOpen={isDetailOpen}

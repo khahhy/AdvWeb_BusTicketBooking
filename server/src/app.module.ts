@@ -20,6 +20,7 @@ import { HealthModule } from './health/health.module';
 import { PaymentModule } from './payment/payment.module';
 import { PayOSModule } from './payos/payos.module';
 import { ChatbotModule } from './chatbot/chatbot.module';
+import { ReviewsModule } from './reviews/reviews.module';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 
@@ -46,6 +47,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     PaymentModule,
     PayOSModule,
     ChatbotModule,
+    ReviewsModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

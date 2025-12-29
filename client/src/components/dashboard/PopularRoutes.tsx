@@ -28,7 +28,7 @@ export default function PopularRoutes() {
   });
 
   return (
-    <section className="bg-muted/30">
+    <section className="">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           <div className="text-center lg:text-left lg:pr-8">

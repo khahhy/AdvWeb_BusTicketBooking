@@ -17,11 +17,10 @@ export class GeminiService {
     }
 
     this.genAI = new GoogleGenerativeAI(apiKey);
-    // Use gemini-2.5-flash (latest working model)
     this.model = this.genAI.getGenerativeModel({
-      model: 'models/gemma-3-4b-it',
+      model: 'gemma-3-4b-it',
     });
-    this.logger.log(`Initialized model: gemini-2.5-flash-lite`);
+    this.logger.log(`Initialized Gemini model: gemma-3-4b-it`);
   }
 
   async generateResponse(
@@ -132,19 +131,21 @@ IMPORTANT: Return ONLY the JSON object, no other text.
       };
     }
 
-    // FAQ patterns
+    // FAQ patterns - Only match questions, not booking actions
     if (
-      lowerMessage.includes('hủy') ||
-      lowerMessage.includes('cancel') ||
+      lowerMessage.includes('làm sao') ||
+      lowerMessage.includes('how to') ||
+      lowerMessage.includes('chính sách') ||
+      lowerMessage.includes('policy') ||
+      lowerMessage.includes('quy định') ||
+      lowerMessage.includes('hủy vé') ||
       lowerMessage.includes('hoàn tiền') ||
       lowerMessage.includes('refund') ||
-      lowerMessage.includes('thanh toán') ||
-      lowerMessage.includes('payment') ||
-      lowerMessage.includes('?')
+      (lowerMessage.includes('?') && lowerMessage.length < 50) // Short questions only
     ) {
       return {
         intent: 'faq',
-        entities: { topic: 'general' },
+        entities: {},
       };
     }
 

@@ -318,7 +318,6 @@ export class TripsService {
 
     // Include tripRoutes with route and price if requested
     if (includeRoutes === 'true') {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       include.tripRoutes = {
         include: {
           route: {
@@ -333,7 +332,7 @@ export class TripsService {
 
     const trip = await this.prisma.trips.findUnique({
       where: { id },
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
       include,
     });
 
@@ -789,7 +788,6 @@ export class TripsService {
           });
 
           const matchedCity = allCities.find(
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
             (item: any) => normalizeCity(item.city) === normalizedOrigin,
           );
 
@@ -838,7 +836,6 @@ export class TripsService {
           });
 
           const matchedCity = allCities.find(
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
             (item: any) => normalizeCity(item.city) === normalizedDestination,
           );
 
@@ -991,7 +988,7 @@ export class TripsService {
 
         return {
           ...trip,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
           routeName: `${(relevantOriginStop as any).location?.city || 'Unknown'} - ${(relevantDestinationStop as any).location?.city || 'Unknown'}`,
           departureTime: relevantOriginStop.departureTime,
           arrivalTime: relevantDestinationStop.arrivalTime,

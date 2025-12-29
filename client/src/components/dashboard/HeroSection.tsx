@@ -53,28 +53,34 @@ export default function HeroSection() {
           </p>
           <LogoLoop className="opacity-60" speed="slow">
             <div className="text-black/60 dark:text-white/60 font-bold text-lg px-8">
-              Emirates
+              Ho Chi Minh City
             </div>
             <div className="text-black/60 dark:text-white/60 font-bold text-lg px-8">
-              KLM
-            </div>
-            <div className="text-black/60 dark:text-white/60 font-bold text-lg italic px-8">
-              AirAsia
+              Ha Noi
             </div>
             <div className="text-black/60 dark:text-white/60 font-bold text-lg px-8">
-              AIR INDIA
+              Quang Nam
             </div>
             <div className="text-black/60 dark:text-white/60 font-bold text-lg px-8">
-              ETIHAD
+              Da Nang
             </div>
             <div className="text-black/60 dark:text-white/60 font-bold text-lg px-8">
-              Singapore Airlines
+              Lam Dong
             </div>
             <div className="text-black/60 dark:text-white/60 font-bold text-lg px-8">
-              Qatar Airways
+              Can Tho
             </div>
             <div className="text-black/60 dark:text-white/60 font-bold text-lg px-8">
-              Turkish Airlines
+              Khanh Hoa
+            </div>
+            <div className="text-black/60 dark:text-white/60 font-bold text-lg px-8">
+              Thua Thien Hue
+            </div>
+            <div className="text-black/60 dark:text-white/60 font-bold text-lg px-8">
+              Binh Dinh
+            </div>
+            <div className="text-black/60 dark:text-white/60 font-bold text-lg px-8">
+              Kien Giang
             </div>
           </LogoLoop>
         </div>

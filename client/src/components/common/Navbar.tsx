@@ -2,16 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
 import ResizableNavbar, { NavItem } from "@/components/ui/resizable-navbar";
-import {
-  Bus,
-  Map,
-  Ticket,
-  User,
-  MapPin,
-  Phone,
-  LogOut,
-  Bell,
-} from "lucide-react";
+import { Ticket, User, Phone, LogOut, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { AppLogo } from "@/components/AppLogo/AppLogo";
@@ -61,33 +52,6 @@ export default function Navbar() {
       name: "Book Ticket",
       link: "/search",
       icon: <Ticket className="h-4 w-4" />,
-    },
-    {
-      name: "Routes",
-      link: "/routes",
-      icon: <Map className="h-4 w-4" />,
-      children: [
-        {
-          name: "Ho Chi Minh City - Da Lat",
-          link: "/routes/hcm-dalat",
-          icon: <Bus className="h-4 w-4 text-primary" />,
-        },
-        {
-          name: "Ho Chi Minh City - Nha Trang",
-          link: "/routes/hcm-nhatrang",
-          icon: <MapPin className="h-4 w-4 text-success" />,
-        },
-        {
-          name: "Hanoi - Sapa",
-          link: "/routes/hn-sapa",
-          icon: <MapPin className="h-4 w-4 text-purple-500" />,
-        },
-        {
-          name: "Ho Chi Minh City - Can Tho",
-          link: "/routes/hcm-cantho",
-          icon: <Bus className="h-4 w-4 text-orange-500" />,
-        },
-      ],
     },
     ...(isLoggedIn
       ? [

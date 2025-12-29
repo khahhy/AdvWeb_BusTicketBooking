@@ -32,14 +32,14 @@ const initialMessages: Message[] = [
   {
     id: "1",
     content:
-      "Your improved Bus Booking AI\n\nHere are a few things I can do, or ask me anything!",
+      "Hello! I'm your Bus Booking AI Assistant.\n\nI can help you with:",
     isBot: true,
     timestamp: new Date(),
     suggestions: [
-      "Personalize your booking experience",
-      "Translate this page",
-      "Analyze travel insights",
-      "Create a trip planner",
+      "Find bus from Hanoi to Da Nang",
+      "Show today's buses",
+      "Cancellation policy",
+      "Contact support",
     ],
   },
 ];
@@ -423,11 +423,6 @@ export default function Chatbot() {
           <MessageCircle className="w-6 h-6" />
           <div className="absolute -top-2 -right-2 w-6 h-6 bg-rose-400 rounded-full flex items-center justify-center">
             <Bot className="w-3 h-3 text-white" />
-          </div>
-
-          {/* Tooltip */}
-          <div className="absolute bottom-full right-0 mb-2 px-3 py-1 bg-gray-800 dark:bg-gray-900 text-white dark:text-gray-200 text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-            Bus Booking AI ⌘J
           </div>
         </button>
       )}
@@ -842,13 +837,10 @@ export default function Chatbot() {
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      placeholder="Ask about booking, schedules, or anything..."
+                      placeholder="Type your message..."
                       className="w-full bg-white/90 dark:bg-gray-800/95 text-gray-800 dark:text-gray-200 rounded-xl px-4 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400 placeholder-gray-500 dark:placeholder-gray-400 border border-rose-200 dark:border-gray-700"
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                      <span className="text-gray-500 dark:text-gray-400 text-xs">
-                        Auto
-                      </span>
                       <Globe className="w-3 h-3 text-gray-500 dark:text-gray-400" />
                     </div>
                   </div>

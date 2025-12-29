@@ -24,4 +24,14 @@ export class ChatbotController {
   async getTripDetails(@Param('tripId') tripId: string) {
     return await this.chatbotService.getTripDetails(tripId);
   }
+
+  @Post('confirm-payment')
+  @ApiOperation({ summary: 'Confirm payment status after QR code payment' })
+  @ApiResponse({
+    status: 200,
+    description: 'Payment confirmation result',
+  })
+  async confirmPayment(@Body() body: { orderCode: number }) {
+    return await this.chatbotService.confirmPayment(body.orderCode);
+  }
 }

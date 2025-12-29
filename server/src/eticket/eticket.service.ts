@@ -255,7 +255,7 @@ export class ETicketService {
 
       const chunks: Buffer[] = [];
       // PDFKit chunk type is compatible with Buffer
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+
       doc.on('data', (chunk) => chunks.push(chunk));
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);

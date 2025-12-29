@@ -7,26 +7,36 @@ import Footer from "@/components/dashboard/Footer";
 
 export default function UserDashboard() {
   return (
-    <div className="min-h-screen bg-background dark:bg-black text-foreground">
+    <div className="min-h-screen bg-pink-50 dark:bg-black text-foreground">
       {/* Responsive Navbar */}
       <Navbar />
 
       {/* Hero Section with Responsive Search Form */}
-      <HeroSection />
+      <section className="">
+        <HeroSection />
+        {/* Gradient fade overlay at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 to-transparent dark:from-transparent dark:to-transparent pointer-events-none"></div>
+      </section>
 
       {/* Popular Routes Section */}
-      <section className="py-12 sm:py-16 md:py-20">
+      <section className="">
         <PopularRoutes />
+        {/* Gradient fade overlay at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 to-transparent dark:from-transparent dark:to-transparent pointer-events-none"></div>
       </section>
 
       {/* Customer Feedback Section */}
-      <section className="py-12 sm:py-16 md:py-20">
+      <section className="">
         <CustomerFeedback />
+        {/* Gradient fade overlay at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 to-transparent dark:from-transparent dark:to-transparent pointer-events-none"></div>
       </section>
 
       {/* Features Section */}
-      <section className="py-12 sm:py-16 md:py-20">
+      <section className="">
         <Features />
+        {/* Gradient fade overlay at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-pink-50 to-transparent dark:from-transparent dark:to-transparent pointer-events-none"></div>
       </section>
 
       {/* Footer */}

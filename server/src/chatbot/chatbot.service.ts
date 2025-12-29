@@ -293,9 +293,9 @@ CRITICAL: Return ONLY valid JSON. Use null (not "null" string) for missing value
             pendingSearch: searchParams, // Return this so frontend can send it back
           },
           suggestions: [
-            'Hà Nội đi Đà Nẵng',
-            'Sài Gòn đi Nha Trang',
-            'Đà Nẵng đi Hội An',
+            'Hà Nội - Đà Nẵng',
+            'Sài Gòn - Vũng Tàu',
+            'Đà Nẵng - Hội An',
           ],
         };
       }
@@ -312,11 +312,7 @@ CRITICAL: Return ONLY valid JSON. Use null (not "null" string) for missing value
         return {
           message: `${noResultMessage} Bạn có thể thử ngày khác hoặc tuyến đường khác.`,
           type: 'text',
-          suggestions: [
-            'Xem các ngày khác',
-            'Thay đổi điểm đến',
-            'Tìm kiếm tuyến khác',
-          ],
+          suggestions: ['Tìm ngày mai', 'Tìm cuối tuần', 'Xem tuyến khác'],
         };
       }
 
@@ -347,7 +343,7 @@ CRITICAL: Return ONLY valid JSON. Use null (not "null" string) for missing value
             date: searchParams.date,
           },
         },
-        suggestions: ['Xem tất cả chuyến', 'Tìm chuyến khác', 'Thay đổi ngày'],
+        suggestions: ['Xem tất cả chuyến', 'Đặt vé ngay', 'Tìm chuyến khác'],
       };
     } catch (error) {
       this.logger.error(`Error in trip search: ${error.message}`);
@@ -357,8 +353,8 @@ CRITICAL: Return ONLY valid JSON. Use null (not "null" string) for missing value
         type: 'text',
         suggestions: [
           'Hà Nội đi Sài Gòn',
-          'Đà Nẵng đi Nha Trang',
-          'Xem các tuyến phổ biến',
+          'Đà Nẵng đi Hội An',
+          'Hỏi về giá vé',
         ],
       };
     }
@@ -512,7 +508,7 @@ CRITICAL: Return ONLY valid JSON. Use null (not "null" string) for missing value
         const seatMap = this.generateTextSeatMap(availableSeats, bookedSeats);
 
         return {
-          message: `🚌 Sơ đồ ghế:\n\n${seatMap}\n\n✅ Ghế trống (${availableSeats.length}): ${availableSeats.slice(0, 10).join(', ')}${availableSeats.length > 10 ? '...' : ''}\n❌ Đã đặt: ${bookedSeats.length} ghế\n\nNhập số ghế bạn muốn chọn (vd: A1, B2):`,
+          message: `Sơ đồ ghế:\n\n${seatMap}\n\nGhế trống (${availableSeats.length}): ${availableSeats.slice(0, 10).join(', ')}${availableSeats.length > 10 ? '...' : ''}\nĐã đặt: ${bookedSeats.length} ghế\n\nNhập số ghế bạn muốn chọn (vd: A1, B2):`,
           type: 'seat_selection',
           data: {
             tripId,
@@ -550,7 +546,7 @@ CRITICAL: Return ONLY valid JSON. Use null (not "null" string) for missing value
         const totalPrice = seats.length * (bookingState.basePrice || 0);
 
         return {
-          message: `✓ Đã chọn ${seats.length} ghế: ${seats.join(', ')}\n\nVui lòng cung cấp thông tin hành khách:\n\n📝 Họ tên:\n📧 Email:\n📱 Số điện thoại:\n\nVí dụ: "Nguyễn Văn A, example@email.com, 0912345678"`,
+          message: `Đã chọn ${seats.length} ghế: ${seats.join(', ')}\n\nVui lòng cung cấp thông tin hành khách:\n\nHọ tên:\nEmail:\nSố điện thoại:\n\nVí dụ: "Nguyễn Văn A, example@email.com, 0912345678"`,
           type: 'passenger_form',
           data: {
             bookingState: {
@@ -576,7 +572,7 @@ CRITICAL: Return ONLY valid JSON. Use null (not "null" string) for missing value
         const phone = parts.find((p) => /\d{9,11}/.test(p)) || '';
 
         return {
-          message: `✓ Thông tin đã nhận!\n\n👤 ${name}\n📧 ${email}\n📱 ${phone}\n\nTổng tiền: ${bookingState.totalPrice?.toLocaleString('vi-VN')} VND\n\nChọn phương thức thanh toán:`,
+          message: `Thông tin đã nhận!\n\nTên: ${name}\nEmail: ${email}\nSĐT: ${phone}\n\nTổng tiền: ${bookingState.totalPrice?.toLocaleString('vi-VN')} VND\n\nChọn phương thức thanh toán:`,
           type: 'payment_selection',
           data: {
             bookingState: {
@@ -652,14 +648,10 @@ CRITICAL: Return ONLY valid JSON. Use null (not "null" string) for missing value
             seatNumberToId[seat.seatNumber] = seat.id;
           });
 
-          const seatMap = this.generateTextSeatMap(
-            availableSeats,
-            bookedSeats,
-            trip.bus.busType,
-          );
+          const seatMap = this.generateTextSeatMap(availableSeats, bookedSeats);
 
           return {
-            message: `🚌 Xe ${busType.toUpperCase()} - ${allSeats.length} ghế\n\n📋 Tình trạng ghế theo hàng:\n(Click số ghế để chọn nhanh)\n\n${seatMap}\n\n💡 Chú thích:\n[A1] = Ghế trống (${availableSeats.length} ghế)\n[A1✗] = Đã đặt (${bookedSeats.length} ghế)\n\n👉 Nhập số ghế bạn muốn (vd: A1 hoặc A1,B2)`,
+            message: `Xe ${busType.toUpperCase()} - ${allSeats.length} ghế\n\nTình trạng ghế theo hàng:\n(Click số ghế để chọn nhanh)\n\n${seatMap}\n\nChú thích:\n[A1] = Ghế trống (${availableSeats.length} ghế)\n[A1✗] = Đã đặt (${bookedSeats.length} ghế)\n\nNhập số ghế bạn muốn (vd: A1 hoặc A1,B2)`,
             type: 'seat_selection',
             data: {
               tripId,
@@ -697,7 +689,7 @@ CRITICAL: Return ONLY valid JSON. Use null (not "null" string) for missing value
       if (user && user.fullName && user.email) {
         // User is logged in - auto-fill and skip to payment
         return {
-          message: `✓ Đã chọn ${bookingState.selectedSeats?.length || 0} ghế!\n\n👤 Thông tin của bạn:\n${user.fullName}\n${user.email}\n${user.phoneNumber || 'Chưa có SĐT'}\n\nTổng tiền: ${bookingState.totalPrice?.toLocaleString('vi-VN')} VND\n\nChọn phương thức thanh toán:`,
+          message: `Đã chọn ${bookingState.selectedSeats?.length || 0} ghế!\n\nThông tin của bạn:\n${user.fullName}\n${user.email}\n${user.phoneNumber || 'Chưa có SĐT'}\n\nTổng tiền: ${bookingState.totalPrice?.toLocaleString('vi-VN')} VND\n\nChọn phương thức thanh toán:`,
           type: 'payment_selection',
           data: {
             bookingState: {
@@ -716,7 +708,7 @@ CRITICAL: Return ONLY valid JSON. Use null (not "null" string) for missing value
 
       // User not logged in - ask for info
       return {
-        message: `Ghế đã được chọn! Vui lòng cung cấp thông tin hành khách:\n\n📝 Họ tên:\n📧 Email:\n📱 Số điện thoại:\n\nVí dụ: "Nguyễn Văn A, example@email.com, 0912345678"`,
+        message: `Ghế đã được chọn! Vui lòng cung cấp thông tin hành khách:\n\nHọ tên:\nEmail:\nSố điện thoại:\n\nVí dụ: "Nguyễn Văn A, example@email.com, 0912345678"`,
         type: 'passenger_form',
         data: {
           bookingState,
@@ -771,7 +763,7 @@ CRITICAL: Return ONLY valid JSON. Use null (not "null" string) for missing value
         });
 
         return {
-          message: `✅ Đặt vé thành công!\n\n👤 ${passengerInfo.name}\n📧 ${passengerInfo.email}\n📱 ${passengerInfo.phone}\n🎫 Ghế: ${selectedSeats?.join(', ')}\n💰 Tổng tiền: ${totalPrice?.toLocaleString('vi-VN')} VND\n\n🔗 Nhấn nút bên dưới để thanh toán ngay:\n\n⏰ Link thanh toán có hiệu lực trong 15 phút`,
+          message: `Đặt vé thành công!\n\nTên: ${passengerInfo.name}\nEmail: ${passengerInfo.email}\nSĐT: ${passengerInfo.phone}\nGhế: ${selectedSeats?.join(', ')}\nTổng tiền: ${totalPrice?.toLocaleString('vi-VN')} VND\n\nVui lòng quét mã QR bên dưới để thanh toán.\n\nLink thanh toán có hiệu lực trong 15 phút.\n\nSau khi thanh toán xong, nhấn nút "Xác nhận đã thanh toán" để kiểm tra trạng thái.`,
           type: 'payment_link',
           data: {
             bookingIds: bookingIds,
@@ -780,15 +772,18 @@ CRITICAL: Return ONLY valid JSON. Use null (not "null" string) for missing value
             qrCode: paymentResult.qrCode,
             amount: paymentResult.amount,
             orderCode: paymentResult.orderCode,
+            // Thêm thông tin để frontend hiển thị nút xác nhận
+            showConfirmButton: true,
+            confirmButtonText: 'Xác nhận đã thanh toán',
           },
-          suggestions: [],
+          suggestions: ['Xác nhận đã thanh toán', 'Cần hỗ trợ'],
         };
       } catch (error) {
         this.logger.error(`Error creating booking/payment: ${error.message}`);
         return {
-          message: `❌ Có lỗi xảy ra khi tạo đặt vé:\n${error.message}\n\nVui lòng thử lại hoặc liên hệ hỗ trợ.`,
+          message: `Có lỗi xảy ra khi tạo đặt vé:\n${error.message}\n\nVui lòng thử lại hoặc liên hệ hỗ trợ.`,
           type: 'error',
-          suggestions: ['Thử lại', 'Tìm chuyến khác'],
+          suggestions: ['Thử lại', 'Tìm chuyến mới'],
         };
       }
     }
@@ -804,47 +799,95 @@ CRITICAL: Return ONLY valid JSON. Use null (not "null" string) for missing value
   private async handleFAQ(userMessage: string): Promise<ChatResponseDto> {
     // Get FAQ data from database or predefined knowledge base
     const faqKnowledge = `
-# Bus Booking FAQs
+# Câu hỏi thường gặp - Đặt vé xe khách
 
-## Cancellation Policy
-- Có thể hủy vé trước 24h: Hoàn 80% giá vé
-- Hủy trước 12h: Hoàn 50% giá vé  
-- Hủy trong vòng 12h: Không hoàn tiền
-- Liên hệ hotline để hủy vé: 1900-xxxx
+## 1. Chính sách hủy vé
+**Hủy vé trước 24 giờ:**
+- Hoàn lại 80% giá vé
+- Phí hủy: 20% giá vé
 
-## Refund Process
-- Thời gian hoàn tiền: 5-7 ngày làm việc
+**Hủy vé trước 12 giờ:**
+- Hoàn lại 50% giá vé  
+- Phí hủy: 50% giá vé
+
+**Hủy trong vòng 12 giờ trước giờ khởi hành:**
+- Không hoàn tiền
+
+**Cách hủy vé:**
+- Truy cập "Quản lý đặt vé" trên website
+- Hoặc liên hệ hotline hỗ trợ
+
+## 2. Quy trình hoàn tiền
+- Thời gian xử lý: 5-7 ngày làm việc
 - Hoàn về tài khoản/thẻ thanh toán ban đầu
-- Kiểm tra trạng thái hoàn tiền qua email hoặc hotline
+- Nhận email thông báo khi hoàn tiền thành công
+- Kiểm tra trạng thái: Website hoặc hotline
 
-## Payment Methods
-- Chấp nhận: Thẻ ATM, Visa, Mastercard, Momo, ZaloPay
-- Thanh toán an toàn với mã hóa SSL
-- Không lưu thông tin thẻ
+## 3. Phương thức thanh toán
+**Thanh toán online:**
+- Thẻ ATM nội địa
+- Visa/Mastercard/JCB
+- Ví điện tử: Momo, ZaloPay
+- Quét QR Code thanh toán
 
-## Ticket Information
-- E-ticket gửi qua email sau khi thanh toán
-- Xuất trình mã QR khi lên xe
-- Đổi lịch trình liên hệ hotline (phụ thuộc vào chính sách)
+**Thanh toán tại bến:**
+- Tiền mặt khi lên xe
+- Cần đặt trước và giữ chỗ
 
-## Contact
-- Hotline: 1900-xxxx (24/7)
+**Bảo mật:**
+- Mã hóa SSL 256-bit
+- Không lưu trữ thông tin thẻ
+- Tuân thủ chuẩn PCI-DSS
+
+## 4. Thông tin về vé
+**Vé điện tử (E-ticket):**
+- Gửi qua email ngay sau thanh toán
+- Chứa mã QR để lên xe
+- Có thể tải lại từ website
+
+**Lên xe:**
+- Xuất trình mã QR hoặc mã đặt vé
+- Đến trước giờ khởi hành 15-30 phút
+- Mang theo CMND/CCCD
+
+**Đổi lịch trình:**
+- Liên hệ hotline trước 24h
+- Phụ thuộc vào tình trạng chỗ trống
+- Có thể phát sinh phí đổi vé
+
+## 5. Chính sách hành lý
+- Hành lý xách tay miễn phí: 7kg
+- Hành lý ký gửi miễn phí: 20kg
+- Vượt mức phụ thu: 10.000đ/kg
+- Không vận chuyển hàng cấm
+
+## 6. Liên hệ & Hỗ trợ
+- Website: https://busticket.com
 - Email: support@busticket.com
-- Website: www.busticket.com
+- Hotline: 1900-xxxx (24/7)
+- Chat trực tuyến: Trên website
 `;
 
     const prompt = `
-You are a customer support assistant for a bus booking system. Answer the user's question based on this knowledge base.
+Bạn là trợ lý hỗ trợ khách hàng chuyên nghiệp cho hệ thống đặt vé xe khách.
 
-Knowledge Base:
+Cơ sở kiến thức:
 ${faqKnowledge}
 
-User question: "${userMessage}"
+Câu hỏi của khách hàng: "${userMessage}"
 
-Provide a helpful, concise answer in Vietnamese. If the question is not covered in the knowledge base, 
-provide general helpful information and suggest contacting support.
+Yêu cầu:
+1. Trả lời chính xác dựa trên cơ sở kiến thức
+2. Nếu câu hỏi không có trong kiến thức, hãy:
+   - Thừa nhận bạn không có thông tin cụ thể
+   - Đề xuất liên hệ hotline hoặc email hỗ trợ
+3. Giọng điệu: Thân thiện, chuyên nghiệp, lịch sự
+4. Độ dài: Ngắn gọn, súc tích (dưới 150 từ)
+5. KHÔNG sử dụng emoji hoặc biểu tượng cảm xúc
+6. Format văn bản đơn giản, KHÔNG dùng markdown phức tạp
+7. Chỉ dùng dấu gạch đầu dòng (-) nếu cần liệt kê
 
-Keep the response friendly and professional, under 200 words.
+TRẢ LỜI BẰNG TIẾNG VIỆT:
 `;
 
     const response = await this.geminiService.generateResponse(prompt);
@@ -852,7 +895,12 @@ Keep the response friendly and professional, under 200 words.
     return {
       message: response.trim(),
       type: 'faq_answer',
-      suggestions: ['Hỏi câu khác', 'Liên hệ hỗ trợ', 'Quay lại tìm kiếm'],
+      suggestions: [
+        'Hỏi câu khác',
+        'Tìm chuyến xe',
+        'Xem giá vé',
+        'Chính sách hoàn tiền',
+      ],
     };
   }
 
@@ -875,7 +923,12 @@ Return ONLY the response message.
     return {
       message: response.trim(),
       type: 'text',
-      suggestions: ['Tìm chuyến xe', 'Đặt vé', 'Câu hỏi thường gặp'],
+      suggestions: [
+        'Tìm chuyến Hà Nội - Đà Nẵng',
+        'Xem chuyến xe hôm nay',
+        'Chính sách hủy vé',
+        'Liên hệ hỗ trợ',
+      ],
     };
   }
 
@@ -912,5 +965,75 @@ Return ONLY the response message.
         },
       },
     });
+  }
+
+  /**
+   * Xác nhận thanh toán sau khi người dùng scan QR code và thanh toán thành công
+   */
+  async confirmPayment(orderCode: number): Promise<ChatResponseDto> {
+    try {
+      this.logger.log(`Confirming payment for orderCode: ${orderCode}`);
+
+      // Gọi payment service để kiểm tra và cập nhật trạng thái
+      const paymentStatus =
+        await this.paymentService.checkPaymentStatusByOrderCode(orderCode);
+
+      if (!paymentStatus) {
+        return {
+          message:
+            'Không tìm thấy thông tin thanh toán.\n\nVui lòng kiểm tra lại mã đơn hàng hoặc liên hệ hỗ trợ.',
+          type: 'error',
+          suggestions: ['Cần hỗ trợ', 'Tìm chuyến mới'],
+        };
+      }
+
+      // Kiểm tra trạng thái thanh toán
+      if (paymentStatus.status === 'successful') {
+        const bookingIds = paymentStatus.bookings?.map((b) => b.bookingId) || [
+          paymentStatus.bookingId,
+        ];
+
+        return {
+          message: `Thanh toán thành công!\n\nVé điện tử đã được gửi qua email.\nMã đơn hàng: ${orderCode}\nSố tiền: ${paymentStatus.amount?.toLocaleString('vi-VN')} VND\n\nVui lòng kiểm tra email để nhận vé điện tử và QR code lên xe.\n\nĐến bến xe trước giờ khởi hành 15-30 phút.`,
+          type: 'payment_success',
+          data: {
+            bookingId: paymentStatus.bookingId,
+            bookingIds,
+            orderCode,
+            amount: paymentStatus.amount,
+            status: paymentStatus.status,
+          },
+          suggestions: ['Xem vé của tôi', 'Tìm chuyến mới'],
+        };
+      } else if (paymentStatus.status === 'pending') {
+        return {
+          message: `Thanh toán đang chờ xử lý...\n\nMã đơn hàng: ${orderCode}\nSố tiền: ${paymentStatus.amount?.toLocaleString('vi-VN')} VND\n\nVui lòng hoàn tất thanh toán hoặc chờ hệ thống xác nhận.\n\nBạn có thể nhấn "Kiểm tra lại" sau vài giây nữa.`,
+          type: 'payment_pending',
+          data: {
+            orderCode,
+            amount: paymentStatus.amount,
+            status: paymentStatus.status,
+          },
+          suggestions: ['Kiểm tra lại', 'Cần hỗ trợ'],
+        };
+      } else {
+        return {
+          message: `Thanh toán không thành công.\n\nMã đơn hàng: ${orderCode}\nTrạng thái: ${paymentStatus.status}\n\nVui lòng thử lại hoặc liên hệ hỗ trợ nếu bạn đã thanh toán.`,
+          type: 'payment_failed',
+          data: {
+            orderCode,
+            status: paymentStatus.status,
+          },
+          suggestions: ['Thử lại', 'Cần hỗ trợ'],
+        };
+      }
+    } catch (error) {
+      this.logger.error(`Error confirming payment: ${error.message}`);
+      return {
+        message: `Có lỗi xảy ra khi kiểm tra thanh toán:\n${error.message}\n\nVui lòng thử lại hoặc liên hệ hỗ trợ.`,
+        type: 'error',
+        suggestions: ['Thử lại', 'Cần hỗ trợ'],
+      };
+    }
   }
 }

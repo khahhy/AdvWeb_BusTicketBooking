@@ -295,8 +295,9 @@ export default function Chatbot() {
 
     if (bookInChat) {
       // Start booking flow in chatbot
-      const price = trip.tripRoutes?.[0]?.price || 0;
-      handleSendMessage(`Đặt vé chuyến ${trip.id}`, {
+      const price =
+        (trip.tripRoutes as Array<{ price: number }>)?.[0]?.price || 0;
+      handleSendMessage(`Xem sơ đồ ghế chuyến ${trip.id}`, {
         bookingState: {
           stage: "seat_selection",
           tripId: trip.id,
@@ -677,13 +678,17 @@ export default function Chatbot() {
                               .slice(0, 5)
                               .map((trip) => {
                                 const tripRoutes = trip.tripRoutes as Array<{
-                                  route?: unknown;
+                                  route?: {
+                                    origin?: { name?: string };
+                                    destination?: { name?: string };
+                                  };
                                   price?: number;
                                 }>;
                                 const startTime = new Date(
                                   trip.startTime as string,
                                 );
                                 const price = tripRoutes?.[0]?.price || 0;
+                                const route = tripRoutes?.[0]?.route;
 
                                 return (
                                   <div

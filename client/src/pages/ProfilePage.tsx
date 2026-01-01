@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,9 @@ import {
   Bell,
   History,
   CreditCard,
+  Lock,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 interface UserProfile {
@@ -44,9 +47,22 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [formData, setFormData] = useState({
     fullName: "",
     phoneNumber: "",
+  });
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
 
   const navigate = useNavigate();
@@ -146,6 +162,149 @@ export default function ProfilePage() {
       });
     }
     setIsEditing(false);
+  };
+
+  const handleAvatarSelect = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+      event.target.value = "";
+      return;
+    }
+
+    setAvatarPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
+  };
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
+
+  const handlePasswordFieldChange = (
+    field: "currentPassword" | "newPassword" | "confirmPassword",
+    value: string,
+  ) => {
+    setPasswordData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+    if (passwordError) {
+      setPasswordError("");
+    }
+    if (passwordSuccess) {
+      setPasswordSuccess("");
+    }
+  };
+
+  const validatePassword = (password: string) => {
+    if (password.length < 8) {
+      return "Password must be at least 8 characters long";
+    }
+    return "";
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!user) return;
+
+    if (user.authProvider !== "local") {
+      setPasswordError(
+        `Password change is not available for ${user.authProvider} accounts.`,
+      );
+      return;
+    }
+
+    if (
+      !passwordData.currentPassword ||
+      !passwordData.newPassword ||
+      !passwordData.confirmPassword
+    ) {
+      setPasswordError("Please fill in all password fields.");
+      return;
+    }
+
+    const passwordValidation = validatePassword(passwordData.newPassword);
+    if (passwordValidation) {
+      setPasswordError(passwordValidation);
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError("New passwords do not match.");
+      return;
+    }
+
+    if (passwordData.currentPassword === passwordData.newPassword) {
+      setPasswordError(
+        "New password must be different from the current password.",
+      );
+      return;
+    }
+
+    setIsChangingPassword(true);
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      const response = await fetch(
+        buildApiUrl(API_ENDPOINTS.auth.changePassword),
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            oldPassword: passwordData.currentPassword,
+            newPassword: passwordData.newPassword,
+          }),
+        },
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("user");
+          navigate("/login");
+          return;
+        }
+        setPasswordError(data.message || "Failed to change password.");
+        return;
+      }
+
+      setPasswordSuccess(data.message || "Password updated successfully.");
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error) {
+      console.error("Error changing password:", error);
+      setPasswordError("Failed to change password. Please try again.");
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   const getStatusBadge = (status: string, emailVerified: boolean) => {
@@ -260,11 +419,29 @@ export default function ProfilePage() {
                 <div className="relative">
                   <div className="absolute -inset-1 bg-gradient-to-r from-pink-400 to-rose-400 rounded-full blur opacity-75"></div>
                   <Avatar className="relative h-32 w-32 border-4 border-white dark:border-gray-600 shadow-2xl">
-                    <AvatarImage src="" alt={user.fullName || "User"} />
+                    <AvatarImage
+                      src={avatarPreview || ""}
+                      alt={user.fullName || "User"}
+                    />
                     <AvatarFallback className="text-3xl bg-gradient-to-br from-pink-500 to-rose-600 text-white font-bold">
                       {getInitials(user.fullName, user.email)}
                     </AvatarFallback>
                   </Avatar>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAvatarSelect}
+                    className="absolute -bottom-2 -right-2 h-9 w-9 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
+                    aria-label="Update profile photo"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
                 </div>
 
                 {/* Profile Info */}
@@ -400,7 +577,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Right Column - Profile Information */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 space-y-6">
               <Card className="bg-white/95 dark:bg-black dark:border-gray-800/95 backdrop-blur-sm shadow-xl border-0">
                 <CardHeader>
                   <CardTitle className="text-2xl font-bold text-gray-800 dark:text-white">
@@ -533,6 +710,156 @@ export default function ProfilePage() {
                       )}
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/95 dark:bg-black dark:border-gray-800/95 backdrop-blur-sm shadow-xl border-0">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                    <Lock className="w-6 h-6 text-blue-500 dark:text-blue-400" />
+                    Change Password
+                  </CardTitle>
+                  <CardDescription className="text-gray-600 dark:text-gray-400">
+                    Update your password to keep your account secure
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {user.authProvider !== "local" ? (
+                    <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-4 text-sm text-gray-600 dark:text-gray-400">
+                      Password changes are only available for email accounts.
+                    </div>
+                  ) : (
+                    <form
+                      onSubmit={handleChangePassword}
+                      className="grid gap-5"
+                    >
+                      <div className="space-y-2">
+                        <label className="flex items-center text-sm font-semibold text-gray-700 dark:text-gray-300">
+                          Current Password
+                        </label>
+                        <div className="relative">
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                          <input
+                            type={showCurrentPassword ? "text" : "password"}
+                            value={passwordData.currentPassword}
+                            onChange={(e) =>
+                              handlePasswordFieldChange(
+                                "currentPassword",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="Enter current password"
+                            className="w-full pl-12 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900/50 dark:bg-gray-700 text-gray-900 dark:text-white"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowCurrentPassword(!showCurrentPassword)
+                            }
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                          >
+                            {showCurrentPassword ? (
+                              <EyeOff className="w-5 h-5" />
+                            ) : (
+                              <Eye className="w-5 h-5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="flex items-center text-sm font-semibold text-gray-700 dark:text-gray-300">
+                          New Password
+                        </label>
+                        <div className="relative">
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                          <input
+                            type={showNewPassword ? "text" : "password"}
+                            value={passwordData.newPassword}
+                            onChange={(e) =>
+                              handlePasswordFieldChange(
+                                "newPassword",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="Enter new password"
+                            className="w-full pl-12 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900/50 dark:bg-gray-700 text-gray-900 dark:text-white"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                          >
+                            {showNewPassword ? (
+                              <EyeOff className="w-5 h-5" />
+                            ) : (
+                              <Eye className="w-5 h-5" />
+                            )}
+                          </button>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Password must be at least 8 characters long
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="flex items-center text-sm font-semibold text-gray-700 dark:text-gray-300">
+                          Confirm New Password
+                        </label>
+                        <div className="relative">
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                          <input
+                            type={showConfirmPassword ? "text" : "password"}
+                            value={passwordData.confirmPassword}
+                            onChange={(e) =>
+                              handlePasswordFieldChange(
+                                "confirmPassword",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="Confirm new password"
+                            className="w-full pl-12 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900/50 dark:bg-gray-700 text-gray-900 dark:text-white"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowConfirmPassword(!showConfirmPassword)
+                            }
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                          >
+                            {showConfirmPassword ? (
+                              <EyeOff className="w-5 h-5" />
+                            ) : (
+                              <Eye className="w-5 h-5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      {passwordError && (
+                        <p className="text-sm text-red-600 dark:text-red-400">
+                          {passwordError}
+                        </p>
+                      )}
+                      {passwordSuccess && (
+                        <p className="text-sm text-green-600 dark:text-green-400">
+                          {passwordSuccess}
+                        </p>
+                      )}
+
+                      <div className="flex justify-end pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <Button
+                          type="submit"
+                          disabled={isChangingPassword}
+                          className="bg-black hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 text-white px-8 py-3 rounded-xl"
+                        >
+                          {isChangingPassword
+                            ? "Updating..."
+                            : "Update Password"}
+                        </Button>
+                      </div>
+                    </form>
+                  )}
                 </CardContent>
               </Card>
             </div>

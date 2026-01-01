@@ -6,6 +6,7 @@ export const API_BASE_URL =
 export const API_ENDPOINTS = {
   auth: {
     profile: "/auth/profile",
+    changePassword: "/auth/change-password",
     signup: "/auth/signup",
     signin: "/auth/signin",
     verifyEmail: "/auth/verify-email",

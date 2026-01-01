@@ -88,7 +88,18 @@ export default function SearchPage() {
     })) || [];
 
   const applyFilters = (trips: (Trip | (typeof tripRouteData)[0])[]) => {
+    const now = dayjs();
+    const isToday = selectedDate?.isSame(now, "day");
+
     return trips.filter((trip) => {
+      // Filter out past trips if searching for today
+      if (isToday && trip.departureTime) {
+        const tripDepartureTime = dayjs(trip.departureTime);
+        if (tripDepartureTime.isBefore(now)) {
+          return false; // Skip past trips
+        }
+      }
+
       if (
         trip.price < filters.priceRange[0] ||
         trip.price > filters.priceRange[1]
@@ -245,7 +256,32 @@ export default function SearchPage() {
     }
 
     // Apply filters to the trips
-    return applyFilters(trips);
+    const filteredTrips = applyFilters(trips);
+
+    // Apply sorting
+    const sortedTrips = [...filteredTrips].sort((a, b) => {
+      // Sort by time (departure time)
+      if (filters.sortByTime === "departure-asc") {
+        const timeA = new Date(a.departureTime).getTime();
+        const timeB = new Date(b.departureTime).getTime();
+        return timeA - timeB; // Early to Late
+      } else if (filters.sortByTime === "departure-desc") {
+        const timeA = new Date(a.departureTime).getTime();
+        const timeB = new Date(b.departureTime).getTime();
+        return timeB - timeA; // Late to Early
+      }
+
+      // Sort by price
+      if (filters.sortByPrice === "price-asc") {
+        return a.price - b.price; // Low to High
+      } else if (filters.sortByPrice === "price-desc") {
+        return b.price - a.price; // High to Low
+      }
+
+      return 0;
+    });
+
+    return sortedTrips;
   };
 
   const allTrips = getAllTrips();

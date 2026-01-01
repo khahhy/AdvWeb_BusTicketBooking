@@ -116,6 +116,42 @@ export class ReviewsService {
     return { message: 'Fetched reviews successfully', data: reviews };
   }
 
+  async findByRoute(routeId: string) {
+    const reviews = await this.prisma.reviews.findMany({
+      where: {
+        status: ReviewStatus.visible,
+        booking: {
+          routeId: routeId,
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const data = reviews.map((review) => ({
+      id: review.id,
+      userId: review.userId,
+      userName:
+        review.user?.fullName || review.user?.email || 'Anonymous Passenger',
+      rating: review.rating,
+      comment: review.comment ?? '',
+      createdAt: review.createdAt.toISOString(),
+    }));
+
+    return {
+      message: 'Fetched reviews successfully',
+      data,
+    };
+  }
+
   async findAllForAdmin() {
     const reviews = await this.prisma.reviews.findMany({
       include: {

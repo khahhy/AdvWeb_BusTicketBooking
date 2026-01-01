@@ -24,6 +24,8 @@ import {
   Users,
 } from "lucide-react";
 import InteractiveSeatMap from "@/components/search/InteractiveSeatMap";
+import TripReviews from "@/components/search/TripReviews";
+import RelatedTrips from "@/components/search/RelatedTrips";
 import { BusType } from "@/store/type/busType";
 import { useSeatBooking } from "@/hooks/useSeatBooking";
 import { useGetBookingRulesQuery } from "@/store/api/settingApi";
@@ -602,6 +604,20 @@ export default function TripDetailPage() {
                     Loading policy details...
                   </div>
                 )}
+              </div>
+
+              {/* Customer Reviews */}
+              <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_1s_forwards]">
+                <TripReviews routeId={routeId} />
+              </div>
+
+              {/* Related Trips */}
+              <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_1.1s_forwards]">
+                <RelatedTrips
+                  currentTripId={tripId}
+                  routeId={routeId}
+                  date={travelDate}
+                />
               </div>
             </div>
 

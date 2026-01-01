@@ -93,6 +93,14 @@ export class ReviewsController {
     return this.reviewsService.moderateReview(id, req.user.userId, dto.status);
   }
 
+  @ApiOperation({ summary: 'Get all visible reviews for a route' })
+  @ApiParam({ name: 'routeId', description: 'Route ID' })
+  @ApiResponse({ status: 200, description: 'Fetched reviews successfully.' })
+  @Get('route/:routeId')
+  async findByRoute(@Param('routeId') routeId: string) {
+    return this.reviewsService.findByRoute(routeId);
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.admin)
   @ApiBearerAuth('JWT-auth')

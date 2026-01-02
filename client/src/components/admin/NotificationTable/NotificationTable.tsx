@@ -2,12 +2,11 @@ import {
   Mail,
   MessageSquare,
   Eye,
-  RotateCcw,
   CheckCircle,
   XCircle,
   Clock,
 } from "lucide-react";
-import { NotificationLog } from "@/admin/customerCare/NotificationManagement";
+import { NotificationLog } from "@/store/api/notificationApi";
 import { formatDate } from "@/utils/formatDate";
 
 interface NotificationTableProps {
@@ -16,18 +15,13 @@ interface NotificationTableProps {
 }
 
 const getTemplateBadge = (template: string) => {
-  switch (template) {
-    case "booking_confirmation":
-      return "bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-100 dark:border-blue-700";
-    case "trip_reminder":
-      return "bg-indigo-50 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 border-indigo-100 dark:border-indigo-700";
-    case "delay_alert":
-      return "bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300 border-red-100 dark:border-red-700";
-    case "cancellation_notice":
-      return "bg-orange-50 dark:bg-orange-900 text-orange-700 dark:text-orange-300 border-orange-100 dark:border-orange-700";
-    default:
-      return "bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-100 dark:border-gray-600";
-  }
+  if (template?.includes("booking"))
+    return "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-100 dark:border-blue-700";
+  if (template?.includes("payment"))
+    return "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-100 dark:border-indigo-700";
+  if (template?.includes("cancel"))
+    return "bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-100 dark:border-orange-700";
+  return "bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-100 dark:border-gray-600";
 };
 
 const NotificationTable = ({ logs, onViewDetail }: NotificationTableProps) => {
@@ -39,10 +33,10 @@ const NotificationTable = ({ logs, onViewDetail }: NotificationTableProps) => {
             <tr>
               <th className="px-6 py-3">Recipient</th>
               <th className="px-6 py-3">Channel</th>
-              <th className="px-6 py-3">Template Type</th>
+              <th className="px-6 py-3">Template</th>
               <th className="px-6 py-3">Booking Ref</th>
               <th className="px-6 py-3">Status</th>
-              <th className="px-6 py-3">Sent Time</th>
+              <th className="px-6 py-3">Time</th>
               <th className="px-6 py-3 text-right">Actions</th>
             </tr>
           </thead>
@@ -78,7 +72,9 @@ const NotificationTable = ({ logs, onViewDetail }: NotificationTableProps) => {
                       log.template,
                     )}`}
                   >
-                    {log.template.replace("_", " ").toUpperCase()}
+                    {log.template
+                      ? log.template.replace(/_/g, " ").toUpperCase()
+                      : "SYSTEM"}
                   </span>
                 </td>
                 <td className="px-6 py-4 font-mono text-xs text-gray-600 dark:text-gray-400">
@@ -86,17 +82,17 @@ const NotificationTable = ({ logs, onViewDetail }: NotificationTableProps) => {
                 </td>
                 <td className="px-6 py-4">
                   {log.status === "sent" && (
-                    <span className="flex items-center gap-1 text-green-600 dark:text-green-400 text-xs font-bold bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded-full w-fit">
+                    <span className="flex items-center gap-1 text-green-600 font-bold text-xs">
                       <CheckCircle className="w-3 h-3" /> Sent
                     </span>
                   )}
                   {log.status === "failed" && (
-                    <span className="flex items-center gap-1 text-red-600 dark:text-red-400 text-xs font-bold bg-red-50 dark:bg-red-900/30 px-2 py-1 rounded-full w-fit">
+                    <span className="flex items-center gap-1 text-red-600 font-bold text-xs">
                       <XCircle className="w-3 h-3" /> Failed
                     </span>
                   )}
                   {log.status === "pending" && (
-                    <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 text-xs font-bold bg-yellow-50 dark:bg-yellow-900/30 px-2 py-1 rounded-full w-fit">
+                    <span className="flex items-center gap-1 text-yellow-600 font-bold text-xs">
                       <Clock className="w-3 h-3" /> Pending
                     </span>
                   )}
@@ -105,36 +101,15 @@ const NotificationTable = ({ logs, onViewDetail }: NotificationTableProps) => {
                   {formatDate(log.createdAt)}
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => onViewDetail(log)}
-                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/50 rounded-full"
-                      title="View Content"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    {log.status === "failed" && (
-                      <button
-                        className="p-2 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/50 rounded-full"
-                        title="Retry / Resend"
-                      >
-                        <RotateCcw className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
+                  <button
+                    onClick={() => onViewDetail(log)}
+                    className="p-2 hover:bg-gray-100 rounded-full text-blue-600"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
                 </td>
               </tr>
             ))}
-            {logs.length === 0 && (
-              <tr>
-                <td
-                  colSpan={7}
-                  className="text-center py-12 text-gray-500 dark:text-gray-400"
-                >
-                  No logs found.
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>

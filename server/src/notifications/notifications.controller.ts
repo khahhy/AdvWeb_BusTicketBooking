@@ -6,6 +6,7 @@ import {
   Delete,
   UseGuards,
   Request,
+  Query,
 } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import {
@@ -15,6 +16,10 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/common/guards/role.guard';
+import { Roles } from 'src/common/decorators/role.decorator';
+import { UserRole } from '@prisma/client';
+import { QueryNotificationDto } from './dto/query-notification.dto';
 
 interface AuthRequest {
   user: {
@@ -28,6 +33,15 @@ interface AuthRequest {
 @ApiBearerAuth('JWT-auth')
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
+
+  @Get('admin/list')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Admin: Lấy danh sách thông báo & thống kê' })
+  async findAll(@Query() query: QueryNotificationDto) {
+    return this.notificationsService.findAll(query);
+  }
 
   @ApiOperation({ summary: 'Get all notifications for current user' })
   @Get()

@@ -1,44 +1,19 @@
-import { Mail, MessageSquare, XCircle, Activity } from "lucide-react";
-
-export interface NotificationLog {
-  id: string;
-  userId: string;
-  userName: string;
-  contactInfo: string;
-  bookingId?: string;
-  bookingTicketCode?: string;
-  type: "email" | "sms";
-  template:
-    | "booking_confirmation"
-    | "trip_reminder"
-    | "delay_alert"
-    | "cancellation_notice"
-    | "otp_verification";
-  content: string;
-  status: "pending" | "sent" | "failed";
-  sentAt?: string;
-  createdAt: string;
-}
+import { CheckCircle, Clock, XCircle, Activity } from "lucide-react";
+import { NotificationStats as NotificationStatsType } from "@/store/api/notificationApi";
 
 interface NotificationStatsProps {
-  logs: NotificationLog[];
+  stats?: NotificationStatsType;
 }
 
-const NotificationStats = ({ logs }: NotificationStatsProps) => {
-  const total = logs.length;
+const NotificationStats = ({ stats }: NotificationStatsProps) => {
+  const { total, sent, failed, pending } = stats || {
+    total: 0,
+    sent: 0,
+    failed: 0,
+    pending: 0,
+  };
 
-  const stats = logs.reduce(
-    (acc, curr) => {
-      if (curr.status === "sent") acc.sent++;
-      if (curr.status === "failed") acc.failed++;
-      if (curr.type === "email") acc.email++;
-      if (curr.type === "sms") acc.sms++;
-      return acc;
-    },
-    { sent: 0, failed: 0, email: 0, sms: 0 },
-  );
-
-  const successRate = total > 0 ? Math.round((stats.sent / total) * 100) : 0;
+  const successRate = total > 0 ? Math.round((sent / total) * 100) : 0;
 
   return (
     <div className="grid gap-4 md:grid-cols-4">
@@ -57,7 +32,7 @@ const NotificationStats = ({ logs }: NotificationStatsProps) => {
             {successRate}%
           </h3>
           <span className="text-xs text-gray-400 dark:text-gray-500">
-            Success / Attempts
+            {sent} / {total} Delivered
           </span>
         </div>
         <div
@@ -80,28 +55,28 @@ const NotificationStats = ({ logs }: NotificationStatsProps) => {
       <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700 shadow-sm flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-            Emails Sent
+            Sent Successfully
           </p>
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-            {stats.email}
+            {sent}
           </h3>
         </div>
-        <div className="h-10 w-10 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-          <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+        <div className="h-10 w-10 bg-green-50 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+          <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
         </div>
       </div>
 
       <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700 shadow-sm flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-            SMS Sent
+            Pending
           </p>
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-            {stats.sms}
+            {pending}
           </h3>
         </div>
-        <div className="h-10 w-10 bg-purple-50 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
-          <MessageSquare className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+        <div className="h-10 w-10 bg-yellow-50 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
+          <Clock className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
         </div>
       </div>
 
@@ -112,16 +87,13 @@ const NotificationStats = ({ logs }: NotificationStatsProps) => {
           </p>
           <h3
             className={`text-2xl font-bold mt-1 ${
-              stats.failed > 0
+              failed > 0
                 ? "text-red-600 dark:text-red-400"
                 : "text-gray-900 dark:text-white"
             }`}
           >
-            {stats.failed}
+            {failed}
           </h3>
-          <span className="text-xs text-gray-400 dark:text-gray-500">
-            Need attention
-          </span>
         </div>
         <div className="h-10 w-10 bg-red-50 dark:bg-red-900/30 rounded-full flex items-center justify-center">
           <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />

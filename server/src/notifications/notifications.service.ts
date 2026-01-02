@@ -3,7 +3,9 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { QueryNotificationDto } from './dto/query-notification.dto';
 
 interface NotificationData {
   template?: string | null;
@@ -12,6 +14,105 @@ interface NotificationData {
 @Injectable()
 export class NotificationsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async findAll(query: QueryNotificationDto) {
+    const { page = 1, limit = 10, search, type, status } = query;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.NotificationsWhereInput = {
+      AND: [
+        status ? { status } : {},
+        type ? { type } : {},
+        search
+          ? {
+              OR: [
+                { content: { contains: search, mode: 'insensitive' } },
+                {
+                  booking: {
+                    ticketCode: { contains: search, mode: 'insensitive' },
+                  },
+                },
+                {
+                  user: { fullName: { contains: search, mode: 'insensitive' } },
+                },
+                { user: { email: { contains: search, mode: 'insensitive' } } },
+                {
+                  user: {
+                    phoneNumber: { contains: search, mode: 'insensitive' },
+                  },
+                },
+              ],
+            }
+          : {},
+      ],
+    };
+
+    const [notifications, total, stats] = await Promise.all([
+      this.prisma.notifications.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              fullName: true,
+              email: true,
+              phoneNumber: true,
+            },
+          },
+          booking: {
+            select: {
+              ticketCode: true,
+            },
+          },
+        },
+      }),
+      this.prisma.notifications.count({ where }),
+      this.prisma.notifications.groupBy({
+        by: ['status'],
+        _count: { id: true },
+      }),
+    ]);
+
+    const statistics = stats.reduce(
+      (acc, curr) => {
+        acc.total += curr._count.id;
+        if (curr.status === 'sent') acc.sent += curr._count.id;
+        else if (curr.status === 'failed') acc.failed += curr._count.id;
+        else if (curr.status === 'pending') acc.pending += curr._count.id;
+        return acc;
+      },
+      { total: 0, sent: 0, failed: 0, pending: 0 },
+    );
+
+    const formattedData = notifications.map((notif) => ({
+      id: notif.id,
+      userId: notif.userId,
+      userName: notif.user?.fullName || 'Unknown User',
+      contactInfo:
+        notif.type === 'sms' ? notif.user?.phoneNumber : notif.user?.email,
+      bookingId: notif.bookingId,
+      bookingTicketCode: notif.booking?.ticketCode,
+      type: notif.type,
+      template: notif.template || 'System Notification',
+      content: notif.content,
+      status: notif.status,
+      sentAt: notif.sentAt,
+      createdAt: notif.createdAt,
+    }));
+
+    return {
+      data: formattedData,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+      stats: statistics,
+    };
+  }
 
   async findAllForUser(userId: string) {
     const notifications = await this.prisma.notifications.findMany({

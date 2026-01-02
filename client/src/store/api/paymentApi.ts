@@ -51,6 +51,48 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
+export interface PaymentTransaction {
+  id: string;
+  bookingId: string;
+  bookingTicketCode: string;
+  customerName: string;
+  amount: number;
+  gateway: string;
+  gatewayTransactionId: string;
+  orderCode: string;
+  status: "pending" | "successful" | "failed" | "refunded";
+  createdAt: string;
+}
+
+export interface PaymentStats {
+  totalRevenue: number;
+  totalTransactions: number;
+  successfulTxn: number;
+  failedTxn: number;
+  pendingTxn: number;
+}
+
+export interface GetPaymentsResponse {
+  data: PaymentTransaction[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+  stats: PaymentStats;
+}
+
+export interface PaymentQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  gateway?: string;
+  dateFrom?: string; // hoặc date
+  dateTo?: string;
+}
+
 export const paymentApi = createApi({
   reducerPath: "paymentApi",
   baseQuery: baseQuery,
@@ -66,6 +108,15 @@ export const paymentApi = createApi({
         body: data,
       }),
       invalidatesTags: ["Payment"],
+    }),
+
+    getPayments: builder.query<GetPaymentsResponse, PaymentQueryParams | void>({
+      query: (params) => ({
+        url: "/payments",
+        method: "GET",
+        params: params || {},
+      }),
+      providesTags: ["Payment"],
     }),
 
     getPaymentStatus: builder.query<
@@ -116,4 +167,5 @@ export const {
   useGetPaymentStatusQuery,
   useGetPaymentStatusByOrderCodeQuery,
   useCancelPaymentMutation,
+  useGetPaymentsQuery,
 } = paymentApi;

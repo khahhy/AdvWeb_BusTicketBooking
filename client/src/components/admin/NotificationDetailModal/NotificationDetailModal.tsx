@@ -1,5 +1,5 @@
-import { XCircle, Mail, MessageSquare, Clock, RotateCcw } from "lucide-react";
-import { NotificationLog } from "@/admin/customerCare/NotificationManagement";
+import { XCircle, Mail, MessageSquare, Clock } from "lucide-react";
+import { NotificationLog } from "@/store/api/notificationApi";
 import { formatDate } from "@/utils/formatDate";
 
 interface NotificationDetailModalProps {
@@ -38,10 +38,12 @@ const NotificationDetailModal = ({
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-800 dark:text-white capitalize">
-                {log.template.replace("_", " ")}
+                {log.template
+                  ? log.template.replace(/_/g, " ")
+                  : "Notification Details"}
               </h2>
               <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                <Clock className="w-3 h-3" /> Sent at:{" "}
+                <Clock className="w-3 h-3" /> Created at:{" "}
                 {formatDate(log.createdAt)}
               </p>
             </div>
@@ -58,7 +60,7 @@ const NotificationDetailModal = ({
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="block text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">
-                Recipient
+                Recipient Name
               </span>
               <span className="font-medium text-gray-900 dark:text-white">
                 {log.userName}
@@ -66,7 +68,7 @@ const NotificationDetailModal = ({
             </div>
             <div>
               <span className="block text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">
-                Contact
+                Contact Info
               </span>
               <span className="font-medium text-gray-900 dark:text-white">
                 {log.contactInfo}
@@ -91,7 +93,7 @@ const NotificationDetailModal = ({
             </div>
             <div>
               <span className="block text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">
-                Related Booking
+                Related Ticket
               </span>
               <span className="font-mono text-blue-600 dark:text-blue-400">
                 {log.bookingTicketCode || "N/A"}
@@ -101,7 +103,7 @@ const NotificationDetailModal = ({
 
           <div className="mt-4">
             <span className="block text-gray-500 dark:text-gray-400 text-xs uppercase font-bold mb-2">
-              Content Preview
+              Message Content
             </span>
             <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg border dark:border-gray-600 text-sm font-mono text-gray-700 dark:text-gray-300 whitespace-pre-wrap max-h-60 overflow-y-auto">
               {log.content}
@@ -116,14 +118,6 @@ const NotificationDetailModal = ({
           >
             Close
           </button>
-          {log.status === "failed" && (
-            <button
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-              onClick={() => alert("Retry logic triggered!")}
-            >
-              <RotateCcw className="w-4 h-4" /> Retry Sending
-            </button>
-          )}
         </div>
       </div>
     </div>

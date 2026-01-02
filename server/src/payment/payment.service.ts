@@ -9,6 +9,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { PayOSService } from 'src/payos/payos.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PayOSWebhookDto } from './dto/payos-webhook.dto';
+import { QueryPaymentDto } from './dto/query-payment.dto';
 import {
   Prisma,
   BookingStatus,
@@ -1003,6 +1004,141 @@ export class PaymentService {
         refundPercentage: refundPercent,
         status: 'refunded',
       },
+    };
+  }
+
+  async findAll(query: QueryPaymentDto) {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      status,
+      gateway,
+      dateFrom,
+      dateTo,
+    } = query;
+    const skip = (page - 1) * limit;
+
+    // Build filter conditions
+    const where: Prisma.PaymentsWhereInput = {
+      AND: [
+        status ? { status } : {},
+        gateway ? { gateway } : {},
+        dateFrom || dateTo
+          ? {
+              createdAt: {
+                gte: dateFrom ? new Date(dateFrom) : undefined,
+                lte: dateTo
+                  ? new Date(new Date(dateTo).setHours(23, 59, 59, 999))
+                  : undefined,
+              },
+            }
+          : {},
+        search
+          ? {
+              OR: [
+                // Tìm theo Booking Ticket Code
+                {
+                  booking: {
+                    ticketCode: { contains: search, mode: 'insensitive' },
+                  },
+                },
+                // Tìm theo User Name (người đặt)
+                {
+                  booking: {
+                    user: {
+                      fullName: { contains: search, mode: 'insensitive' },
+                    },
+                  },
+                },
+                // Tìm theo OrderCode (Convert search to number nếu có thể vì orderCode là BigInt)
+                // Lưu ý: Tìm text trong BigInt khá hạn chế với Prisma, ta ưu tiên tìm các field khác
+              ],
+            }
+          : {},
+      ],
+    };
+
+    // Execute queries
+    const [payments, total, stats] = await Promise.all([
+      // 1. Get List
+      this.prisma.payments.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          booking: {
+            select: {
+              ticketCode: true,
+              customerInfo: true,
+              user: { select: { fullName: true, email: true } },
+            },
+          },
+        },
+      }),
+      // 2. Count Total filtered
+      this.prisma.payments.count({ where }),
+      // 3. Get Statistics (Revenue & Counts) - Tính trên TOÀN BỘ dữ liệu (hoặc theo filter date nếu cần)
+      this.prisma.payments.groupBy({
+        by: ['status'],
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+    ]);
+
+    // Process Statistics
+    const statistics = stats.reduce(
+      (acc, curr) => {
+        acc.totalTransactions += curr._count.id;
+        if (curr.status === PaymentStatus.successful) {
+          acc.totalRevenue += Number(curr._sum.amount || 0);
+          acc.successfulTxn += curr._count.id;
+        } else if (curr.status === PaymentStatus.failed) {
+          acc.failedTxn += curr._count.id;
+        } else if (curr.status === PaymentStatus.pending) {
+          acc.pendingTxn += curr._count.id;
+        }
+        return acc;
+      },
+      {
+        totalRevenue: 0,
+        totalTransactions: 0,
+        successfulTxn: 0,
+        failedTxn: 0,
+        pendingTxn: 0,
+      },
+    );
+
+    // Format Data for Frontend
+    const formattedPayments = payments.map((p) => {
+      const customerInfo = p.booking.customerInfo as any;
+      const customerName =
+        p.booking.user?.fullName || customerInfo?.fullName || 'Guest';
+
+      return {
+        id: p.id,
+        bookingId: p.bookingId,
+        bookingTicketCode: p.booking.ticketCode,
+        customerName,
+        amount: Number(p.amount),
+        gateway: p.gateway,
+        gatewayTransactionId: p.gatewayTransactionId || p.orderCode?.toString(), // Fallback to OrderCode if TransID null
+        orderCode: p.orderCode?.toString(), // Convert BigInt to String
+        status: p.status,
+        createdAt: p.createdAt,
+      };
+    });
+
+    return {
+      data: formattedPayments,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+      stats: statistics,
     };
   }
 }

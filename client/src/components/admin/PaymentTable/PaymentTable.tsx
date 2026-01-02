@@ -1,11 +1,11 @@
-import { ArrowUpRight, ArrowDownLeft, Eye } from "lucide-react";
-import { Payment } from "@/admin/saleAndBooking/PaymentManagement";
+import { ArrowUpRight, ArrowDownLeft, Eye, RefreshCw } from "lucide-react";
+import { PaymentTransaction } from "@/store/api/paymentApi";
 import { formatDate } from "@/utils/formatDate";
 import { formatCurrency } from "@/utils/formatCurrency";
 
 interface PaymentTableProps {
-  payments: Payment[];
-  onViewDetail: (payment: Payment) => void;
+  payments: PaymentTransaction[];
+  onViewDetail: (payment: PaymentTransaction) => void;
 }
 
 const getStatusStyles = (status: string) => {
@@ -24,16 +24,12 @@ const getStatusStyles = (status: string) => {
 };
 
 const getGatewayColor = (gateway: string) => {
-  switch (gateway) {
-    case "Momo":
-      return "text-pink-600 bg-pink-50 border-pink-100";
-    case "Zalopay":
-      return "text-blue-600 bg-blue-50 border-blue-100";
-    case "PayOS":
-      return "text-indigo-600 bg-indigo-50 border-indigo-100";
-    default:
-      return "text-gray-600 bg-gray-50 border-gray-200";
-  }
+  const gw = gateway?.toLowerCase() || "";
+  if (gw.includes("momo")) return "text-pink-600 bg-pink-50 border-pink-100";
+  if (gw.includes("zalo")) return "text-blue-600 bg-blue-50 border-blue-100";
+  if (gw.includes("payos"))
+    return "text-indigo-600 bg-indigo-50 border-indigo-100";
+  return "text-gray-600 bg-gray-50 border-gray-200";
 };
 
 const PaymentTable = ({ payments, onViewDetail }: PaymentTableProps) => {
@@ -43,7 +39,9 @@ const PaymentTable = ({ payments, onViewDetail }: PaymentTableProps) => {
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium border-b dark:border-gray-600">
             <tr>
-              <th className="px-6 py-3 whitespace-nowrap">Transaction ID</th>
+              <th className="px-6 py-3 whitespace-nowrap">
+                Transaction / Order ID
+              </th>
               <th className="px-6 py-3">Booking Ref</th>
               <th className="px-6 py-3">Gateway</th>
               <th className="px-6 py-3">Amount</th>
@@ -59,13 +57,22 @@ const PaymentTable = ({ payments, onViewDetail }: PaymentTableProps) => {
                 className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 <td className="px-6 py-4">
-                  <div className="font-mono text-xs font-medium text-gray-700 dark:text-gray-300">
-                    {payment.gatewayTransactionId}
+                  <div
+                    className="font-mono text-xs font-medium text-gray-700 dark:text-gray-300 truncate max-w-[150px]"
+                    title={payment.gatewayTransactionId || payment.orderCode}
+                  >
+                    {payment.gatewayTransactionId || payment.orderCode}
                   </div>
+                  {payment.gatewayTransactionId &&
+                    payment.gatewayTransactionId !== payment.orderCode && (
+                      <div className="text-[10px] text-gray-400 mt-0.5 font-mono">
+                        Order: {payment.orderCode}
+                      </div>
+                    )}
                 </td>
                 <td className="px-6 py-4">
                   <div className="font-medium text-blue-600 dark:text-blue-400">
-                    {payment.bookingTicketCode}
+                    {payment.bookingTicketCode || "N/A"}
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">
                     {payment.customerName}
@@ -94,6 +101,9 @@ const PaymentTable = ({ payments, onViewDetail }: PaymentTableProps) => {
                     )}
                     {payment.status === "refunded" && (
                       <ArrowUpRight className="w-3 h-3 mr-1" />
+                    )}
+                    {payment.status === "pending" && (
+                      <RefreshCw className="w-3 h-3 mr-1 animate-spin-slow" />
                     )}
                     {payment.status.charAt(0).toUpperCase() +
                       payment.status.slice(1)}

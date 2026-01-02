@@ -1,6 +1,6 @@
 import React from "react";
-import { XCircle, Ticket, MapPin, CreditCard } from "lucide-react";
-import { Booking } from "@/admin/saleAndBooking/BookingManagement";
+import { XCircle, Ticket, MapPin, CreditCard, Map } from "lucide-react";
+import { Booking } from "@/store/type/bookingType";
 import { formatDate } from "@/utils/formatDate";
 import { formatCurrency } from "@/utils/formatCurrency";
 
@@ -16,6 +16,13 @@ const BookingDetailModal = ({
   booking,
 }: BookingDetailModalProps) => {
   if (!isOpen || !booking) return null;
+
+  const customerName =
+    booking.customerInfo?.fullName || booking.user?.fullName || "N/A";
+  const customerEmail =
+    booking.customerInfo?.email || booking.user?.email || "N/A";
+  const customerPhone =
+    booking.customerInfo?.phoneNumber || booking.user?.phoneNumber || "N/A";
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
@@ -55,17 +62,17 @@ const BookingDetailModal = ({
                 Full Name:
               </span>
               <span className="col-span-2 font-medium dark:text-white">
-                {booking.customerInfo.fullName}
+                {customerName}
               </span>
 
               <span className="text-gray-500 dark:text-gray-400">Email:</span>
               <span className="col-span-2 break-all dark:text-white">
-                {booking.customerInfo.email}
+                {customerEmail}
               </span>
 
               <span className="text-gray-500 dark:text-gray-400">Phone:</span>
               <span className="col-span-2 dark:text-white">
-                {booking.customerInfo.phoneNumber}
+                {customerPhone}
               </span>
             </div>
           </div>
@@ -77,19 +84,19 @@ const BookingDetailModal = ({
             <div className="grid grid-cols-3 gap-2 text-sm">
               <span className="text-gray-500 dark:text-gray-400">Route:</span>
               <span className="col-span-2 font-medium flex items-center gap-1 dark:text-white">
-                <MapPin className="w-3 h-3" /> {booking.routeName}
+                <Map className="w-3 h-3" /> {booking.route?.name}
               </span>
 
               <span className="text-gray-500 dark:text-gray-400">
                 Trip Name:
               </span>
               <span className="col-span-2 dark:text-white">
-                {booking.tripName}
+                {booking.trip?.tripName}
               </span>
 
               <span className="text-gray-500 dark:text-gray-400">Seat:</span>
               <span className="col-span-2 font-bold text-blue-600 dark:text-blue-400">
-                {booking.seatNumber}
+                {booking.seat?.seatNumber}
               </span>
 
               <span className="text-gray-500 dark:text-gray-400">
@@ -98,6 +105,41 @@ const BookingDetailModal = ({
               <span className="col-span-2 dark:text-white">
                 {formatDate(booking.createdAt)}
               </span>
+            </div>
+          </div>
+
+          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div>
+              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b dark:border-gray-600 pb-1 mb-2">
+                Pickup
+              </h3>
+              <div className="text-sm dark:text-white flex items-start gap-2">
+                <MapPin className="w-4 h-4 text-green-500 mt-0.5" />
+                <div>
+                  <div className="font-medium">
+                    {booking.pickupStop?.location.name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {booking.pickupStop?.location.address}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b dark:border-gray-600 pb-1 mb-2">
+                Dropoff
+              </h3>
+              <div className="text-sm dark:text-white flex items-start gap-2">
+                <MapPin className="w-4 h-4 text-red-500 mt-0.5" />
+                <div>
+                  <div className="font-medium">
+                    {booking.dropoffStop?.location.name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {booking.dropoffStop?.location.address}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -119,16 +161,8 @@ const BookingDetailModal = ({
                         : "text-yellow-600 dark:text-yellow-400"
                     }`}
                   >
-                    {booking.status.replace("_", " ")}
+                    {String(booking.status).replace("_", " ")}
                   </div>
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  Gateway
-                </div>
-                <div className="font-medium dark:text-white">
-                  {booking.paymentGateway || "N/A"}
                 </div>
               </div>
               <div className="text-right w-full sm:w-auto border-t dark:border-gray-600 sm:border-t-0 pt-2 sm:pt-0">
@@ -149,9 +183,6 @@ const BookingDetailModal = ({
             className="px-4 py-2 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500 font-medium text-sm"
           >
             Close
-          </button>
-          <button className="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 font-medium text-sm flex items-center gap-2 shadow-sm">
-            <Ticket className="w-4 h-4" /> Resend Ticket
           </button>
         </div>
       </div>

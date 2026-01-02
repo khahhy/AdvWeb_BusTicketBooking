@@ -50,6 +50,7 @@ export interface LockSeatResponse {
   expiresIn: number;
 }
 export interface BookingQueryParams extends PaginationParams {
+  search?: string;
   status?: BookingStatus;
   userId?: string;
   tripId?: string;

@@ -9,6 +9,7 @@ import {
   HttpStatus,
   Delete,
   Req,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,9 +19,13 @@ import {
   ApiBearerAuth,
   ApiBody,
 } from '@nestjs/swagger';
+import { RolesGuard } from 'src/common/guards/role.guard';
+import { Roles } from 'src/common/decorators/role.decorator';
+import { UserRole } from '@prisma/client';
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PayOSWebhookDto } from './dto/payos-webhook.dto';
+import { QueryPaymentDto } from './dto/query-payment.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import type { RequestWithUser } from 'src/common/type/request-with-user.interface';
 
@@ -70,6 +75,15 @@ export class PaymentController {
   })
   async handlePayOSWebhook(@Body() webhookData: PayOSWebhookDto) {
     return this.paymentService.handlePayOSWebhook(webhookData);
+  }
+
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Admin: Lấy danh sách giao dịch & thống kê' })
+  async findAll(@Query() query: QueryPaymentDto) {
+    return this.paymentService.findAll(query);
   }
 
   @Get('status/:bookingId')

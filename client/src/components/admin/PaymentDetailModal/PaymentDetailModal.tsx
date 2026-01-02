@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   XCircle,
   CreditCard,
@@ -7,15 +8,20 @@ import {
   ArrowDownLeft,
   FileText,
   Activity,
+  Loader2,
 } from "lucide-react";
-import { Payment } from "@/admin/saleAndBooking/PaymentManagement";
+// Import Type từ API
+import {
+  PaymentTransaction,
+  useCancelPaymentMutation,
+} from "@/store/api/paymentApi";
 import { formatDate } from "@/utils/formatDate";
 import { formatCurrency } from "@/utils/formatCurrency";
 
 interface PaymentDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  payment: Payment | null;
+  payment: PaymentTransaction | null;
 }
 
 const PaymentDetailModal = ({
@@ -23,14 +29,57 @@ const PaymentDetailModal = ({
   onClose,
   payment,
 }: PaymentDetailModalProps) => {
+  // State quản lý việc hiển thị form Refund
+  const [showRefundConfirm, setShowRefundConfirm] = useState(false);
+  const [refundReason, setRefundReason] = useState("");
+
+  // API Cancel Payment
+  const [cancelPayment, { isLoading: isRefunding }] =
+    useCancelPaymentMutation();
+
   if (!isOpen || !payment) return null;
+
+  const handleRefund = async () => {
+    if (!refundReason.trim()) {
+      alert("Please provide a reason for refund.");
+      return;
+    }
+
+    if (
+      confirm(
+        `Are you sure you want to refund this transaction? This action cannot be undone.`,
+      )
+    ) {
+      try {
+        await cancelPayment({
+          bookingId: payment.bookingId,
+          reason: refundReason,
+        }).unwrap();
+
+        alert("Refund processed successfully!");
+        setShowRefundConfirm(false);
+        onClose();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
+        console.error("Refund failed:", error);
+        const msg = error?.data?.message || "Failed to process refund.";
+        alert(`Error: ${msg}`);
+      }
+    }
+  };
 
   return (
     <div
       className="fixed inset-0 bg-black bg-opacity-50 dark:bg-black dark:bg-opacity-70 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          setShowRefundConfirm(false);
+          onClose();
+        }
+      }}
     >
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        {/* HEADER */}
         <div className="flex justify-between items-center p-6 border-b dark:border-gray-700 flex-shrink-0">
           <div>
             <h2 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
@@ -38,7 +87,7 @@ const PaymentDetailModal = ({
               Transaction Details
             </h2>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-mono">
-              {payment.gatewayTransactionId}
+              ID: {payment.gatewayTransactionId || payment.orderCode}
             </p>
           </div>
           <button
@@ -49,20 +98,26 @@ const PaymentDetailModal = ({
           </button>
         </div>
 
+        {/* CONTENT */}
         <div className="p-6 overflow-y-auto">
+          {/* Status Badge */}
           <div
             className={`flex items-center gap-3 p-4 rounded-lg mb-6 border ${
               payment.status === "successful"
                 ? "bg-green-50 dark:bg-green-900/30 border-green-100 dark:border-green-700 text-green-800 dark:text-green-300"
                 : payment.status === "failed"
                   ? "bg-red-50 dark:bg-red-900/30 border-red-100 dark:border-red-700 text-red-800 dark:text-red-300"
-                  : "bg-yellow-50 dark:bg-yellow-900/30 border-yellow-100 dark:border-yellow-700 text-yellow-800 dark:text-yellow-300"
+                  : payment.status === "refunded"
+                    ? "bg-gray-100 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-300"
+                    : "bg-yellow-50 dark:bg-yellow-900/30 border-yellow-100 dark:border-yellow-700 text-yellow-800 dark:text-yellow-300"
             }`}
           >
             {payment.status === "successful" ? (
               <CheckCircle className="w-5 h-5" />
             ) : payment.status === "failed" ? (
               <AlertCircle className="w-5 h-5" />
+            ) : payment.status === "refunded" ? (
+              <ArrowUpRight className="w-5 h-5" />
             ) : (
               <Activity className="w-5 h-5" />
             )}
@@ -94,6 +149,14 @@ const PaymentDetailModal = ({
                   </span>
                   <span className="font-medium text-gray-900 dark:text-white">
                     {payment.gateway}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">
+                    Order Code
+                  </span>
+                  <span className="font-mono text-gray-900 dark:text-white">
+                    {payment.orderCode}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -132,8 +195,8 @@ const PaymentDetailModal = ({
                   <span className="text-gray-500 dark:text-gray-400 block text-xs">
                     Ticket Reference
                   </span>
-                  <span className="font-medium text-blue-600 dark:text-blue-400 cursor-pointer hover:underline">
-                    {payment.bookingTicketCode}
+                  <span className="font-medium text-blue-600 dark:text-blue-400">
+                    {payment.bookingTicketCode || "N/A"}
                   </span>
                 </div>
                 <div>
@@ -148,25 +211,64 @@ const PaymentDetailModal = ({
             </div>
           </div>
 
+          {showRefundConfirm && (
+            <div className="mt-8 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900 rounded-lg p-4 animate-in slide-in-from-bottom-2">
+              <h3 className="text-sm font-bold text-red-800 dark:text-red-300 mb-2">
+                Process Refund
+              </h3>
+              <p className="text-xs text-red-600 dark:text-red-400 mb-3">
+                This will cancel the booking and initiate a refund process.
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Refund Reason <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border rounded-md text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                    placeholder="e.g. Customer requested cancellation"
+                    value={refundReason}
+                    onChange={(e) => setRefundReason(e.target.value)}
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => setShowRefundConfirm(false)}
+                    className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded dark:text-gray-300 dark:hover:bg-gray-700"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleRefund}
+                    disabled={isRefunding || !refundReason.trim()}
+                    className="px-3 py-1.5 text-xs font-medium bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 flex items-center gap-1"
+                  >
+                    {isRefunding && (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    )}
+                    Confirm Refund
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="mt-8">
             <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-              <FileText className="w-4 h-4" /> Gateway Raw Response (Log)
+              <FileText className="w-4 h-4" /> Gateway Data (Reconstructed)
             </h3>
             <div className="bg-slate-900 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto">
               <pre className="text-xs text-green-400 dark:text-green-300 font-mono">
                 {`{
-  "transaction_id": "${payment.gatewayTransactionId}",
+  "order_code": ${payment.orderCode},
+  "transaction_id": "${payment.gatewayTransactionId || "null"}",
   "amount": ${payment.amount},
   "currency": "VND",
   "status": "${payment.status.toUpperCase()}",
   "gateway": "${payment.gateway.toUpperCase()}",
   "timestamp": "${payment.createdAt}",
-  "message": "${
-    payment.status === "successful"
-      ? "Transaction approved"
-      : "Transaction rejected by issuer"
-  }",
-  "signature": "e8f9d...2a1b"
+  "booking_ref": "${payment.bookingTicketCode || "null"}"
 }`}
               </pre>
             </div>
@@ -180,8 +282,11 @@ const PaymentDetailModal = ({
           >
             Close
           </button>
-          {payment.status === "successful" && (
-            <button className="px-4 py-2 bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors">
+          {payment.status === "successful" && !showRefundConfirm && (
+            <button
+              onClick={() => setShowRefundConfirm(true)}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors"
+            >
               Refund Transaction
             </button>
           )}

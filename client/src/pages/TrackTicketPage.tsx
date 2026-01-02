@@ -9,7 +9,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-// import { buildApiUrl, API_ENDPOINTS } from "@/lib/api";
 import Navbar from "@/components/common/Navbar";
 import Footer from "@/components/dashboard/Footer";
 import backgroundImage from "@/assets/images/background.png";
@@ -23,7 +22,11 @@ import {
   Ticket,
   User,
   AlertCircle,
+  Eye,
 } from "lucide-react";
+import { useLookupGuestBookingsMutation } from "@/store/api/bookingApi";
+import { Booking, BookingStatus } from "@/store/type/bookingType";
+import dayjs from "dayjs";
 
 interface BookingResult {
   id: string;
@@ -47,24 +50,24 @@ export default function TrackTicketPage() {
     phoneNumber: "",
   });
   const [bookingResults, setBookingResults] = useState<BookingResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [searchAttempted, setSearchAttempted] = useState(false);
   const [errors, setErrors] = useState({
     email: "",
     phoneNumber: "",
   });
-
   const navigate = useNavigate();
+  const [lookupGuestBookings, { isLoading: isSearching }] =
+    useLookupGuestBookingsMutation();
+
+  const handleViewTicket = (bookingCode: string) => {
+    if (!bookingCode) return;
+    navigate(`/eticket/${bookingCode}`);
+  };
 
   useEffect(() => {
-    // Check if user is logged in
     const token = localStorage.getItem("accessToken");
-    if (token) {
-      setIsLoggedIn(true);
-      // Redirect to booking history if already logged in
-      navigate("/booking-history");
-    }
-  }, [navigate]);
+    setIsLoggedIn(!!token);
+  }, []);
 
   const validateForm = () => {
     const newErrors = {
@@ -90,40 +93,63 @@ export default function TrackTicketPage() {
     return !Object.values(newErrors).some((error) => error);
   };
 
+  const transformBookingToResult = (booking: Booking): BookingResult => {
+    const startTime = booking.trip?.startTime
+      ? dayjs(booking.trip.startTime)
+      : dayjs();
+    const endTime = startTime.add(6, "hour");
+    const durationHours = endTime.diff(startTime, "hour", true);
+    const durationText =
+      durationHours >= 1
+        ? `${Math.floor(durationHours)}h ${Math.round((durationHours % 1) * 60)}m`
+        : `${Math.round(durationHours * 60)}m`;
+
+    const mapStatus = (
+      status: BookingStatus,
+    ): "completed" | "upcoming" | "cancelled" => {
+      switch (status) {
+        case BookingStatus.confirmed:
+          return "upcoming";
+        case BookingStatus.cancelled:
+          return "cancelled";
+        case BookingStatus.pendingPayment:
+        default:
+          return "upcoming";
+      }
+    };
+
+    return {
+      id: booking.id,
+      bookingCode: booking.ticketCode || booking.id.slice(0, 8).toUpperCase(),
+      from: booking.pickupStop?.location?.name || "Unknown",
+      to: booking.dropoffStop?.location?.name || "Unknown",
+      date: startTime.format("YYYY-MM-DD"),
+      departureTime: startTime.format("HH:mm"),
+      arrivalTime: endTime.format("HH:mm"),
+      seat: booking.seat?.seatNumber || "N/A",
+      price: Number(booking.price) || 0,
+      status: mapStatus(booking.status),
+      passengerName: booking.customerInfo?.fullName || "Guest",
+      duration: durationText,
+    };
+  };
+
   const handleTrackTicket = async () => {
     if (!validateForm()) return;
 
-    setIsSearching(true);
     setSearchAttempted(true);
 
     try {
-      // Mock API call - replace with actual API
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const response = await lookupGuestBookings({
+        email: formData.email,
+        phoneNumber: formData.phoneNumber.replace(/\s/g, ""),
+      }).unwrap();
 
-      // Mock results based on form data
-      const mockResults: BookingResult[] = [
-        {
-          id: "1",
-          bookingCode: "BUS123456",
-          from: "Ho Chi Minh City",
-          to: "Da Lat",
-          date: "2024-12-01",
-          departureTime: "08:00",
-          arrivalTime: "14:30",
-          seat: "A12",
-          price: 280000,
-          status: "upcoming",
-          passengerName: "Guest User",
-          duration: "6h 30m",
-        },
-      ];
-
-      setBookingResults(mockResults);
+      const results = (response.data || []).map(transformBookingToResult);
+      setBookingResults(results);
     } catch (error) {
       console.error("Error tracking ticket:", error);
       setBookingResults([]);
-    } finally {
-      setIsSearching(false);
     }
   };
 
@@ -146,10 +172,6 @@ export default function TrackTicketPage() {
       currency: "VND",
     }).format(price);
   };
-
-  if (isLoggedIn) {
-    return null; // Will be redirected
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
@@ -176,6 +198,17 @@ export default function TrackTicketPage() {
           <p className="text-center mb-8 text-black/80 dark:text-white/80 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.4s_forwards]">
             Enter your contact information to find your booking
           </p>
+          {isLoggedIn && (
+            <p className="text-center text-sm text-black/70 dark:text-white/70 opacity-0 animate-[fadeInDown_0.7s_ease-out_0.5s_forwards]">
+              You're logged in.{" "}
+              <button
+                onClick={() => navigate("/booking-history")}
+                className="text-pink-600 dark:text-pink-400 hover:underline font-medium"
+              >
+                View your booking history
+              </button>
+            </p>
+          )}
         </div>
       </div>
 
@@ -346,16 +379,29 @@ export default function TrackTicketPage() {
                                 {booking.seat}
                               </span>
                             </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                navigate(`/booking-details/${booking.id}`)
-                              }
-                              className="border-blue-300 text-blue-600 hover:bg-blue-50"
-                            >
-                              View Details
-                            </Button>
+                            <div className="flex gap-2 justify-end">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleViewTicket(booking.bookingCode)
+                                }
+                                className="border-pink-300 text-pink-600 hover:bg-pink-50 dark:border-pink-700 dark:text-pink-400 dark:hover:bg-pink-900/20"
+                              >
+                                <Eye className="w-4 h-4 mr-1" />
+                                E-Ticket
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  navigate(`/booking-details/${booking.id}`)
+                                }
+                                className="border-blue-300 text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                              >
+                                View Details
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </CardContent>

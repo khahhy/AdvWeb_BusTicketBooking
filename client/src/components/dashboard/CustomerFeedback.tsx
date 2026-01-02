@@ -1,6 +1,5 @@
 import { BlurText } from "@/components/ui/blur-text";
 import { InfiniteMovingCards } from "@/components/ui/infinite-moving-cards";
-import backgroundImage1 from "@/assets/images/background1.png";
 
 interface Testimonial {
   quote: string;
@@ -58,12 +57,7 @@ export default function CustomerFeedback() {
   return (
     <section className="py-20 relative">
       {/* Background Image - only in light mode */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat dark:hidden"
-        style={{
-          backgroundImage: `url(${backgroundImage1})`,
-        }}
-      />
+      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat dark:hidden" />
 
       {/* Dark mode background */}
       <div className="absolute inset-0 bg-black hidden dark:block" />

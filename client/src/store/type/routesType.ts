@@ -42,12 +42,22 @@ export interface TripRouteMapDetail {
   startTime?: string;
   endTime?: string;
   bus: {
+    id: string;
     plate: string;
+    busType: string;
     amenities: string[];
   };
   routeName: string;
   origin: string;
+  originCity: string;
   destination: string;
+  destinationCity: string;
+}
+
+export interface BackendSeat {
+  id: string;
+  busId: string;
+  seatNumber: string;
 }
 
 export interface TopPerformingRoute {
@@ -78,6 +88,7 @@ export interface RouteTripAvailable {
   startTime: string;
   endTime: string;
   busName: string;
+  busType: string;
   amenities: string[];
   pickupLocation: string;
   dropoffLocation: string;
@@ -85,6 +96,7 @@ export interface RouteTripAvailable {
     basePrice: number;
     surcharge: string;
     surchargeReason: string;
+    busTypeFactor: number;
     finalPrice: number;
     currency: string;
   };
@@ -105,7 +117,6 @@ export interface TripResponseRaw {
     id: string;
     plate: string;
     busType: string;
-    seatCapacity: string;
     amenities: Record<string, unknown>;
   };
 }

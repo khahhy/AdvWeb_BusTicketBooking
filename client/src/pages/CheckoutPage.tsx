@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/common/Navbar";
 import backgroundImage from "@/assets/images/background.png";
-import { mockTrips, generateSeats } from "@/data/mockTrips";
 import dayjs from "dayjs";
 import TripSummaryCard from "@/components/checkout/TripSummaryCard";
 import PassengerDetailsCard from "@/components/checkout/PassengerDetailsCard";
@@ -10,7 +9,10 @@ import ContactInformationCard from "@/components/checkout/ContactInformationCard
 import PriceDetailsSidebar from "@/components/checkout/PriceDetailsSidebar";
 import SeatMapModal from "@/components/checkout/SeatMapModal";
 import Footer from "@/components/dashboard/Footer";
-import { useEffect } from "react";
+import { useGetTripRouteMapDetailQuery } from "@/store/api/routesApi";
+import { useGetTripSeatsQuery } from "@/store/api/tripsApi";
+import { SeatStatus } from "@/store/type/seatsType";
+import { Loader2 } from "lucide-react";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -20,18 +22,112 @@ export default function CheckoutPage() {
     window.scrollTo(0, 0);
   }, []);
 
-  // Get trip data from URL params or use default
-  const tripId = searchParams.get("tripId") || "1";
-  const selectedSeat = searchParams.get("seat") || "25";
+  // Get trip data from URL params
+  const tripId = searchParams.get("tripId") || "";
+  const routeId = searchParams.get("routeId") || "";
+  // Support both single seat (seatId) and multiple seats (seatIds)
+  const seatIdsParam =
+    searchParams.get("seatIds") || searchParams.get("seatId") || "";
+  const seatsParam =
+    searchParams.get("seats") || searchParams.get("seat") || "";
+  const seatIds = seatIdsParam.split(",").filter(Boolean);
+  const selectedSeats = seatsParam.split(",").filter(Boolean);
   const travelDate = searchParams.get("date") || dayjs().format("YYYY-MM-DD");
 
-  const trip = mockTrips.find((t) => t.id === tripId) || mockTrips[0];
+  // Fetch trip details from API
+  const {
+    data: tripData,
+    isLoading: tripLoading,
+    error: tripError,
+  } = useGetTripRouteMapDetailQuery(
+    { tripId, routeId },
+    { skip: !tripId || !routeId },
+  );
 
-  // Calculate prices
+  // Fetch real-time seat status
+  const { data: seatStatusData } = useGetTripSeatsQuery(
+    { tripId, routeId },
+    { skip: !tripId || !routeId },
+  );
+
+  // Transform API data to component format
+  const trip = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const actualData = (tripData as any)?.data || tripData;
+    if (!actualData) {
+      return {
+        id: tripId,
+        departureTime: "--:--",
+        arrivalTime: "--:--",
+        duration: "0h",
+        from: "",
+        to: "",
+        price: 0,
+        availableSeats: 0,
+        totalSeats: 32,
+        busType: "standard",
+        amenities: {},
+      };
+    }
+
+    const startTime = dayjs(actualData.startTime);
+    const endTime = dayjs(actualData.endTime);
+    const durationHours = endTime.diff(startTime, "hour", true);
+    const durationText =
+      durationHours >= 1
+        ? `${Math.floor(durationHours)}h ${Math.round((durationHours % 1) * 60)}m`
+        : `${Math.round(durationHours * 60)}m`;
+
+    const busType = actualData.bus?.busType?.toLowerCase() || "standard";
+    const totalSeats =
+      busType === "sleeper" || busType === "limousine" ? 20 : 32;
+
+    // Calculate available seats from real seat status
+    const availableSeats = seatStatusData?.availableSeats ?? totalSeats;
+
+    return {
+      id: actualData.tripId,
+      departureTime: startTime.format("HH:mm"),
+      arrivalTime: endTime.format("HH:mm"),
+      duration: durationText,
+      from: actualData.originCity || actualData.origin,
+      to: actualData.destinationCity || actualData.destination,
+      fromTerminal: actualData.origin,
+      toTerminal: actualData.destination,
+      price: parseFloat(actualData.price) || 0,
+      availableSeats,
+      totalSeats,
+      busType,
+      amenities: actualData.bus?.amenities || {},
+    };
+  }, [tripData, tripId, seatStatusData]);
+
+  // Transform real seat status data for seat map
+  const transformSeatStatus = (
+    seatStatusData: SeatStatus[] | undefined,
+    basePrice: number,
+  ) => {
+    if (!seatStatusData || seatStatusData.length === 0) {
+      return [];
+    }
+
+    return seatStatusData.map((seat) => ({
+      id: seat.seatId,
+      number: seat.seatNumber,
+      type:
+        seat.status === "BOOKED" || seat.status === "LOCKED"
+          ? ("booked" as const)
+          : ("available" as const),
+      price: basePrice,
+    }));
+  };
+
+  // Calculate prices - multiply by number of seats
   const ticketPrice = trip.price;
-  const insuranceFee = 1000;
-  const serviceFee = 14000;
-  const totalPrice = ticketPrice + insuranceFee + serviceFee;
+  const seatCount = seatIds.length || 1;
+  const insuranceFee = 0;
+  const serviceFee = 0;
+  const totalPrice = ticketPrice * seatCount + insuranceFee + serviceFee;
 
   const [fullName, setFullName] = useState("");
   const [contactName, setContactName] = useState("");
@@ -43,10 +139,32 @@ export default function CheckoutPage() {
   const [showPassengerDetails, setShowPassengerDetails] = useState(true);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [showSeatMap, setShowSeatMap] = useState(false);
-  const seats = generateSeats(
-    trip.totalSeats,
-    trip.totalSeats - trip.availableSeats,
-    trip.price,
+
+  // Auto-fill user info if logged in
+  useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.fullName) {
+          setFullName(user.fullName);
+          setContactName(user.fullName);
+        }
+        if (user.email) {
+          setEmail(user.email);
+        }
+        if (user.phoneNumber) {
+          setPhoneNumber(user.phoneNumber);
+        }
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }, []);
+
+  const seats = useMemo(
+    () => transformSeatStatus(seatStatusData?.seats, trip.price),
+    [seatStatusData, trip.price],
   );
 
   const formatDate = () => {
@@ -64,9 +182,7 @@ export default function CheckoutPage() {
     if (!fullName.trim()) {
       newErrors.fullName = "Please enter passenger full name";
     }
-    if (!personalId.trim()) {
-      newErrors.personalId = "Please enter Personal ID/Citizen ID/Passport ID";
-    }
+    // Personal ID is optional
 
     // Validate contact information
     if (!contactName.trim()) {
@@ -82,10 +198,7 @@ export default function CheckoutPage() {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = "Please enter a valid email address";
     }
-    if (!contactPersonalId.trim()) {
-      newErrors.contactPersonalId =
-        "Please enter Personal ID/Citizen ID/Passport ID";
-    }
+    // Contact Personal ID is optional
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -93,13 +206,63 @@ export default function CheckoutPage() {
 
   const handleNext = () => {
     if (validateForm()) {
-      console.log("Proceeding to payment...");
-      // Navigate to payment page with trip details
-      navigate(
-        `/payment?tripId=${tripId}&seat=${selectedSeat}&date=${travelDate}&passengerName=${encodeURIComponent(fullName)}&passengerId=${encodeURIComponent(personalId)}&email=${encodeURIComponent(email)}`,
-      );
+      const params = new URLSearchParams({
+        tripId,
+        routeId,
+        seatIds: seatIds.join(","),
+        seats: selectedSeats.join(","),
+        date: travelDate,
+        passengerName: fullName,
+        passengerId: personalId,
+        email,
+        phoneNumber,
+      });
+      navigate(`/payment?${params.toString()}`);
     }
   };
+
+  // Loading state
+  if (tripLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-pink-500 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-300">
+              Loading trip details...
+            </p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Error state
+  if (tripError || !tripId || !routeId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <p className="text-red-500 text-lg mb-4">
+              {!tripId || !routeId
+                ? "Missing trip information. Please select a trip first."
+                : "Failed to load trip details. Please try again."}
+            </p>
+            <button
+              onClick={() => navigate("/search")}
+              className="px-6 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
+            >
+              Go to Search
+            </button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 dark:bg-black dark:bg-none">
@@ -148,7 +311,7 @@ export default function CheckoutPage() {
                 setFullName={setFullName}
                 personalId={personalId}
                 setPersonalId={setPersonalId}
-                selectedSeat={selectedSeat}
+                selectedSeat={selectedSeats.join(", ")}
                 showPassengerDetails={showPassengerDetails}
                 setShowPassengerDetails={setShowPassengerDetails}
                 errors={errors}
@@ -178,7 +341,7 @@ export default function CheckoutPage() {
           <div className="lg:col-span-1">
             <div className="opacity-0 animate-[fadeInUp_0.8s_ease-out_0.4s_forwards]">
               <PriceDetailsSidebar
-                selectedSeat={selectedSeat}
+                selectedSeat={selectedSeats.join(", ")}
                 ticketPrice={ticketPrice}
                 insuranceFee={insuranceFee}
                 serviceFee={serviceFee}
@@ -197,7 +360,7 @@ export default function CheckoutPage() {
         trip={trip}
         formatDate={formatDate}
         formatCurrency={formatCurrency}
-        selectedSeat={selectedSeat}
+        selectedSeat={selectedSeats.join(", ")}
         ticketPrice={ticketPrice}
         seats={seats}
       />

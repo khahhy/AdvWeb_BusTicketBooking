@@ -48,8 +48,8 @@ export const mockTrips: Trip[] = [
     to: "Da Lat",
     fromTerminal: "Mien Dong Bus Station",
     toTerminal: "Da Lat Central Terminal",
-    availableSeats: 18,
-    totalSeats: 32,
+    availableSeats: 12,
+    totalSeats: 18,
     price: 250000,
     busType: "vip",
     amenities: {
@@ -91,7 +91,7 @@ export const mockTrips: Trip[] = [
     fromTerminal: "Da Lat Central Terminal",
     toTerminal: "Nha Trang Bus Terminal",
     availableSeats: 10,
-    totalSeats: 32,
+    totalSeats: 16,
     price: 320000,
     busType: "limousine",
     amenities: {
@@ -112,8 +112,8 @@ export const mockTrips: Trip[] = [
     duration: "6 hours 15 min",
     from: "Ho Chi Minh City",
     to: "Ba Ria - Vung Tau",
-    availableSeats: 22,
-    totalSeats: 32,
+    availableSeats: 10,
+    totalSeats: 16,
     price: 205000,
     busType: "sleeper",
     amenities: {
@@ -138,6 +138,7 @@ export const generateSeats = (
   totalSeats: number,
   bookedSeats: number,
   basePrice: number,
+  busType?: string,
 ): Seat[] => {
   const seats: Seat[] = [];
   const bookedIndices = new Set<number>();
@@ -147,12 +148,51 @@ export const generateSeats = (
     bookedIndices.add(Math.floor(Math.random() * totalSeats));
   }
 
+  // Generate seat labels based on bus type (matching admin layouts)
+  const getSeatLabel = (index: number, type?: string): string => {
+    const busTypeNormalized = type?.toLowerCase();
+
+    if (busTypeNormalized === "standard") {
+      // Standard: 2-2 layout, 8 rows, 4 seats per row (A1-D8)
+      const row = Math.floor(index / 4) + 1;
+      const col = ["A", "B", "C", "D"][index % 4];
+      return `${col}${row}`;
+    } else if (busTypeNormalized === "vip") {
+      // VIP: 2-1 layout, 6 rows, 3 seats per row (A1-C6) = 18 seats
+      const row = Math.floor(index / 3) + 1;
+      const col = ["A", "B", "C"][index % 3];
+      return `${col}${row}`;
+    } else if (busTypeNormalized === "sleeper") {
+      // Sleeper: 2 tiers, 4 rows, 2 beds per row (A1-B4, C1-D4) = 16 beds
+      if (index < 8) {
+        // Upper tier: A1-B4
+        const row = Math.floor(index / 2) + 1;
+        const col = ["A", "B"][index % 2];
+        return `${col}${row}`;
+      } else {
+        // Lower tier: C1-D4
+        const adjustedIndex = index - 8;
+        const row = Math.floor(adjustedIndex / 2) + 1;
+        const col = ["C", "D"][adjustedIndex % 2];
+        return `${col}${row}`;
+      }
+    } else if (busTypeNormalized === "limousine") {
+      // Limousine: 1-2-1 layout, 4 rows, 4 seats per row (A1-D4) = 16 seats
+      const row = Math.floor(index / 4) + 1;
+      const col = ["A", "B", "C", "D"][index % 4];
+      return `${col}${row}`;
+    }
+
+    // Fallback for unknown types
+    return (index + 1).toString().padStart(2, "0");
+  };
+
   for (let i = 0; i < totalSeats; i++) {
-    const seatNumber = (i + 1).toString().padStart(2, "0");
+    const seatNumber = getSeatLabel(i, busType);
     const isBooked = bookedIndices.has(i);
 
     seats.push({
-      id: `seat-${seatNumber}`,
+      id: `seat-${i}`,
       number: seatNumber,
       type: isBooked ? "booked" : "available",
       price: basePrice,

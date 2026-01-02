@@ -45,4 +45,8 @@ export class RedisCacheService {
       await this.redis.client.del(keys);
     }
   }
+
+  async keys(pattern: string): Promise<string[]> {
+    return this.redis.client.keys(pattern);
+  }
 }

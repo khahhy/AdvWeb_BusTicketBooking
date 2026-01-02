@@ -26,7 +26,7 @@ export class TripsService {
     await this.cacheManager.delByPattern('trips:search*');
 
     if (tripId) {
-      await this.cacheManager.del(`trips:detail:${tripId}`);
+      await this.cacheManager.delByPattern(`trips:detail:${tripId}*`);
     }
   }
 
@@ -297,7 +297,7 @@ export class TripsService {
 
     // 5. SET CACHE (Lưu 300s = 5 phút)
     await this.cacheManager.set(cacheKey, result, 300);
-    return trips;
+    return result;
   }
 
   async findOne(id: string, includeRoutes?: string) {
@@ -318,7 +318,6 @@ export class TripsService {
 
     // Include tripRoutes with route and price if requested
     if (includeRoutes === 'true') {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       include.tripRoutes = {
         include: {
           route: {
@@ -333,7 +332,7 @@ export class TripsService {
 
     const trip = await this.prisma.trips.findUnique({
       where: { id },
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
       include,
     });
 
@@ -663,22 +662,60 @@ export class TripsService {
 
       const segmentIds = relevantSegments.map((s) => s.id);
 
-      const lockedSeats = await this.prisma.seatSegmentLocks.findMany({
+      // Collect booked seat IDs from multiple sources
+      const bookedSeatIds = new Set<string>();
+
+      const lockPattern = `lock:trip:${tripId}:*`;
+      const activeLocks = await this.cacheManager.keys(lockPattern);
+
+      if (activeLocks && activeLocks.length > 0) {
+        activeLocks.forEach((key) => {
+          const parts = key.split(':');
+          const segId = parts[4];
+          const seatId = parts[6];
+          if (segmentIds.includes(segId)) {
+            bookedSeatIds.add(seatId);
+          }
+        });
+      }
+
+      // Method 1: Check SeatSegmentLocks (if segments exist)
+      if (segmentIds.length > 0) {
+        const lockedSeats = await this.prisma.seatSegmentLocks.findMany({
+          where: {
+            tripId,
+            segmentId: { in: segmentIds },
+          },
+          select: { seatId: true },
+        });
+        lockedSeats.forEach((lock) => bookedSeatIds.add(lock.seatId));
+      }
+
+      // Method 2: Check Bookings table directly (fallback when no segments)
+      const bookedFromBookings = await this.prisma.bookings.findMany({
         where: {
           tripId,
-          segmentId: { in: segmentIds },
+          routeId,
+          status: { in: ['confirmed', 'pendingPayment'] },
         },
         select: { seatId: true },
       });
+      bookedFromBookings.forEach((b) => bookedSeatIds.add(b.seatId));
 
-      const lockedSeatIds = new Set(lockedSeats.map((lock) => lock.seatId));
+      console.log('=== SEAT STATUS DEBUG ===');
+      console.log('tripId:', tripId, 'routeId:', routeId);
+      console.log('segmentIds count:', segmentIds.length);
+      console.log('bookedFromBookings count:', bookedFromBookings.length);
+      console.log('Total booked seats:', bookedSeatIds.size);
+      console.log('=========================');
+
+      const lockedSeatIds = bookedSeatIds;
 
       const result = trip.bus.seats.map((seat) => {
         const isLocked = lockedSeatIds.has(seat.id);
         return {
           seatId: seat.id,
           seatNumber: seat.seatNumber,
-          coordinates: seat.coordinates,
           status: isLocked ? 'BOOKED' : 'AVAILABLE',
         };
       });
@@ -751,7 +788,6 @@ export class TripsService {
           });
 
           const matchedCity = allCities.find(
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
             (item: any) => normalizeCity(item.city) === normalizedOrigin,
           );
 
@@ -800,7 +836,6 @@ export class TripsService {
           });
 
           const matchedCity = allCities.find(
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
             (item: any) => normalizeCity(item.city) === normalizedDestination,
           );
 
@@ -953,7 +988,7 @@ export class TripsService {
 
         return {
           ...trip,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
           routeName: `${(relevantOriginStop as any).location?.city || 'Unknown'} - ${(relevantDestinationStop as any).location?.city || 'Unknown'}`,
           departureTime: relevantOriginStop.departureTime,
           arrivalTime: relevantDestinationStop.arrivalTime,
@@ -981,6 +1016,71 @@ export class TripsService {
       };
     } catch (error: unknown) {
       throw new InternalServerErrorException('Failed to search trips', {
+        cause: error,
+      });
+    }
+  }
+
+  async getUpcomingTrips(limit: number = 5) {
+    try {
+      const trips = await this.prisma.trips.findMany({
+        where: {
+          startTime: { gte: new Date() },
+          status: { not: TripStatus.cancelled },
+        },
+        orderBy: { startTime: 'asc' },
+        take: limit,
+        include: {
+          bus: {
+            select: {
+              plate: true,
+              _count: { select: { seats: true } },
+            },
+          },
+          _count: {
+            select: {
+              bookings: { where: { status: 'confirmed' } },
+            },
+          },
+          tripStops: {
+            orderBy: { sequence: 'asc' },
+            include: { location: true },
+          },
+        },
+      });
+
+      return trips.map((trip) => {
+        const origin = trip.tripStops[0]?.location?.city || 'Unknown';
+        const destination =
+          trip.tripStops[trip.tripStops.length - 1]?.location?.city ||
+          'Unknown';
+
+        const totalSeats = trip.bus?._count?.seats || 0;
+        const bookedSeats = trip._count?.bookings || 0;
+
+        let displayStatus: string = trip.status;
+        if (bookedSeats >= totalSeats) {
+          displayStatus = 'Full';
+        } else if (
+          new Date(trip.startTime).getTime() - new Date().getTime() <
+          30 * 60 * 1000
+        ) {
+          displayStatus = 'Boarding';
+        }
+
+        return {
+          id: trip.id,
+          route: `${origin} - ${destination}`,
+          startTime: trip.startTime,
+          busPlate: trip.bus?.plate || 'N/A',
+          totalSeats,
+          bookedSeats,
+          seatsInfo: `${bookedSeats}/${totalSeats}`,
+          status: displayStatus,
+        };
+      });
+    } catch (error: unknown) {
+      throw new InternalServerErrorException('Failed to fetch upcoming trips', {
         cause: error,
       });
     }

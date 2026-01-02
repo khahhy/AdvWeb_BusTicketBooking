@@ -1,4 +1,5 @@
-﻿import { Module } from '@nestjs/common';
+﻿import type { DynamicModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { AppController } from 'src/app.controller';
 import { AppService } from 'src/app.service';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -15,9 +16,20 @@ import { SettingModule } from './setting/setting.module';
 import { ActivityLogsModule } from './activity-logs/activity-logs.module';
 import { RedisModule } from './redis/redis.module';
 import { RedisCacheModule } from './cache/redis-cache.module';
+import { HealthModule } from './health/health.module';
+import { PaymentModule } from './payment/payment.module';
+import { PayOSModule } from './payos/payos.module';
+import { ChatbotModule } from './chatbot/chatbot.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    // Type issue with ScheduleModule from @nestjs/schedule library
+
+    ScheduleModule.forRoot() as unknown as DynamicModule,
     PrismaModule,
     UserModule,
     LocationModule,
@@ -31,6 +43,11 @@ import { RedisCacheModule } from './cache/redis-cache.module';
     ActivityLogsModule,
     RedisModule,
     RedisCacheModule,
+    HealthModule,
+    PaymentModule,
+    PayOSModule,
+    ChatbotModule,
+    ReviewsModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

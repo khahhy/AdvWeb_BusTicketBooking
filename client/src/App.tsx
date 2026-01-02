@@ -1,10 +1,29 @@
+import { useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
+import { Toaster } from "@/components/ui/sonner";
+function HomeRedirect() {
+  const userStr = localStorage.getItem("user");
+
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr);
+      if (user.role === "admin") {
+        return <Navigate to="/admin" replace />;
+      }
+    } catch (error) {
+      console.error("Error parsing user data:", error);
+    }
+  }
+
+  return <Navigate to="/dashboard" replace />;
+}
 import {
   AdminLayout,
   AdminDashboard,
@@ -20,6 +39,7 @@ import {
   ReviewManagement,
   NotificationManagement,
   SystemSettings,
+  SystemHealth,
 } from "@/admin";
 import UserDashboard from "./user/UserDashboard";
 import SearchPage from "./pages/SearchPage";
@@ -33,6 +53,7 @@ import Chatbot from "./components/ui/chatbot";
 import "./index.css";
 import CheckoutPage from "./pages/CheckoutPage";
 import PaymentPage from "./pages/PaymentPage";
+import PaymentResultPage from "./pages/PaymentResultPage";
 import ConfirmationPage from "./pages/ConfirmationPage";
 import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
@@ -47,10 +68,31 @@ import AboutPage from "./pages/AboutPage";
 import SupportPage from "./pages/SupportPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import TripDetailPage from "./pages/TripDetailPage";
+import ETicketDemoPage from "./pages/ETicketDemoPage";
+import ETicketPage from "./pages/ETicketPage";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
 function AppContent() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Listen for logout events from other tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      // If accessToken is removed in another tab, logout this tab too
+      if (e.key === "accessToken" && e.newValue === null) {
+        // Navigate to login page
+        navigate("/login", { replace: true });
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [navigate]);
+
   const hideChatbot = [
     "/signup",
     "/login",
@@ -64,7 +106,7 @@ function AppContent() {
 
   const routeContent = (
     <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<HomeRedirect />} />
       {/* admin pages */}
       <Route
         path="/admin"
@@ -99,18 +141,15 @@ function AppContent() {
         </Route>
         <Route path="system">
           <Route path="settings" element={<SystemSettings />} />
+          <Route path="health" element={<SystemHealth />} />
         </Route>
       </Route>
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute requiredRole="passenger">
-            <UserDashboard />
-          </ProtectedRoute>
-        }
-      />
+      {/* Dashboard/Landing page - accessible to everyone */}
+      <Route path="/dashboard" element={<UserDashboard />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/support" element={<SupportPage />} />
+      <Route path="/eticket-demo" element={<ETicketDemoPage />} />
+      <Route path="/eticket/:ticketCode" element={<ETicketPage />} />
       <Route
         path="/profile"
         element={
@@ -119,30 +158,10 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/search"
-        element={
-          <ProtectedRoute requiredRole="passenger">
-            <SearchPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/trip-detail"
-        element={
-          <ProtectedRoute requiredRole="passenger">
-            <TripDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/track-ticket"
-        element={
-          <ProtectedRoute requiredRole="passenger">
-            <TrackTicketPage />
-          </ProtectedRoute>
-        }
-      />
+      {/* Public routes - accessible by guests */}
+      <Route path="/search" element={<SearchPage />} />
+      <Route path="/trip-detail" element={<TripDetailPage />} />
+      <Route path="/track-ticket" element={<TrackTicketPage />} />
       <Route
         path="/booking-history"
         element={
@@ -183,30 +202,11 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/checkout"
-        element={
-          <ProtectedRoute requiredRole="passenger">
-            <CheckoutPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/payment"
-        element={
-          <ProtectedRoute requiredRole="passenger">
-            <PaymentPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/confirmation"
-        element={
-          <ProtectedRoute requiredRole="passenger">
-            <ConfirmationPage />
-          </ProtectedRoute>
-        }
-      />
+      {/* Guest checkout flow - accessible without login */}
+      <Route path="/checkout" element={<CheckoutPage />} />
+      <Route path="/payment" element={<PaymentPage />} />
+      <Route path="/payment-result" element={<PaymentResultPage />} />
+      <Route path="/confirmation" element={<ConfirmationPage />} />
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -224,6 +224,7 @@ function AppContent() {
       <ThemeProvider>
         {routeContent}
         {!hideChatbot && <Chatbot />}
+        <Toaster />
       </ThemeProvider>
     </>
   );

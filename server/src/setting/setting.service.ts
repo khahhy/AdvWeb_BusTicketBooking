@@ -11,12 +11,16 @@ import { BookingRulesSettingsDto } from './dto/booking-rule-setting.dto';
 import { BusAmenitiesSettingsDto } from './dto/bus-amenities-setting.dto';
 import { GeneralSettingsDto } from './dto/general-setting.dto';
 import { PaymentGatewaySettingsDto } from './dto/payment-gateway-setting.dto';
+import { BusTypePricingDto } from './dto/bus-type-pricing.dto';
+import { PricingPoliciesDto } from './dto/pricing-policies.dto';
 
 export type SettingsValueDto =
   | GeneralSettingsDto
   | BookingRulesSettingsDto
   | BusAmenitiesSettingsDto
-  | PaymentGatewaySettingsDto;
+  | PaymentGatewaySettingsDto
+  | BusTypePricingDto
+  | PricingPoliciesDto;
 
 @Injectable()
 export class SettingService {
@@ -36,6 +40,10 @@ export class SettingService {
         return 'List of bus amenities';
       case SettingKey.PAYMENT_GATEWAYS:
         return 'Payment gateway configurations';
+      case SettingKey.BUS_TYPE_PRICING:
+        return 'Price multipliers based on bus type (standard, vip, etc.)';
+      case SettingKey.PRICING_POLICIES:
+        return 'Global pricing rules (base price/km, surcharges)';
       default:
         return 'System setting';
     }
@@ -95,6 +103,14 @@ export class SettingService {
       });
 
       await this.cacheManager.del(`settings:${key}`);
+      if (
+        key === SettingKey.BUS_TYPE_PRICING ||
+        key === SettingKey.PRICING_POLICIES
+      ) {
+        await this.cacheManager.delByPattern('routes:trips:*');
+
+        await this.cacheManager.delByPattern('trip-route-map:search:*');
+      }
       await this.activityLogService.logAction({
         userId: userId,
         action: 'UPSERT_SETTING',

@@ -29,9 +29,11 @@ export default function SearchPage() {
   const [filters, setFilters] = useState<FilterState>({
     departureTime: [],
     arrivalTime: [],
-    priceRange: [0, 1328000],
+    priceRange: [0, 500000],
     busType: [],
     amenities: [],
+    sortByTime: "departure-asc",
+    sortByPrice: "price-asc",
   });
 
   // Update locations and date when search params change
@@ -67,6 +69,8 @@ export default function SearchPage() {
   const tripRouteData =
     searchTripsData?.items?.map((item) => ({
       id: item.id,
+      tripId: item.tripId, // Add tripId from API
+      routeId: item.routeId, // Add routeId from API
       departureTime: item.trip.startTime,
       arrivalTime: item.trip.endTime,
       busType: item.trip.bus?.busType,
@@ -84,7 +88,18 @@ export default function SearchPage() {
     })) || [];
 
   const applyFilters = (trips: (Trip | (typeof tripRouteData)[0])[]) => {
+    const now = dayjs();
+    const isToday = selectedDate?.isSame(now, "day");
+
     return trips.filter((trip) => {
+      // Filter out past trips if searching for today
+      if (isToday && trip.departureTime) {
+        const tripDepartureTime = dayjs(trip.departureTime);
+        if (tripDepartureTime.isBefore(now)) {
+          return false; // Skip past trips
+        }
+      }
+
       if (
         trip.price < filters.priceRange[0] ||
         trip.price > filters.priceRange[1]
@@ -104,20 +119,46 @@ export default function SearchPage() {
         for (const timeSlot of filters.departureTime) {
           switch (timeSlot) {
             case "early-morning":
-              if (departureHour >= 0 && departureHour <= 6)
+              // 00:00 - 06:00 (hour 0-6, excluding minutes after 06:00)
+              if (departureHour >= 0 && departureHour < 6)
                 matchesTimeSlot = true;
+              else if (departureHour === 6) {
+                const date = new Date(trip.departureTime);
+                if (date.getMinutes() === 0) matchesTimeSlot = true;
+              }
               break;
             case "morning":
-              if (departureHour > 6 && departureHour <= 12)
+              // 06:01 - 12:00
+              if (departureHour > 6 && departureHour < 12)
                 matchesTimeSlot = true;
+              else if (departureHour === 6) {
+                const date = new Date(trip.departureTime);
+                if (date.getMinutes() > 0) matchesTimeSlot = true;
+              } else if (departureHour === 12) {
+                const date = new Date(trip.departureTime);
+                if (date.getMinutes() === 0) matchesTimeSlot = true;
+              }
               break;
             case "afternoon":
-              if (departureHour > 12 && departureHour <= 18)
+              // 12:01 - 18:00
+              if (departureHour > 12 && departureHour < 18)
                 matchesTimeSlot = true;
+              else if (departureHour === 12) {
+                const date = new Date(trip.departureTime);
+                if (date.getMinutes() > 0) matchesTimeSlot = true;
+              } else if (departureHour === 18) {
+                const date = new Date(trip.departureTime);
+                if (date.getMinutes() === 0) matchesTimeSlot = true;
+              }
               break;
             case "evening":
+              // 18:01 - 23:59
               if (departureHour > 18 && departureHour <= 23)
                 matchesTimeSlot = true;
+              else if (departureHour === 18) {
+                const date = new Date(trip.departureTime);
+                if (date.getMinutes() > 0) matchesTimeSlot = true;
+              }
               break;
           }
         }
@@ -138,16 +179,42 @@ export default function SearchPage() {
         for (const timeSlot of filters.arrivalTime) {
           switch (timeSlot) {
             case "early-morning":
-              if (arrivalHour >= 0 && arrivalHour <= 6) matchesTimeSlot = true;
+              // 00:00 - 06:00 (hour 0-6, excluding minutes after 06:00)
+              if (arrivalHour >= 0 && arrivalHour < 6) matchesTimeSlot = true;
+              else if (arrivalHour === 6) {
+                const date = new Date(trip.arrivalTime);
+                if (date.getMinutes() === 0) matchesTimeSlot = true;
+              }
               break;
             case "morning":
-              if (arrivalHour > 6 && arrivalHour <= 12) matchesTimeSlot = true;
+              // 06:01 - 12:00
+              if (arrivalHour > 6 && arrivalHour < 12) matchesTimeSlot = true;
+              else if (arrivalHour === 6) {
+                const date = new Date(trip.arrivalTime);
+                if (date.getMinutes() > 0) matchesTimeSlot = true;
+              } else if (arrivalHour === 12) {
+                const date = new Date(trip.arrivalTime);
+                if (date.getMinutes() === 0) matchesTimeSlot = true;
+              }
               break;
             case "afternoon":
-              if (arrivalHour > 12 && arrivalHour <= 18) matchesTimeSlot = true;
+              // 12:01 - 18:00
+              if (arrivalHour > 12 && arrivalHour < 18) matchesTimeSlot = true;
+              else if (arrivalHour === 12) {
+                const date = new Date(trip.arrivalTime);
+                if (date.getMinutes() > 0) matchesTimeSlot = true;
+              } else if (arrivalHour === 18) {
+                const date = new Date(trip.arrivalTime);
+                if (date.getMinutes() === 0) matchesTimeSlot = true;
+              }
               break;
             case "evening":
+              // 18:01 - 23:59
               if (arrivalHour > 18 && arrivalHour <= 23) matchesTimeSlot = true;
+              else if (arrivalHour === 18) {
+                const date = new Date(trip.arrivalTime);
+                if (date.getMinutes() > 0) matchesTimeSlot = true;
+              }
               break;
           }
         }
@@ -189,7 +256,32 @@ export default function SearchPage() {
     }
 
     // Apply filters to the trips
-    return applyFilters(trips);
+    const filteredTrips = applyFilters(trips);
+
+    // Apply sorting
+    const sortedTrips = [...filteredTrips].sort((a, b) => {
+      // Sort by time (departure time)
+      if (filters.sortByTime === "departure-asc") {
+        const timeA = new Date(a.departureTime).getTime();
+        const timeB = new Date(b.departureTime).getTime();
+        return timeA - timeB; // Early to Late
+      } else if (filters.sortByTime === "departure-desc") {
+        const timeA = new Date(a.departureTime).getTime();
+        const timeB = new Date(b.departureTime).getTime();
+        return timeB - timeA; // Late to Early
+      }
+
+      // Sort by price
+      if (filters.sortByPrice === "price-asc") {
+        return a.price - b.price; // Low to High
+      } else if (filters.sortByPrice === "price-desc") {
+        return b.price - a.price; // High to Low
+      }
+
+      return 0;
+    });
+
+    return sortedTrips;
   };
 
   const allTrips = getAllTrips();
@@ -281,244 +373,215 @@ export default function SearchPage() {
       {/* Results Section */}
       <div className="max-w-7xl mx-auto px-6 py-12 pb-20 dark:bg-black dark:bg-none">
         {/* Header Section */}
-        <div className="mb-8 flex gap-6">
-          <div className="w-80 flex-shrink-0"></div>
-          <div className="flex-1">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  Available Trips
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300">
-                  {fromLocation} → {toLocation} • {formatDate()}
-                </p>
-              </div>
-              <div className="text-sm text-gray-500 dark:text-gray-300">
-                {(() => {
-                  if (isLoading) return "Loading...";
-                  const totalTrips = allTrips.length;
-                  const originalTrips =
-                    tripRouteData?.length || (error ? mockTrips.length : 0);
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                Available Trips
+              </h2>
+              <p className="text-gray-600 dark:text-gray-300">
+                {fromLocation} → {toLocation} • {formatDate()}
+              </p>
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-300 px-4 py-2">
+              {(() => {
+                if (isLoading) return "Loading...";
+                const totalTrips = allTrips.length;
+                const originalTrips =
+                  tripRouteData?.length || (error ? mockTrips.length : 0);
 
-                  if (totalTrips === 0) {
-                    return originalTrips > 0
-                      ? "No trips match your filters"
-                      : "No trips found";
-                  }
+                if (totalTrips === 0) {
+                  return originalTrips > 0
+                    ? "No trips match your filters"
+                    : "No trips found";
+                }
 
-                  const displayStart = startIndex + 1;
-                  const displayEnd = Math.min(endIndex, totalTrips);
-                  const hasFilters =
-                    filters.departureTime.length > 0 ||
-                    filters.arrivalTime.length > 0 ||
-                    filters.busType.length > 0 ||
-                    filters.amenities.length > 0 ||
-                    filters.priceRange[0] > 0 ||
-                    filters.priceRange[1] < 1328000;
+                const displayStart = startIndex + 1;
+                const displayEnd = Math.min(endIndex, totalTrips);
+                const hasFilters =
+                  filters.departureTime.length > 0 ||
+                  filters.arrivalTime.length > 0 ||
+                  filters.busType.length > 0 ||
+                  filters.amenities.length > 0 ||
+                  filters.priceRange[0] > 0 ||
+                  filters.priceRange[1] < 500000;
 
-                  if (hasFilters && totalTrips < originalTrips) {
-                    return `Showing ${displayStart}-${displayEnd} of ${totalTrips} trips (${originalTrips - totalTrips} filtered out)`;
-                  }
+                if (hasFilters && totalTrips < originalTrips) {
+                  return `Showing ${displayStart}-${displayEnd} of ${totalTrips} trips (${originalTrips - totalTrips} filtered out)`;
+                }
 
-                  return `Showing ${displayStart}-${displayEnd} of ${totalTrips} trips`;
-                })()}
-              </div>
+                return `Showing ${displayStart}-${displayEnd} of ${totalTrips} trips`;
+              })()}
             </div>
           </div>
         </div>
 
-        {/* Filter and Trip Cards Layout */}
-        <div className="flex gap-6">
-          {/* Filter Panel - Left Side */}
-          <div className="w-80 flex-shrink-0">
-            <FilterPanel onFilterChange={handleFilterChange} />
-          </div>
+        {/* Filter Panel - Horizontal Above Trips */}
+        <FilterPanel onFilterChange={handleFilterChange} />
 
-          {/* Trip Cards - Right Side */}
-          <div className="flex-1 trips-results">
-            <div className="space-y-6">
-              {isLoading && (
-                <div className="flex justify-center items-center py-8">
-                  <div className="text-gray-600 dark:text-gray-400">
-                    Loading trips...
-                  </div>
+        {/* Trip Cards */}
+        <div className="trips-results">
+          <div className="space-y-6">
+            {isLoading && (
+              <div className="flex justify-center items-center py-8">
+                <div className="text-gray-600 dark:text-gray-400">
+                  Loading trips...
                 </div>
-              )}
+              </div>
+            )}
 
-              {error && (
-                <div className="flex justify-center items-center py-8">
-                  <div className="text-red-600 dark:text-red-400">
-                    Error loading trips. Using mock data.
-                  </div>
+            {error && (
+              <div className="flex justify-center items-center py-8">
+                <div className="text-red-600 dark:text-red-400">
+                  Error loading trips. Using mock data.
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Use paginated trips data */}
-              {!isLoading &&
-                currentTrips.length > 0 &&
-                currentTrips.map((tripRoute, index) => {
-                  // Check if this is API data or mock data
-                  const isApiData = "trip" in tripRoute;
+            {/* Use paginated trips data */}
+            {!isLoading &&
+              currentTrips.length > 0 &&
+              currentTrips.map((tripRoute, index) => {
+                // Check if this is API data or mock data
+                const isApiData = "trip" in tripRoute;
 
-                  if (isApiData) {
-                    // Convert TripRoute data to Trip format for TripCard component
-                    const startTime = dayjs(tripRoute.trip.startTime);
-                    const endTime = dayjs(tripRoute.trip.endTime);
-                    const durationHours = endTime.diff(startTime, "hour", true);
-                    const durationText =
-                      durationHours >= 1
-                        ? `${Math.floor(durationHours)}h ${Math.round((durationHours % 1) * 60)}m`
-                        : `${Math.round(durationHours * 60)}m`;
+                if (isApiData) {
+                  // Convert TripRoute data to Trip format for TripCard component
+                  const startTime = dayjs(tripRoute.trip.startTime);
+                  const endTime = dayjs(tripRoute.trip.endTime);
+                  const durationHours = endTime.diff(startTime, "hour", true);
+                  const durationText =
+                    durationHours >= 1
+                      ? `${Math.floor(durationHours)}h ${Math.round((durationHours % 1) * 60)}m`
+                      : `${Math.round(durationHours * 60)}m`;
 
-                    // Map seat capacity to total seats number
-                    const seatCapacityMap: { [key: string]: number } = {
-                      SEAT_16: 16,
-                      SEAT_28: 28,
-                      SEAT_32: 32,
-                    };
+                  const tripData = {
+                    ...tripRoute.trip,
 
-                    const totalSeats =
-                      seatCapacityMap[
-                        tripRoute?.trip?.bus?.seatCapacity ?? "SEAT_32"
-                      ] || 32;
+                    id: tripRoute.tripId || tripRoute.id,
+                    tripId: tripRoute.tripId,
+                    routeId: tripRoute.routeId,
+                    route: tripRoute.route,
+                    departureTime: startTime.format("HH:mm"),
+                    arrivalTime: endTime.format("HH:mm"),
+                    duration: durationText,
+                    from: tripRoute.route.origin.city,
+                    to: tripRoute.route.destination.city,
+                    fromTerminal: tripRoute.route.origin.name,
+                    toTerminal: tripRoute.route.destination.name,
+                    price: Number(tripRoute.price),
 
-                    const tripData = {
-                      id: tripRoute.id,
-                      route: tripRoute.route,
-                      departureTime: startTime.format("HH:mm"),
-                      arrivalTime: endTime.format("HH:mm"),
-                      duration: durationText,
-                      from: tripRoute.route.origin.city,
-                      to: tripRoute.route.destination.city,
-                      fromTerminal: tripRoute.route.origin.name,
-                      toTerminal: tripRoute.route.destination.name,
-                      price: Number(tripRoute.price),
-                      availableSeats: Math.floor(totalSeats * 0.6),
-                      totalSeats,
-                      busType:
-                        tripRoute.trip.bus?.busType?.toLowerCase() ||
-                        "standard",
-                      amenities:
-                        (tripRoute.trip.bus?.amenities as unknown as {
-                          [key: string]: boolean;
-                        }) || {},
-                    };
+                    // Bus Info
+                    busType:
+                      tripRoute.trip.bus?.busType?.toLowerCase() || "standard",
+                    amenities:
+                      (tripRoute.trip.bus?.amenities as unknown as {
+                        [key: string]: boolean;
+                      }) || {},
+                  };
 
-                    return (
-                      <TripCard
-                        key={`trip-${tripData.id}-${index}`}
-                        trip={tripData}
-                        isOpen={openTripId === tripData.id}
-                        onToggle={(tripId) =>
-                          setOpenTripId(openTripId === tripId ? null : tripId)
-                        }
-                      />
-                    );
-                  } else {
-                    // This is mock data
-                    return (
-                      <TripCard
-                        key={`trip-${tripRoute.id}-${index}`}
-                        trip={tripRoute as Trip}
-                        isOpen={openTripId === tripRoute.id}
-                        onToggle={(tripId) =>
-                          setOpenTripId(openTripId === tripId ? null : tripId)
-                        }
-                      />
-                    );
-                  }
-                })}
+                  return (
+                    <TripCard
+                      key={`trip-${tripData.id}-${index}`}
+                      trip={tripData}
+                      isOpen={openTripId === tripData.id}
+                      onToggle={(tripId) =>
+                        setOpenTripId(openTripId === tripId ? null : tripId)
+                      }
+                    />
+                  );
+                }
+              })}
 
-              {/* No results message */}
-              {!isLoading && currentTrips.length === 0 && (
-                <div className="flex justify-center items-center py-8">
-                  <div className="text-gray-600 dark:text-gray-400">
-                    No trips found for your search criteria.
-                  </div>
+            {/* No results message */}
+            {!isLoading && currentTrips.length === 0 && (
+              <div className="flex justify-center items-center py-8">
+                <div className="text-gray-600 dark:text-gray-400">
+                  No trips found for your search criteria.
                 </div>
-              )}
-            </div>
-
-            {/* Pagination Controls */}
-            {!isLoading && totalPages > 1 && (
-              <div className="mt-8 flex justify-center items-center space-x-2">
-                {/* Previous Button */}
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    currentPage === 1
-                      ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600"
-                      : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:border-gray-600"
-                  }`}
-                >
-                  Previous
-                </button>
-
-                {/* Page Numbers */}
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => {
-                    // Show first page, last page, current page, and pages around current page
-                    const showPage =
-                      page === 1 ||
-                      page === totalPages ||
-                      (page >= currentPage - 1 && page <= currentPage + 1);
-
-                    if (!showPage && page === currentPage - 2) {
-                      return (
-                        <span
-                          key="dots-before"
-                          className="px-2 py-2 text-gray-400"
-                        >
-                          ...
-                        </span>
-                      );
-                    }
-
-                    if (!showPage && page === currentPage + 2) {
-                      return (
-                        <span
-                          key="dots-after"
-                          className="px-2 py-2 text-gray-400"
-                        >
-                          ...
-                        </span>
-                      );
-                    }
-
-                    if (!showPage) return null;
-
-                    return (
-                      <button
-                        key={page}
-                        onClick={() => handlePageChange(page)}
-                        className={`px-3 py-2 rounded-md text-sm font-medium ${
-                          currentPage === page
-                            ? "bg-blue-600 text-white dark:bg-blue-700"
-                            : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:border-gray-600"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    );
-                  },
-                )}
-
-                {/* Next Button */}
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    currentPage === totalPages
-                      ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600"
-                      : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:border-gray-600"
-                  }`}
-                >
-                  Next
-                </button>
               </div>
             )}
           </div>
+
+          {/* Pagination Controls */}
+          {!isLoading && totalPages > 1 && (
+            <div className="mt-8 flex justify-center items-center space-x-2">
+              {/* Previous Button */}
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  currentPage === 1
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600"
+                    : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:border-gray-600"
+                }`}
+              >
+                Previous
+              </button>
+
+              {/* Page Numbers */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => {
+                  // Show first page, last page, current page, and pages around current page
+                  const showPage =
+                    page === 1 ||
+                    page === totalPages ||
+                    (page >= currentPage - 1 && page <= currentPage + 1);
+
+                  if (!showPage && page === currentPage - 2) {
+                    return (
+                      <span
+                        key="dots-before"
+                        className="px-2 py-2 text-gray-400"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+
+                  if (!showPage && page === currentPage + 2) {
+                    return (
+                      <span
+                        key="dots-after"
+                        className="px-2 py-2 text-gray-400"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+
+                  if (!showPage) return null;
+
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`px-3 py-2 rounded-md text-sm font-medium ${
+                        currentPage === page
+                          ? "bg-blue-600 text-white dark:bg-blue-700"
+                          : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:border-gray-600"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                },
+              )}
+
+              {/* Next Button */}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  currentPage === totalPages
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600"
+                    : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:border-gray-600"
+                }`}
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

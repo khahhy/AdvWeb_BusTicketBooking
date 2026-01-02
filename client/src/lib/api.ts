@@ -6,6 +6,7 @@ export const API_BASE_URL =
 export const API_ENDPOINTS = {
   auth: {
     profile: "/auth/profile",
+    changePassword: "/auth/change-password",
     signup: "/auth/signup",
     signin: "/auth/signin",
     verifyEmail: "/auth/verify-email",
@@ -16,10 +17,19 @@ export const API_ENDPOINTS = {
   users: {
     list: "/users",
     details: "/users/{id}",
+    notificationPreferences: "/users/me/notification-preferences",
   },
   bookings: {
     list: "/bookings",
+    myBookings: "/bookings/my-bookings",
     details: "/bookings/{id}",
+    cancel: "/bookings/{id}/cancel",
+    modify: "/bookings/{id}/modify",
+    lockSeat: "/bookings/lock",
+    unlockSeat: "/bookings/unlock",
+    guestLookup: "/bookings/guest/lookup",
+    lookupByTicketCode: "/bookings/lookup/{ticketCode}",
+    guestCancel: "/bookings/guest/{ticketCode}/cancel",
   },
   buses: {
     list: "/buses",
@@ -29,6 +39,13 @@ export const API_ENDPOINTS = {
     list: "/routes",
     tripMaps: "/routes/trip-maps",
     details: "/routes/{id}",
+  },
+  notifications: {
+    list: "/notifications",
+    details: "/notifications/{id}",
+    markAsRead: "/notifications/{id}/read",
+    markAllAsRead: "/notifications/mark-all-read",
+    delete: "/notifications/{id}",
   },
 } as const;
 

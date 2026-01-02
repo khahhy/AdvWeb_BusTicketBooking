@@ -43,6 +43,22 @@ export interface Trip {
   destinationStop?: TripStop;
 }
 
+export type TripCardData = Trip & {
+  tripId?: string;
+  routeId?: string;
+  price: number;
+  from: string;
+  to: string;
+  fromTerminal?: string;
+  toTerminal?: string;
+  duration?: string;
+  busType?: string;
+  amenities?: Record<string, boolean>;
+  note?: string;
+  departureTime: string;
+  arrivalTime: string;
+};
+
 export interface CreateTripRequest {
   busId: string;
   stops: {
@@ -75,9 +91,13 @@ export interface SearchTripParams {
   includeRoutes?: boolean;
 }
 
-export interface SeatStatus {
-  seatId: string;
-  seatNumber: string;
-  coordinates?: Record<string, unknown> | null;
-  status: "AVAILABLE" | "BOOKED" | "LOCKED";
+export interface UpcomingTrip {
+  id: string;
+  route: string;
+  startTime: string;
+  busPlate: string;
+  totalSeats: number;
+  bookedSeats: number;
+  seatsInfo: string;
+  status: string;
 }

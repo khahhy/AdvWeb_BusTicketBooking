@@ -1,0 +1,5 @@
+-- AlterEnum
+ALTER TYPE "SettingKey" ADD VALUE 'BUS_TYPE_PRICING';
+
+-- AlterTable
+ALTER TABLE "Buses" ADD COLUMN     "priceFactor" DOUBLE PRECISION NOT NULL DEFAULT 1.0;

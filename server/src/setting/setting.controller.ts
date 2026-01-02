@@ -12,6 +12,8 @@ import { GeneralSettingsDto } from './dto/general-setting.dto';
 import { BookingRulesSettingsDto } from './dto/booking-rule-setting.dto';
 import { BusAmenitiesSettingsDto } from './dto/bus-amenities-setting.dto';
 import { PaymentGatewaySettingsDto } from './dto/payment-gateway-setting.dto';
+import { BusTypePricingDto } from './dto/bus-type-pricing.dto';
+import { PricingPoliciesDto } from './dto/pricing-policies.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { Roles } from 'src/common/decorators/role.decorator';
@@ -167,6 +169,72 @@ export class SettingController {
     const userAgent = req.headers['user-agent'] as string;
     return this.settingService.upsert(
       SettingKey.PAYMENT_GATEWAYS,
+      dto,
+      userId,
+      ip,
+      userAgent,
+    );
+  }
+
+  @ApiOperation({ summary: 'Get Bus Type Pricing Config (Public)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fetched pricing multipliers.',
+    type: BusTypePricingDto,
+  })
+  @Get('bus-type-pricing')
+  async getBusTypePricing() {
+    return this.settingService.findOne(SettingKey.BUS_TYPE_PRICING);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Admin: Update Bus Type Pricing' })
+  @ApiBody({ type: BusTypePricingDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Pricing multipliers updated successfully.',
+  })
+  @Patch('bus-type-pricing')
+  async upsertBusTypePricing(
+    @Body() dto: BusTypePricingDto,
+    @Req() req: RequestWithUser,
+  ) {
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.settingService.upsert(
+      SettingKey.BUS_TYPE_PRICING,
+      dto,
+      userId,
+      ip,
+      userAgent,
+    );
+  }
+
+  @ApiOperation({ summary: 'Get Pricing Policies (Public)' })
+  @ApiResponse({ status: 200, type: PricingPoliciesDto })
+  @Get('pricing-policies')
+  async getPricingPolicies() {
+    return this.settingService.findOne(SettingKey.PRICING_POLICIES);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Admin: Update Pricing Policies' })
+  @ApiBody({ type: PricingPoliciesDto })
+  @Patch('pricing-policies')
+  async upsertPricingPolicies(
+    @Body() dto: PricingPoliciesDto,
+    @Req() req: RequestWithUser,
+  ) {
+    const userId = req.user.userId;
+    const ip = req.ip as string;
+    const userAgent = req.headers['user-agent'] as string;
+    return this.settingService.upsert(
+      SettingKey.PRICING_POLICIES,
       dto,
       userId,
       ip,

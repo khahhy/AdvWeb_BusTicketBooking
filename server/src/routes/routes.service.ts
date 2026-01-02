@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { ActivityLogsService } from 'src/activity-logs/activity-logs.service';
 import { RedisCacheService } from 'src/cache/redis-cache.service';
+import { SettingService } from 'src/setting/setting.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateRouteDto } from './dto/create-route.dto';
 import { UpdateRouteDto } from './dto/update-route.dto';
@@ -16,6 +17,8 @@ import {
   QueryTripRouteMapDto,
   SortOrder,
 } from './dto/query-trip-route-map.dto';
+import { BusTypePricingDto } from 'src/setting/dto/bus-type-pricing.dto';
+import { PricingPoliciesDto } from 'src/setting/dto/pricing-policies.dto';
 import {
   Prisma,
   TripStatus,
@@ -24,20 +27,20 @@ import {
   Locations,
   BookingStatus,
   Routes,
+  Buses,
+  SettingKey,
+  BusType,
 } from '@prisma/client';
 import { TripsForRouteResponse } from 'src/common/type/trip-available-for-route.interface';
 import { TopPerformingRoute } from 'src/common/type/top-performing-route.interface';
 
 @Injectable()
 export class RoutesService {
-  private readonly PRICE_PER_KM = 1400;
-  private readonly WEEKEND_SURCHARGE = 0.05;
-  private readonly HOLIDAY_SURCHARGE = 0.1;
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly activityLogService: ActivityLogsService,
     private readonly cacheManager: RedisCacheService,
+    private readonly settingService: SettingService,
   ) {}
 
   private async clearRouteCache(id?: string) {
@@ -355,10 +358,24 @@ export class RoutesService {
           data: cachedData,
         };
       }
-      const route = await this.prisma.routes.findUnique({
-        where: { id: routeId },
-      });
+      const [route, policySetting, busPriceSetting] = await Promise.all([
+        this.prisma.routes.findUnique({ where: { id: routeId } }),
+        this.settingService.findOne(SettingKey.PRICING_POLICIES),
+        this.settingService.findOne(SettingKey.BUS_TYPE_PRICING),
+      ]);
       if (!route) throw new NotFoundException('Route not found');
+
+      const policies = (policySetting.data as PricingPoliciesDto) || {
+        pricePerKm: 1500,
+        weekendSurcharge: 0,
+        holidaySurcharge: 0,
+      };
+      const busMultipliers = (busPriceSetting.data as BusTypePricingDto) || {
+        standard: 1.0,
+        vip: 1.2,
+        sleeper: 1.3,
+        limousine: 1.5,
+      };
 
       const { startDate, endDate } = query;
       const whereTrip: Prisma.TripsWhereInput = {
@@ -390,12 +407,14 @@ export class RoutesService {
         },
       });
 
-      const result = trips
+      const resolvedTrips = trips
         .map((trip) => {
           const pricing = this.calculateTripRoutePrice(
             trip,
             route.originLocationId,
             route.destinationLocationId,
+            policies,
+            busMultipliers,
           );
 
           if (!pricing) return null;
@@ -405,6 +424,7 @@ export class RoutesService {
             startTime: trip.startTime,
             endTime: trip.endTime,
             busName: trip.bus.plate,
+            busType: trip.bus.busType,
             amenities: trip.bus.amenities,
             pickupLocation: pricing.pickupName,
             dropoffLocation: pricing.dropoffName,
@@ -413,10 +433,10 @@ export class RoutesService {
         })
         .filter((item) => item !== null);
 
-      await this.cacheManager.set(cacheKey, result, 300);
+      await this.cacheManager.set(cacheKey, resolvedTrips, 300);
       return {
-        message: `Found ${result.length} trips matching this route`,
-        data: result,
+        message: `Found ${resolvedTrips.length} trips matching this route`,
+        data: resolvedTrips,
       };
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
@@ -445,20 +465,22 @@ export class RoutesService {
         );
       }
 
-      const route = await this.prisma.routes.findUnique({
-        where: { id: routeId },
-      });
-      if (!route) throw new NotFoundException('Route not found');
-
-      const trip = await this.prisma.trips.findUnique({
-        where: { id: tripId },
-        include: {
-          tripStops: {
-            include: { location: true },
-            orderBy: { sequence: 'asc' },
+      const [route, trip, policySetting, busPriceSetting] = await Promise.all([
+        this.prisma.routes.findUnique({ where: { id: routeId } }),
+        this.prisma.trips.findUnique({
+          where: { id: tripId },
+          include: {
+            tripStops: {
+              include: { location: true },
+              orderBy: { sequence: 'asc' },
+            },
+            bus: true,
           },
-        },
-      });
+        }),
+        this.settingService.findOne(SettingKey.PRICING_POLICIES),
+        this.settingService.findOne(SettingKey.BUS_TYPE_PRICING),
+      ]);
+      if (!route) throw new NotFoundException('Route not found');
       if (!trip) throw new NotFoundException('Trip not found');
 
       let finalPrice = 0;
@@ -466,10 +488,25 @@ export class RoutesService {
       if (manualPrice !== undefined && manualPrice !== null) {
         finalPrice = manualPrice;
       } else {
+        // Prepare settings
+        const policies = (policySetting.data as PricingPoliciesDto) || {
+          pricePerKm: 1500,
+          weekendSurcharge: 0,
+          holidaySurcharge: 0,
+        };
+        const busMultipliers = (busPriceSetting.data as BusTypePricingDto) || {
+          standard: 1.0,
+          vip: 1.2,
+          sleeper: 1.3,
+          limousine: 1.5,
+        };
+
         const pricingCalc = this.calculateTripRoutePrice(
           trip,
           route.originLocationId,
           route.destinationLocationId,
+          policies,
+          busMultipliers,
         );
 
         if (!pricingCalc) {
@@ -637,6 +674,8 @@ export class RoutesService {
           endTime: data.trip.endTime,
           status: data.trip.status,
           bus: {
+            id: data.trip.bus.id,
+            busType: data.trip.bus.busType,
             plate: data.trip.bus.plate,
             amenities: data.trip.bus.amenities,
           },
@@ -690,7 +729,6 @@ export class RoutesService {
         departureTimeStart,
         departureTimeEnd,
         busType,
-        seatCapacity,
         amenities,
         minDuration,
         maxDuration,
@@ -834,11 +872,6 @@ export class RoutesService {
         busWhere.busType = { in: busType };
       }
 
-      // Filter by Seat Capacity
-      if (seatCapacity && seatCapacity.length > 0) {
-        busWhere.seatCapacity = { in: seatCapacity };
-      }
-
       // Filter by Amenities - Enhanced to handle both object and array formats
       if (amenities && amenities.length > 0) {
         busWhere.OR = [
@@ -876,13 +909,24 @@ export class RoutesService {
         orderBy.trip = { startTime: 'desc' };
       }
 
+      // If filtering by origin/destination sequence or duration, we need to fetch more data
+      // to apply filters at application level, then paginate
+      const needsAppLevelFiltering =
+        (originLocationId && destinationLocationId) ||
+        minDuration !== undefined ||
+        maxDuration !== undefined ||
+        sortByDuration;
+
       const [rawTripData, total] = await this.prisma.$transaction([
         this.prisma.tripRouteMap.findMany({
-          skip,
-          take: limit,
+          skip: needsAppLevelFiltering ? undefined : skip,
+          take: needsAppLevelFiltering ? undefined : limit,
           where,
           orderBy,
-          include: {
+          select: {
+            price: true,
+            tripId: true,
+            routeId: true,
             route: {
               select: {
                 name: true,
@@ -897,7 +941,12 @@ export class RoutesService {
                 endTime: true,
                 status: true,
                 tripStops: {
-                  include: {
+                  select: {
+                    id: true,
+                    locationId: true,
+                    sequence: true,
+                    arrivalTime: true,
+                    departureTime: true,
                     location: true,
                   },
                   orderBy: {
@@ -906,9 +955,9 @@ export class RoutesService {
                 },
                 bus: {
                   select: {
+                    id: true,
                     plate: true,
                     busType: true,
-                    seatCapacity: true,
                     amenities: true,
                   },
                 },
@@ -922,10 +971,20 @@ export class RoutesService {
       type RawItem = (typeof rawTripData)[number];
       type ProcessedItem = RawItem & { durationMinutes?: number };
 
+      // Process data - add duration if needed
+      let processedData: ProcessedItem[] = rawTripData.map((item) => {
+        if (minDuration || maxDuration || sortByDuration) {
+          const start = new Date(item.trip.startTime).getTime();
+          const end = new Date(item.trip.endTime).getTime();
+          const durationMinutes = (end - start) / 60000;
+          return { ...item, durationMinutes };
+        }
+        return item;
+      });
+
       // Filter trips based on origin/destination sequence order
-      let filteredTripData = rawTripData;
       if (originLocationId && destinationLocationId) {
-        filteredTripData = rawTripData.filter((item) => {
+        processedData = processedData.filter((item) => {
           const tripStops = item.trip.tripStops;
           const originStop = tripStops.find(
             (stop) => stop.locationId === originLocationId,
@@ -943,52 +1002,46 @@ export class RoutesService {
         });
       }
 
-      let finalData: ProcessedItem[] = filteredTripData;
-
-      if (minDuration || maxDuration || sortByDuration) {
-        finalData = rawTripData.map((item) => {
-          const start = new Date(item.trip.startTime).getTime();
-          const end = new Date(item.trip.endTime).getTime();
-          const durationMinutes = (end - start) / 60000;
-
-          return { ...item, durationMinutes };
-        });
-
-        if (minDuration !== undefined) {
-          finalData = finalData.filter(
-            (item) => (item.durationMinutes ?? 0) >= minDuration,
-          );
-        }
-        if (maxDuration !== undefined) {
-          finalData = finalData.filter(
-            (item) => (item.durationMinutes ?? 0) <= maxDuration,
-          );
-        }
-
-        if (sortByDuration) {
-          finalData.sort((a, b) => {
-            const durationA = a.durationMinutes ?? 0;
-            const durationB = b.durationMinutes ?? 0;
-            return sortByDuration === SortOrder.ASC
-              ? durationA - durationB
-              : durationB - durationA;
-          });
-        }
+      // Filter by duration if needed
+      if (minDuration !== undefined) {
+        processedData = processedData.filter(
+          (item) => (item.durationMinutes ?? 0) >= minDuration,
+        );
+      }
+      if (maxDuration !== undefined) {
+        processedData = processedData.filter(
+          (item) => (item.durationMinutes ?? 0) <= maxDuration,
+        );
       }
 
-      // Update total count if we filtered by sequence order
-      const actualTotal =
-        originLocationId && destinationLocationId
-          ? filteredTripData.length
-          : total;
+      // Sort by duration if needed
+      if (sortByDuration) {
+        processedData.sort((a, b) => {
+          const durationA = a.durationMinutes ?? 0;
+          const durationB = b.durationMinutes ?? 0;
+          return sortByDuration === SortOrder.ASC
+            ? durationA - durationB
+            : durationB - durationA;
+        });
+      }
+
+      // Apply pagination at application level if we did app-level filtering
+      let finalItems = processedData;
+      let finalTotal = total;
+
+      if (needsAppLevelFiltering) {
+        finalTotal = processedData.length;
+        const startIndex = (page - 1) * limit;
+        finalItems = processedData.slice(startIndex, startIndex + limit);
+      }
 
       const resultData = {
-        items: finalData,
+        items: finalItems,
         meta: {
-          total: actualTotal,
+          total: finalTotal,
           page,
           limit,
-          lastPage: Math.ceil(actualTotal / limit),
+          lastPage: Math.ceil(finalTotal / limit),
         },
       };
       await this.cacheManager.set(cacheKey, resultData, 300);
@@ -1006,9 +1059,14 @@ export class RoutesService {
   }
 
   private calculateTripRoutePrice(
-    trip: Trips & { tripStops: (TripStops & { location: Locations })[] },
+    trip: Trips & {
+      tripStops: (TripStops & { location: Locations })[];
+      bus: Buses;
+    },
     originId: string,
     destinationId: string,
+    policies: PricingPoliciesDto,
+    busMultipliers: BusTypePricingDto,
   ) {
     const originStop = trip.tripStops.find((s) => s.locationId === originId);
     const destStop = trip.tripStops.find((s) => s.locationId === destinationId);
@@ -1023,7 +1081,13 @@ export class RoutesService {
       destStop.sequence,
     );
 
-    const priceDetails = this.calculatePrice(trip.startTime, distanceKm);
+    const priceDetails = this.calculatePrice(
+      trip.startTime,
+      distanceKm,
+      trip.bus.busType,
+      policies,
+      busMultipliers,
+    );
 
     return {
       pickupName: originStop.location.name,
@@ -1033,6 +1097,9 @@ export class RoutesService {
         currency: 'VND',
       },
     };
+  }
+  private roundToThousands(amount: number): number {
+    return Math.ceil(amount / 1000) * 1000;
   }
 
   private calculateSegmentDistance(
@@ -1087,10 +1154,20 @@ export class RoutesService {
     return deg * (Math.PI / 180);
   }
 
-  private calculatePrice(date: Date, distanceKm: number) {
-    const basePrice = Math.round(distanceKm * this.PRICE_PER_KM);
+  private calculatePrice(
+    date: Date,
+    distanceKm: number,
+    busType: BusType,
+    policies: PricingPoliciesDto,
+    busMultipliers: BusTypePricingDto,
+  ) {
+    const basePricePerKm = policies.pricePerKm;
+    const baseRoutePrice = distanceKm * basePricePerKm;
+
+    const busFactor = busMultipliers[busType] || 1.0;
+
     let surchargePercent = 0;
-    let reason = 'Normal day';
+    let surchargeReason = 'Normal day';
 
     const tripDate = new Date(date);
     const dayOfWeek = tripDate.getDay();
@@ -1100,23 +1177,28 @@ export class RoutesService {
     const isHoliday =
       (day === 30 && month === 4) ||
       (day === 1 && month === 5) ||
-      (day === 2 && month === 9);
+      (day === 2 && month === 9) ||
+      (day === 1 && month === 1);
 
     if (isHoliday) {
-      surchargePercent = this.HOLIDAY_SURCHARGE;
-      reason = 'Holiday surcharge';
+      surchargePercent = policies.holidaySurcharge;
+      surchargeReason = 'Holiday surcharge';
     } else if (dayOfWeek === 0 || dayOfWeek === 6) {
-      surchargePercent = this.WEEKEND_SURCHARGE;
-      reason = 'Weekend surcharge';
+      surchargePercent = policies.weekendSurcharge;
+      surchargeReason = 'Weekend surcharge';
     }
 
-    const finalPrice = basePrice * (1 + surchargePercent);
+    const priceBeforeSurcharge = baseRoutePrice * busFactor;
+    const finalRawPrice = priceBeforeSurcharge * (1 + surchargePercent);
+
+    const roundedPrice = this.roundToThousands(finalRawPrice);
 
     return {
-      basePrice,
-      surcharge: `${surchargePercent * 100}%`,
-      surchargeReason: reason,
-      finalPrice: Math.round(finalPrice),
+      basePrice: this.roundToThousands(baseRoutePrice),
+      busTypeFactor: busFactor,
+      surcharge: `${(surchargePercent * 100).toFixed(0)}%`,
+      surchargeReason,
+      finalPrice: roundedPrice,
     };
   }
 

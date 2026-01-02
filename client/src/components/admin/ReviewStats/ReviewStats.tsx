@@ -10,7 +10,7 @@ export interface BookingReview {
   rating: number;
   comment: string;
   createdAt: string;
-  status: "visible" | "hidden";
+  status: "visible" | "hidden" | "flagged";
 }
 
 interface ReviewStatsProps {

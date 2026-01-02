@@ -86,6 +86,22 @@ export class TripsController {
   }
 
   @ApiOperation({
+    summary: 'Get upcoming trips for Dashboard',
+    description:
+      'Returns list of trips starting soon with booking status (booked/total seats)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    example: 5,
+    description: 'Number of trips to return',
+  })
+  @Get('upcoming')
+  async getUpcomingTrips(@Query('limit') limit?: number) {
+    return this.tripsService.getUpcomingTrips(Number(limit) || 5);
+  }
+
+  @ApiOperation({
     summary: 'Search trips by city names and departure date',
     description:
       'Enhanced search that allows searching by city name (e.g., "HCMC") instead of location IDs. Time is taken from trip stops. When searching "HCMC", it will find all bus stations in Ho Chi Minh City.',

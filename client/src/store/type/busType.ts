@@ -5,12 +5,6 @@ export enum BusType {
   LIMOUSINE = "limousine",
 }
 
-export enum SeatCapacity {
-  SEAT_16 = "SEAT_16",
-  SEAT_28 = "SEAT_28",
-  SEAT_32 = "SEAT_32",
-}
-
 export interface BusAmenities {
   tv: boolean;
   wifi: boolean;
@@ -29,27 +23,14 @@ export interface Bus {
   id: string;
   plate: string;
   busType: BusType;
-  seatCapacity: SeatCapacity;
   amenities: BusAmenities;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface SeatLayout {
-  busType: BusType;
-  seatCapacity: SeatCapacity;
-  layout: {
-    columns: number[];
-    rows: number;
-    aisles: number[];
-  };
-  description: string;
-}
-
 export interface CreateBusRequest {
   plate: string;
   busType: BusType;
-  seatCapacity: SeatCapacity;
   amenities: BusAmenities;
 }
 

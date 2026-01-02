@@ -1,8 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, Search, Bell } from "lucide-react";
+import { Menu, Bell, Calendar } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AdminSidebarNav } from "@/components/admin";
 import {
@@ -14,13 +13,24 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { AppLogo } from "@/components/AppLogo/AppLogo";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
+import { useDispatch, useSelector } from "react-redux";
+import { logOut, selectCurrentUser } from "@/store/slice/authSlice";
 
 const AdminHeader = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const user = useSelector(selectCurrentUser);
+
+  const getInitials = (name?: string) => {
+    if (!name) return "AD";
+    const words = name.trim().split(/\s+/);
+    if (words.length === 1) return words[0].substring(0, 2).toUpperCase();
+    return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+  };
 
   const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
+    dispatch(logOut());
     navigate("/login");
   };
 
@@ -60,13 +70,11 @@ const AdminHeader = () => {
       <div className="flex-1" />
 
       <form className="hidden lg:block">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search..."
-            className="w-full appearance-none bg-background pl-8 shadow-none lg:w-[300px]"
-          />
+        <div className="flex items-center gap-2 bg-white dark:bg-gray-800 p-2 rounded-lg border dark:border-gray-700 shadow-sm">
+          <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {new Date().toLocaleDateString("vi-VN")}
+          </span>
         </div>
       </form>
 
@@ -86,28 +94,19 @@ const AdminHeader = () => {
                   src="https://github.com/shadcn.png"
                   alt="@shadcn"
                 />
-                <AvatarFallback>YW</AvatarFallback>
+                <AvatarFallback>
+                  {getInitials(user?.fullName ?? "Admin")}
+                </AvatarFallback>
               </Avatar>
               <span className="sr-only">Toggle user menu</span>
             </Button>
           </HoverCardTrigger>
           <HoverCardContent align="end" className="w-56 p-2">
-            <div className="px-2 py-1.5 text-sm font-semibold">My Account</div>
+            <div className="px-2 py-1.5 text-sm font-semibold">
+              {user?.fullName || user?.email || "Admin"}
+            </div>
             <Separator className="my-1" />
             <div className="space-y-1">
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-sm font-normal"
-              >
-                Settings
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-sm font-normal"
-              >
-                Support
-              </Button>
-              <Separator className="my-1" />
               <Button
                 variant="ghost"
                 className="w-full justify-start text-sm font-normal"

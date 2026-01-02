@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -37,6 +36,7 @@ type Props = {
 const TripAssignmentDialog = ({ open, onOpenChange, route }: Props) => {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [editedPrices, setEditedPrices] = useState<Record<string, string>>({});
 
   const {
     data: potentialTrips = [],
@@ -58,12 +58,36 @@ const TripAssignmentDialog = ({ open, onOpenChange, route }: Props) => {
     new Set(),
   );
 
+  const getDisplayPrice = (trip: RouteTripAvailable) => {
+    if (editedPrices[trip.tripId] !== undefined) {
+      return editedPrices[trip.tripId];
+    }
+    return trip.pricing.finalPrice.toString();
+  };
+
+  const handlePriceChange = (tripId: string, value: string) => {
+    setEditedPrices((prev) => ({
+      ...prev,
+      [tripId]: value,
+    }));
+  };
+
   const handleAssign = async (tripItem: RouteTripAvailable) => {
     try {
+      const finalPriceInput = editedPrices[tripItem.tripId];
+      const priceToSave = finalPriceInput
+        ? Number(finalPriceInput)
+        : tripItem.pricing.finalPrice;
+
+      if (isNaN(priceToSave) || priceToSave < 0) {
+        toast.error("Invalid price value");
+        return;
+      }
+
       await assignTrip({
         tripId: tripItem.tripId,
         routeId: route.id,
-        manualPrice: tripItem.pricing.finalPrice,
+        manualPrice: priceToSave,
       }).unwrap();
 
       setAssignedTripIds((prev) => new Set(prev).add(tripItem.tripId));
@@ -86,10 +110,6 @@ const TripAssignmentDialog = ({ open, onOpenChange, route }: Props) => {
       <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Assign Trips to {route.name}</DialogTitle>
-          <DialogDescription>
-            Find existing trips that match this route's path. Prices are
-            calculated automatically based on distance and dates.
-          </DialogDescription>
         </DialogHeader>
 
         <div className="flex gap-4 items-end py-4 border-b">
@@ -139,6 +159,12 @@ const TripAssignmentDialog = ({ open, onOpenChange, route }: Props) => {
                 potentialTrips.map((trip) => {
                   const isAssigned = assignedTripIds.has(trip.tripId);
 
+                  const basePrice = trip.pricing.basePrice;
+                  const busFactor = trip.pricing.busTypeFactor;
+                  const surchargeStr = trip.pricing.surcharge;
+
+                  const priceAfterBusType = basePrice * busFactor;
+
                   return (
                     <TableRow
                       key={trip.tripId}
@@ -159,34 +185,97 @@ const TripAssignmentDialog = ({ open, onOpenChange, route }: Props) => {
                           {format(new Date(trip.endTime), "HH:mm")}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="text-xs space-y-1">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Base:</span>
-                            <span>
-                              {formatCurrency(trip.pricing.basePrice)}
-                            </span>
-                          </div>
-                          {trip.pricing.surcharge !== "0%" && (
-                            <div className="flex justify-between text-orange-600 font-medium">
-                              <span>
-                                {trip.pricing.surchargeReason} (
-                                {trip.pricing.surcharge}):
+                      <TableCell className="align-top p-4">
+                        <div className="flex flex-col gap-2 min-w-[300px]">
+                          {/* Block */}
+                          <div className="bg-slate-50 rounded-lg border p-3 text-xs space-y-2">
+                            {/* Base Price */}
+                            <div className="flex justify-between items-center text-slate-600">
+                              <span className="font-medium">
+                                Base Fare (Distance)
                               </span>
-                              <span>
-                                +
-                                {(
-                                  trip.pricing.finalPrice -
-                                  trip.pricing.basePrice
-                                ).toLocaleString()}
+                              <span className="font-mono tabular-nums">
+                                {formatCurrency(basePrice)}
                               </span>
                             </div>
-                          )}
+
+                            {/* Bus Type Upgrade */}
+                            {busFactor > 1 && (
+                              <div className="flex justify-between items-center text-blue-700">
+                                <div className="flex items-center gap-1.5">
+                                  <span>{trip.busType}</span>
+                                  <span className="px-1.5 py-0.5 rounded-full bg-blue-100 text-[10px] font-bold">
+                                    x{busFactor}
+                                  </span>
+                                </div>
+                                <span className="font-mono tabular-nums font-medium">
+                                  +{" "}
+                                  {formatCurrency(
+                                    priceAfterBusType - basePrice,
+                                  )}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Surcharge (weekend/..) */}
+                            {surchargeStr !== "0%" && (
+                              <div className="flex justify-between items-center text-orange-700">
+                                <div className="flex items-center gap-1.5">
+                                  <span>Surcharge</span>
+                                  <span className="px-1.5 py-0.5 rounded-full bg-orange-100 text-[10px] font-bold">
+                                    {trip.pricing.surchargeReason ===
+                                    "Weekend surcharge"
+                                      ? "Weekend"
+                                      : "Holiday"}{" "}
+                                    {surchargeStr}
+                                  </span>
+                                </div>
+
+                                <span className="font-mono tabular-nums font-medium">
+                                  +{" "}
+                                  {formatCurrency(
+                                    trip.pricing.finalPrice -
+                                      Math.ceil(priceAfterBusType / 1000) *
+                                        1000,
+                                  )}
+                                </span>
+                              </div>
+                            )}
+
+                            <div className="border-t border-slate-200 my-1" />
+
+                            <div className="flex justify-between items-center">
+                              <span className="font-semibold text-slate-700">
+                                Suggested Price
+                              </span>
+                              <span className="font-mono tabular-nums font-bold text-slate-900">
+                                {formatCurrency(trip.pricing.finalPrice)}
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-right font-bold text-green-600 text-lg">
-                        {formatCurrency(trip.pricing.finalPrice)}
+
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Input
+                            type="number"
+                            className="text-right font-bold text-green-700 h-9"
+                            value={getDisplayPrice(trip)}
+                            onChange={(e) =>
+                              handlePriceChange(trip.tripId, e.target.value)
+                            }
+                            disabled={isAssigned}
+                          />
+                        </div>
+                        {getDisplayPrice(trip) !==
+                          trip.pricing.finalPrice.toString() && (
+                          <div className="text-[10px] text-orange-500 text-right mt-1">
+                            Manual Override
+                          </div>
+                        )}
                       </TableCell>
+
                       <TableCell>
                         {isAssigned ? (
                           <Button

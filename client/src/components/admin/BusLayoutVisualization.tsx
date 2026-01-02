@@ -27,7 +27,7 @@ const BusLayoutVisualization: React.FC<BusLayoutVisualizationProps> = ({
       type: BusType.VIP,
       name: "VIP Bus",
       description: "2-1 Layout",
-      capacity: 16,
+      capacity: 18,
       color: "bg-purple-100 text-purple-800",
       seats: generateVIPSeats(6), // ~6 rows × 3 seats = 18, close to 16
     },
@@ -42,7 +42,7 @@ const BusLayoutVisualization: React.FC<BusLayoutVisualizationProps> = ({
     {
       type: BusType.LIMOUSINE,
       name: "Limousine Bus",
-      description: "1-2-1 Layout",
+      description: "3-1 Layout",
       capacity: 16,
       color: "bg-yellow-100 text-yellow-800",
       seats: generateLimousineSeats(4), // 4 rows × 4 seats = 16
@@ -120,11 +120,6 @@ const BusLayoutVisualization: React.FC<BusLayoutVisualizationProps> = ({
           <div className="mt-6 flex justify-center">
             <div className="h-2 w-32 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
           </div>
-        </div>
-
-        {/* Layout Info */}
-        <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
-          <p>Click arrows to switch between bus types</p>
         </div>
       </CardContent>
     </Card>

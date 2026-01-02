@@ -10,7 +10,7 @@ import {
   IsDateString,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
-import { BusType, SeatCapacity } from '@prisma/client';
+import { BusType } from '@prisma/client';
 
 export enum SortOrder {
   ASC = 'asc',
@@ -151,24 +151,6 @@ export class QueryTripRouteMapDto {
   @IsArray()
   @IsEnum(BusType, { each: true })
   busType?: BusType[];
-
-  @ApiPropertyOptional({
-    enum: SeatCapacity,
-    description: 'Filter by seat capacity (crtl + click with swagger)',
-    isArray: true,
-  })
-  @IsOptional()
-  @Transform(({ value }) => {
-    if (!value) return [];
-    if (Array.isArray(value)) return value as SeatCapacity[];
-    if (typeof value === 'string') {
-      return value.split(',').map((v) => v.trim()) as SeatCapacity[];
-    }
-    return [value] as SeatCapacity[];
-  })
-  @IsArray()
-  @IsEnum(SeatCapacity, { each: true })
-  seatCapacity?: SeatCapacity[];
 
   @ApiPropertyOptional({
     description: 'Filter by amenities (comma-separated)',

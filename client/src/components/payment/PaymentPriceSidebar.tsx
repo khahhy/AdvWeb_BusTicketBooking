@@ -47,30 +47,36 @@ export default function PaymentPriceSidebar({
         </div>
 
         <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-          <div className="flex justify-between text-sm mb-2">
-            <span className="text-gray-600 dark:text-gray-300">
-              Insurance fees
-            </span>
-            <span className="text-gray-900 dark:text-white">
-              {formatCurrency(insuranceFee)}
-            </span>
-          </div>
-          <div className="flex justify-between text-sm items-center">
-            <div className="flex items-center gap-1">
+          {insuranceFee > 0 && (
+            <div className="flex justify-between text-sm mb-2">
               <span className="text-gray-600 dark:text-gray-300">
-                Service fees
+                Insurance fees
               </span>
-              <span className="text-gray-400 dark:text-gray-500 text-xs">
-                ⓘ
+              <span className="text-gray-900 dark:text-white">
+                {formatCurrency(insuranceFee)}
               </span>
             </div>
-            <span className="text-gray-900 dark:text-white">
-              {formatCurrency(serviceFee)}
-            </span>
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            *This fee is non-refundable
-          </p>
+          )}
+          {serviceFee > 0 && (
+            <>
+              <div className="flex justify-between text-sm items-center">
+                <div className="flex items-center gap-1">
+                  <span className="text-gray-600 dark:text-gray-300">
+                    Service fees
+                  </span>
+                  <span className="text-gray-400 dark:text-gray-500 text-xs">
+                    ⓘ
+                  </span>
+                </div>
+                <span className="text-gray-900 dark:text-white">
+                  {formatCurrency(serviceFee)}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                *This fee is non-refundable
+              </p>
+            </>
+          )}
         </div>
       </div>
 

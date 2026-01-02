@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsNotEmpty } from 'class-validator';
-import { BusType, SeatCapacity } from '@prisma/client';
+import { BusType } from '@prisma/client';
 
 export class CreateBusDto {
   @ApiProperty({
@@ -18,15 +18,6 @@ export class CreateBusDto {
   @IsOptional()
   @IsEnum(BusType)
   busType?: BusType;
-
-  @ApiPropertyOptional({
-    enum: SeatCapacity,
-    example: SeatCapacity.SEAT_32,
-    description: 'Total seats capacity (16, 28, or 32)',
-  })
-  @IsOptional()
-  @IsEnum(SeatCapacity)
-  seatCapacity?: SeatCapacity;
 
   @ApiPropertyOptional({
     example: {

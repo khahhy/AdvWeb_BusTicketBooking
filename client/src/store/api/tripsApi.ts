@@ -1,6 +1,6 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "./baseQuery";
-import { ApiResponse } from "../type/shared";
+import { ApiResponse } from "@/store/type/shared";
 import {
   Trip,
   TripQueryParams,
@@ -8,13 +8,14 @@ import {
   CreateTripRequest,
   UpdateTripRequest,
   TripStatus,
-  SeatStatus,
-} from "../type/tripsType";
+  UpcomingTrip,
+} from "@/store/type/tripsType";
+import { SeatStatus, TripSeatResult } from "@/store/type/seatsType";
 
 export const tripsApi = createApi({
   reducerPath: "tripsApi",
   baseQuery: baseQuery,
-  tagTypes: ["Trips", "TripDetail", "Seats"],
+  tagTypes: ["Trips", "Seats"],
 
   endpoints: (builder) => ({
     getTrips: builder.query<Trip[], TripQueryParams | void>({
@@ -42,9 +43,24 @@ export const tripsApi = createApi({
       providesTags: [{ type: "Trips", id: "SEARCH_LIST" }],
     }),
 
+    getUpcomingTrips: builder.query<UpcomingTrip[], number | void>({
+      query: (limit) => ({
+        url: "/trips/upcoming",
+        method: "GET",
+        params: { limit: limit || 5 },
+      }),
+      transformResponse: (
+        response: ApiResponse<UpcomingTrip[]> | UpcomingTrip[],
+      ) => {
+        if (Array.isArray(response)) return response;
+        return (response as ApiResponse<UpcomingTrip[]>).data;
+      },
+      providesTags: [{ type: "Trips", id: "LIST" }],
+    }),
+
     getTripById: builder.query<Trip, string>({
       query: (id) => `/trips/${id}`,
-      providesTags: (_, __, id) => [{ type: "TripDetail", id }],
+      providesTags: (_, __, id) => [{ type: "Trips", id }],
     }),
 
     createTrip: builder.mutation<Trip, CreateTripRequest>({
@@ -64,7 +80,7 @@ export const tripsApi = createApi({
       }),
       invalidatesTags: (_, __, { id }) => [
         { type: "Trips", id: "LIST" },
-        { type: "TripDetail", id },
+        { type: "Trips", id },
         { type: "Trips", id: "SEARCH_LIST" },
       ],
     }),
@@ -80,7 +96,7 @@ export const tripsApi = createApi({
       }),
       invalidatesTags: (_, __, { id }) => [
         { type: "Trips", id: "LIST" },
-        { type: "TripDetail", id },
+        { type: "Trips", id },
         { type: "Trips", id: "SEARCH_LIST" },
       ],
     }),
@@ -92,13 +108,13 @@ export const tripsApi = createApi({
       }),
       invalidatesTags: (_, __, id) => [
         { type: "Trips", id: "LIST" },
-        { type: "TripDetail", id },
+        { type: "Trips", id },
         { type: "Trips", id: "SEARCH_LIST" },
       ],
     }),
 
     getTripSeats: builder.query<
-      SeatStatus[],
+      TripSeatResult,
       { tripId: string; routeId: string }
     >({
       query: ({ tripId, routeId }) => ({
@@ -106,7 +122,18 @@ export const tripsApi = createApi({
         method: "GET",
         params: { routeId },
       }),
-      transformResponse: (response: ApiResponse<SeatStatus[]>) => response.data,
+      transformResponse: (response: ApiResponse<SeatStatus[]>) => {
+        const customMeta = response.meta as unknown as {
+          totalSeats: number;
+          availableSeats: number;
+        };
+
+        return {
+          seats: response.data,
+          totalSeats: customMeta?.totalSeats || 0,
+          availableSeats: customMeta?.availableSeats || 0,
+        };
+      },
       keepUnusedDataFor: 60,
       providesTags: (_, __, { tripId }) => [{ type: "Seats", id: tripId }],
     }),
@@ -122,4 +149,5 @@ export const {
   useUpdateTripStatusMutation,
   useDeleteTripMutation,
   useGetTripSeatsQuery, // realtime seats status (trip + route)
+  useGetUpcomingTripsQuery,
 } = tripsApi;

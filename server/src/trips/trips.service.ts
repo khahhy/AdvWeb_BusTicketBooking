@@ -552,7 +552,6 @@ export class TripsService {
         return {
           seatId: seat.id,
           seatNumber: seat.seatNumber,
-          coordinates: seat.coordinates,
           status: isLocked ? 'BOOKED' : 'AVAILABLE',
         };
       });

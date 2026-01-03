@@ -6,6 +6,7 @@ import {
   ReviewTable,
 } from "@/components/admin";
 import { toast } from "sonner";
+import { API_BASE_URL } from "@/lib/api";
 
 export interface Review {
   id: string;
@@ -46,7 +47,7 @@ const ReviewManagement = () => {
         return;
       }
 
-      const response = await fetch("http://localhost:3000/reviews/admin", {
+      const response = await fetch(`${API_BASE_URL}/reviews/admin`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -105,7 +106,7 @@ const ReviewManagement = () => {
       }
 
       const response = await fetch(
-        `http://localhost:3000/reviews/${reviewId}/moderate`,
+        `${API_BASE_URL}/reviews/${reviewId}/moderate`,
         {
           method: "PATCH",
           headers: {
@@ -140,15 +141,12 @@ const ReviewManagement = () => {
         return;
       }
 
-      const response = await fetch(
-        `http://localhost:3000/reviews/${reviewId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await fetch(`${API_BASE_URL}/reviews/${reviewId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       if (!response.ok) {
         throw new Error("Failed to delete review");

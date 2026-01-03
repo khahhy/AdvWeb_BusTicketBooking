@@ -21,6 +21,7 @@ import Footer from "@/components/dashboard/Footer";
 import { toast } from "sonner";
 import backgroundImage from "@/assets/images/background.png";
 import dayjs from "dayjs";
+import { API_BASE_URL } from "@/lib/api";
 
 interface BookingDetails {
   id: string;
@@ -82,7 +83,7 @@ export default function BookingDetailsPage() {
         return;
       }
 
-      const response = await fetch(`http://localhost:3000/bookings/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/bookings/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

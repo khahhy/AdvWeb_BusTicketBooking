@@ -16,6 +16,7 @@ import Footer from "@/components/dashboard/Footer";
 import backgroundImage from "@/assets/images/background.png";
 import dayjs from "dayjs";
 import { toast } from "sonner";
+import { API_BASE_URL } from "@/lib/api";
 
 interface BookingData {
   id: string;
@@ -79,7 +80,7 @@ export default function FeedbackRatingPage() {
       if (!id) return;
       try {
         const token = localStorage.getItem("accessToken");
-        const response = await fetch(`http://localhost:3000/bookings/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/bookings/${id}`, {
           headers: token
             ? {
                 Authorization: `Bearer ${token}`,
@@ -144,14 +145,11 @@ export default function FeedbackRatingPage() {
       if (!token) return;
 
       try {
-        const response = await fetch(
-          `http://localhost:3000/reviews/booking/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+        const response = await fetch(`${API_BASE_URL}/reviews/booking/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-        );
+        });
 
         if (response.status === 404) {
           return;
@@ -227,7 +225,7 @@ export default function FeedbackRatingPage() {
     setSubmitting(true);
 
     try {
-      const response = await fetch("http://localhost:3000/reviews", {
+      const response = await fetch(`${API_BASE_URL}/reviews`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -18,6 +18,7 @@ import Footer from "@/components/dashboard/Footer";
 import { toast } from "sonner";
 import dayjs from "dayjs";
 import backgroundImage from "@/assets/images/background.png";
+import { API_BASE_URL } from "@/lib/api";
 
 interface Booking {
   id: string;
@@ -95,7 +96,7 @@ export default function ModifyBookingPage() {
   const fetchBooking = async () => {
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await fetch(`http://localhost:3000/bookings/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/bookings/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -149,7 +150,7 @@ export default function ModifyBookingPage() {
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
-        `http://localhost:3000/bookings/${booking.id}/modify`,
+        `${API_BASE_URL}/bookings/${booking.id}/modify`,
         {
           method: "PATCH",
           headers: {

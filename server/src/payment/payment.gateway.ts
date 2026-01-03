@@ -12,7 +12,9 @@ import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
   cors: {
-    origin: ['http://localhost:3000', 'http://localhost:5173'],
+    origin: (origin, callback) => {
+      callback(null, true);
+    },
     credentials: true,
   },
   namespace: 'payment',

@@ -18,6 +18,7 @@ import Footer from "@/components/dashboard/Footer";
 import { toast } from "sonner";
 import backgroundImage from "@/assets/images/background.png";
 import dayjs from "dayjs";
+import { API_BASE_URL } from "@/lib/api";
 
 interface Booking {
   id: string;
@@ -86,7 +87,7 @@ export default function BookingHistoryPage() {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
 
-      const response = await fetch("http://localhost:3000/reviews/my", {
+      const response = await fetch(`${API_BASE_URL}0/reviews/my`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -120,14 +121,11 @@ export default function BookingHistoryPage() {
         return;
       }
 
-      const response = await fetch(
-        "http://localhost:3000/bookings/my-bookings",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await fetch(`${API_BASE_URL}/bookings/my-bookings`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       if (!response.ok) {
         throw new Error("Failed to fetch bookings");
@@ -218,7 +216,7 @@ export default function BookingHistoryPage() {
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
-        `http://localhost:3000/bookings/${bookingId}/cancel`,
+        `${API_BASE_URL}/bookings/${bookingId}/cancel`,
         {
           method: "PATCH",
           headers: {

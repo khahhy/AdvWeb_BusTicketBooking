@@ -3,6 +3,7 @@ import { Star, User, MessageSquare } from "lucide-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/vi";
+import { API_BASE_URL } from "@/lib/api";
 
 dayjs.extend(relativeTime);
 dayjs.locale("vi");
@@ -31,7 +32,7 @@ export default function TripReviews({ routeId }: TripReviewsProps) {
         setLoading(true);
         setError(null);
         const response = await fetch(
-          `http://localhost:3000/reviews/route/${routeId}`,
+          `${API_BASE_URL}/reviews/route/${routeId}`,
         );
 
         if (!response.ok) {

@@ -17,7 +17,7 @@ import {
   Users,
 } from "lucide-react";
 import { Button } from "./button";
-
+import { API_BASE_URL } from "@/lib/api";
 interface Message {
   id: string;
   content: string;
@@ -75,7 +75,7 @@ export default function Chatbot() {
   // Initialize WebSocket connection
   useEffect(() => {
     if (isOpen && !socket) {
-      const newSocket = io("http://localhost:3000/payment", {
+      const newSocket = io(`${API_BASE_URL}/payment`, {
         transports: ["websocket"],
       });
 
@@ -189,7 +189,7 @@ export default function Chatbot() {
         );
 
       // Call backend API with context (search or booking)
-      const response = await fetch("http://localhost:3000/chatbot/chat", {
+      const response = await fetch(`${API_BASE_URL}/chatbot/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

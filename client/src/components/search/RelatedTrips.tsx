@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Clock, ArrowRight } from "lucide-react";
 import dayjs from "dayjs";
+import { API_BASE_URL } from "@/lib/api";
 
 interface Trip {
   id: string;
@@ -39,7 +40,7 @@ export default function RelatedTrips({
         const formattedDate = dayjs(date).format("YYYY-MM-DD");
 
         const response = await fetch(
-          `http://localhost:3000/routes/${routeId}/trips?date=${formattedDate}`,
+          `${API_BASE_URL}/routes/${routeId}/trips?date=${formattedDate}`,
         );
 
         if (!response.ok) {

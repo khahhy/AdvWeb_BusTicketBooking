@@ -1,16 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class EmailService {
+  private readonly logger = new Logger(EmailService.name);
   private transporter: nodemailer.Transporter;
 
   constructor() {
-    // Configure email transporter
+    const port = parseInt(process.env.EMAIL_PORT || '587');
+    const isSecure = port === 465;
+
+    this.logger.log(
+      `Initializing Email Service on Port: ${port}, Secure: ${isSecure}`,
+    );
+
     this.transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.EMAIL_PORT || '587'),
-      secure: false, // true for 465, false for other ports
+      port: port,
+      secure: isSecure,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,

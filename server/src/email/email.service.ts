@@ -26,6 +26,15 @@ export class EmailService {
     } as any);
   }
 
+  async onModuleInit() {
+    try {
+      await this.transporter.verify();
+      console.log('SMTP CONNECT OK');
+    } catch (e) {
+      console.error('SMTP CONNECT FAILED', e);
+    }
+  }
+
   async sendVerificationEmail(email: string, token: string) {
     const verificationUrl = `${process.env.FRONTEND_URL}/email-verified?token=${token}`;
 

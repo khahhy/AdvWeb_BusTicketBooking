@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import dayjs, { Dayjs } from "dayjs";
 import Navbar from "@/components/common/Navbar";
 import backgroundImage from "@/assets/images/background.png";
@@ -13,6 +13,7 @@ import FilterPanel, { FilterState } from "@/components/search/FilterPanel";
 
 export default function SearchPage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [fromLocation, setFromLocation] = useState(
     () => searchParams.get("from") || "Ho Chi Minh City",
   );
@@ -319,6 +320,18 @@ export default function SearchPage() {
     to: string;
     date: Dayjs | null;
   }) => {
+    // Update URL parameters when searching
+    const newSearchParams = new URLSearchParams();
+
+    if (params.from) newSearchParams.set("from", params.from);
+    if (params.to) newSearchParams.set("to", params.to);
+    if (params.date)
+      newSearchParams.set("departureDate", params.date.format("YYYY-MM-DD"));
+
+    // Navigate to update URL with new search params
+    navigate(`/search?${newSearchParams.toString()}`, { replace: true });
+
+    // Update local state
     setFromLocation(params.from);
     setToLocation(params.to);
     setSelectedDate(params.date);

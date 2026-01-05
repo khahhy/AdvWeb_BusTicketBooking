@@ -69,8 +69,11 @@ const AdminDashboard = () => {
     limit: 5,
   });
 
-  // Fetch Upcoming Trips
-  const { data: upcomingTrips } = useGetUpcomingTripsQuery(5);
+  // Fetch Upcoming Trips with polling enabled (every 30 seconds)
+  const { data: upcomingTrips } = useGetUpcomingTripsQuery(5, {
+    pollingInterval: 30000,
+    refetchOnMountOrArgChange: true,
+  });
 
   const stats = bookingStatsResponse?.data;
   const userStats = userStatsResponse?.data;

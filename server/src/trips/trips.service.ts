@@ -1085,4 +1085,23 @@ export class TripsService {
       });
     }
   }
+
+  async getTripStatus(tripId: string) {
+    const trip = await this.prisma.trips.findUnique({
+      where: { id: tripId },
+      select: {
+        id: true,
+        status: true,
+        startTime: true,
+        endTime: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!trip) {
+      throw new NotFoundException('Trip not found');
+    }
+
+    return trip;
+  }
 }

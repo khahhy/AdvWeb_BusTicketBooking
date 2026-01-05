@@ -13,6 +13,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { TripsService } from './trips.service';
+import { TripStatusUpdaterService } from './trip-status-updater.service';
 import {
   ApiTags,
   ApiOperation,
@@ -36,7 +37,10 @@ import { UpdateTripStatusDto } from './dto/update-trip-status.dto';
 @ApiTags('trips')
 @Controller('trips')
 export class TripsController {
-  constructor(private readonly tripsService: TripsService) {}
+  constructor(
+    private readonly tripsService: TripsService,
+    private readonly tripStatusUpdater: TripStatusUpdaterService,
+  ) {}
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.admin)
@@ -244,5 +248,30 @@ export class TripsController {
     @Query('routeId') routeId: string,
   ) {
     return this.tripsService.getSeatsStatus(tripId, routeId);
+  }
+
+  @ApiOperation({
+    summary: 'Get live trip status',
+    description: 'Get current trip status - useful for polling',
+  })
+  @ApiParam({ name: 'id', description: 'Trip ID', type: String })
+  @ApiResponse({ status: 200, description: 'Trip status retrieved.' })
+  @ApiResponse({ status: 404, description: 'Trip not found.' })
+  @Get(':id/status')
+  async getTripStatus(@Param('id') id: string) {
+    return this.tripsService.getTripStatus(id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Manually trigger trip status update',
+    description: 'Force an immediate check and update of all trip statuses',
+  })
+  @Post('update-statuses')
+  @HttpCode(HttpStatus.OK)
+  async triggerStatusUpdate() {
+    return this.tripStatusUpdater.triggerStatusUpdate();
   }
 }

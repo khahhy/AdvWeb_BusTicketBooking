@@ -137,6 +137,20 @@ export const tripsApi = createApi({
       keepUnusedDataFor: 60,
       providesTags: (_, __, { tripId }) => [{ type: "Seats", id: tripId }],
     }),
+
+    getTripStatus: builder.query<
+      {
+        id: string;
+        status: TripStatus;
+        startTime: string;
+        endTime: string;
+        updatedAt: string;
+      },
+      string
+    >({
+      query: (id) => `/trips/${id}/status`,
+      providesTags: (_, __, id) => [{ type: "Trips", id }],
+    }),
   }),
 });
 
@@ -150,4 +164,5 @@ export const {
   useDeleteTripMutation,
   useGetTripSeatsQuery, // realtime seats status (trip + route)
   useGetUpcomingTripsQuery,
+  useGetTripStatusQuery, // live trip status for polling
 } = tripsApi;
